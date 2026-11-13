@@ -275,7 +275,8 @@ function awards() {
 const found = () => { const s = new Set(), A = awards(); S.done.forEach((d, i) => { if (d && A[i]) A[i].forEach(c => s.add(c)); }); return s; };
 const showWord = k => { const f = found(); return [...CFG.keys[k]].map(c => /[A-Z]/.test(c) ? (f.has(c) ? c : '_') : c).join(' '); };
 /* the first name is shown with its letters in the wrong places until Pook "fixes" it at the end of tape one */
-const scramOrder = w => { const idx = [...w].map((c, i) => i); let seed = 7; for (const c of w) seed = (seed * 31 + c.charCodeAt(0)) % 9973; for (let i = idx.length - 1; i > 0; i--) { seed = (seed * 137 + 11) % 9973; const j = seed % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; } if (idx.every((v, i) => v === i)) idx.reverse(); return idx; };
+const FAKE = { ENDACOPIA: 'PANICODEA' };   // a believable wrong word for the default name
+const scramOrder = w => { if (FAKE[w]) { const used = new Set(); return [...FAKE[w]].map(ch => { const i = [...w].findIndex((c, j) => c === ch && !used.has(j)); used.add(i); return i; }); } const idx = [...w].map((c, i) => i); let seed = 7; for (const c of w) seed = (seed * 31 + c.charCodeAt(0)) % 9973; for (let i = idx.length - 1; i > 0; i--) { seed = (seed * 137 + 11) % 9973; const j = seed % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; } if (idx.every((v, i) => v === i)) idx.reverse(); return idx; };
 const wordsHtml = (fresh = new Set()) => { const f = found(); return CFG.keys.map((w, k) => { if (k > 0 && S.tape < k) return ''; const order = (k === 0 && !F.unscr) ? scramOrder(w) : [...w].map((c, i) => i); return `<div class="hw" id="hw${k}">${order.map(i => { const c = w[i]; return `<span class="lt ${fresh.has(c) && f.has(c) ? 'nl' : ''}">${!/[A-Z]/.test(c) ? esc(c) : f.has(c) ? c : '_'}</span>`; }).join('')}</div>`; }).join(''); };
 function unscramble() {
   const el = $('#hw0'); if (!el) return;
@@ -567,7 +568,7 @@ function chessPanel() {
   draw();
 }
 function wordPanel() {
-  const seq = F.wseq || (F.wseq = ['dog', 'eye', 'hat', 'ant', 'egg']); let pick = -1;
+  const seq = F.wseq || (F.wseq = ['dog', 'ant', 'hat', 'egg', 'eye']); let pick = -1;
   const draw = () => {
     openPanel(`<div class="t">WARDROBE... IT'S LOCKED</div><div class="sp"></div><div class="row" style="gap:4px">${seq.map((id, i) => `<button class="tile ${pick === i ? 'on' : ''}" data-a="${i}"><canvas width="16" height="16"></canvas></button>`).join('')}</div>
       <div class="c" style="font-size:10px">TAP TWO TILES TO SWAP.</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,

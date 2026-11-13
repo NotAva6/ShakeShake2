@@ -429,6 +429,10 @@ function pook(cx, fy, o = {}) {
   R(cx - 1, hy + 2, 3, 2, K);
   R(cx - 3, hy + 5, 1, 1, K); R(cx + 3, hy + 5, 1, 1, K); R(cx - 2, hy + 6, 5, 1, K);
   if (!o.sleep && Date.now() < angryT) { [[7, -5], [6, -4], [5, -4], [4, -3]].forEach(p => { R(cx - p[0], hy + p[1], 1, 1, K); R(cx + p[0], hy + p[1], 1, 1, K); }); R(cx - 2, hy + 5, 5, 1, K); }
+  else if (!o.sleep && isNight() && S.done[4] && !S.done[6]) {   // sick or scared: drooping brows, frown, no tongue
+    [[4, -5], [5, -4], [6, -4], [7, -3]].forEach(p => { R(cx - p[0], hy + p[1], 1, 1, K); R(cx + p[0], hy + p[1], 1, 1, K); });
+    R(cx - 3, hy + 5, 1, 1, W); R(cx + 3, hy + 5, 1, 1, W); R(cx - 3, hy + 7, 1, 1, K); R(cx + 3, hy + 7, 1, 1, K);
+  }
   else if (!o.sleep) { R(cx - 1, hy + 6, 3, 3, O); R(cx, hy + 6, 1, 2, K); }
   if (o.sleep) { const zx = cx + 14, zy = hy - 12 - (frame % 4); R(zx, zy, 4, 1, 'k'); R(zx + 2, zy + 1, 1, 1, 'k'); R(zx + 1, zy + 2, 1, 1, 'k'); R(zx, zy + 3, 4, 1, 'k'); }
 }
@@ -752,7 +756,7 @@ const FIX = [
   () => { F.cM = F.cP = F.cV = F.cD = 1; drop('cardM', 'cardP', 'cardV', 'cardD'); }
 ];
 const DONE_LINE = ['POOK EATS. POOK DOES NOT BLINK WHILE HE EATS.', 'POOK PLAYS. THE BALL WILL NEVER BE THE SAME.', 'POOK IS CLEAN. THE WATER IS NOT.', 'POOK SLEEPS.',
-  'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THEN HE STARTS TO SHAKE. SOMEWHERE IN THE HOUSE, A TELEVISION TURNS ON.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING. ALL HIS ATTENTION IS ON THE BEAR. THE HOUSE GOES BACK TO NORMAL.', 'THE SONG PLAYS. POOK SLEEPS.'];
+  'POOK DRINKS.', 'POOK SWALLOWS IT. THEN HE STARTS TO SHAKE. SOMEWHERE IN THE HOUSE, A TELEVISION TURNS ON.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING. ALL HIS ATTENTION IS ON THE BEAR. THE HOUSE GOES BACK TO NORMAL.', 'THE SONG PLAYS. POOK SLEEPS.'];
 function startNight() { (F.un || (F.un = []))[0] = 1; S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
 let flying = 0;
 function need(i) {
@@ -761,6 +765,10 @@ function need(i) {
   S.done[i] = 1; FIX[i](); F.newL = [...(F.newL || []), ...got]; if (i % 4 === 3) F.pendEnd = (i / 4) | 0;
   closePanel(); save(); sfx.good(); render(); say(DONE_LINE[i]);
   if (got.length) flyLetters(i, got);
+  if (i === 4) {
+    setTimeout(() => { if (S.done[5]) return; angryT = Date.now() + 3200; sfx.bad(); bubble('WHAT DID YOU DO!!! NOT THAT WATER?????'); }, 1500);
+    setTimeout(() => { if (!S.done[5] && elPanel.hidden) say('POOK LOOKS SICK.'); }, 5200);
+  }
 }
 /* letters leap out of where they were won, bounce round the screen, then dive into the WORD button */
 function flyLetters(i, letters) {

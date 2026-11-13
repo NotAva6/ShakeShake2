@@ -317,10 +317,9 @@ function pages(list, done) {
 }
 function note(title, body) { openPanel(`<div class="t">${title}</div><pre>${body}</pre><div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => { closePanel(); }); }
 function clueNote() {
-  // f = right digit, right place (filled). l = right digit, wrong place (outline). . = not in the code.
+  // f = right digit, right place (filled). l = right digit, wrong place (outline). No legend: the player infers it.
   const rows = [['391', 'f..'], ['294', 'l..'], ['673', '.ll'], ['609', '...'], ['643', '..l']];
-  openPanel(`<div class="t">NOTE TO SELF: CUPBOARD LOCK</div><div style="display:flex;gap:14px;align-items:center"><div style="flex:none;white-space:nowrap">${rows.map(r => `<div style="margin:2px 0">${[...r[0]].map((ch, i) => `<span class="dg ${r[1][i] === '.' ? '' : r[1][i]}">${ch}</span>`).join('')}</div>`).join('')}</div>
-    <div><div><span class="dg f">&nbsp;</span>RIGHT DIGIT, RIGHT PLACE</div><div style="margin-top:8px"><span class="dg l">&nbsp;</span>RIGHT DIGIT, WRONG PLACE</div></div></div>
+  openPanel(`<div class="t">A NOTE ON THE FRIDGE</div><div class="sp"></div><div class="c">${rows.map(r => `<div style="margin:0;line-height:1">${[...r[0]].map((ch, i) => `<span class="dg ${r[1][i] === '.' ? '' : r[1][i]}">${ch}</span>`).join('')}</div>`).join('')}</div>
     <div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
 }
 function lockPanel(id, title, labels, answer, onOpen) {

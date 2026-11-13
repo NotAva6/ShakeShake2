@@ -844,7 +844,7 @@ function onPook(it) {
     if (!S.done[4]) return say('POOK CANNOT SWALLOW IT DRY.');
     if (JARS[F.jperm][+it[3]] === 'med') return need(5);
     drop(it); F.jperm = rand(2); F.jsample = null; save();
-    return scare(() => pages(['THE CABINET SHAKES.\n\nIT HAS RESET.'], () => say('POOK IS STILL SICK.')));
+    return scare(() => say('THE CABINET SHAKES. IT HAS RESET.'));
   }
   if (it === 'teddy') return S.done[5] ? need(6) : say('POOK IS TOO UNWELL TO CARE ABOUT THE BEAR.');
   if (CAPS[it] && jamt(it) === 5) { angryT = Date.now() + 4000; sfx.bad(); return bubble("I'M A DOG, I CAN'T DRINK OUT OF THAT... IDIOT."); }

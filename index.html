@@ -181,6 +181,14 @@ button{font:inherit;cursor:pointer;border-radius:0}
 #bmenu,#bwords{padding:8px 10px}
 .lt{display:inline-block;width:1.15em;text-align:center}
 .lt.nl{padding:0}
+#panel .jb{padding:3px 7px}
+/* TV: readable text, soft translucent scan lines */
+.vhs pre{text-shadow:none;font-size:13px;line-height:1.4;animation:vj 6s steps(1) infinite}
+.vhs::before{height:34px;top:-34px;background:linear-gradient(transparent,rgba(244,236,216,.13),transparent);animation:vbar 5.5s linear infinite}
+.vhs::after{inset:0;height:auto;background:repeating-linear-gradient(rgba(128,128,128,0) 0 2px,rgba(128,128,128,.13) 2px 3px);pointer-events:none}
+@keyframes vj{0%,93%{transform:none}94%{transform:translateX(3px)}96%{transform:translateX(-2px)}98%{transform:none}}
+.vhs .vb{top:4px;bottom:auto}
+.vhs pre{padding-top:16px}
 </style>
 </head>
 <body>
@@ -275,15 +283,15 @@ function awards() {
 const found = () => { const s = new Set(), A = awards(); S.done.forEach((d, i) => { if (d && A[i]) A[i].forEach(c => s.add(c)); }); return s; };
 const showWord = k => { const f = found(); return [...CFG.keys[k]].map(c => /[A-Z]/.test(c) ? (f.has(c) ? c : '_') : c).join(' '); };
 /* the first name is shown with its letters in the wrong places until Pook "fixes" it at the end of tape one */
-const FAKE = { ENDACOPIA: 'PANICODEA' };   // a believable wrong word for the default name
+const FAKE = { ENDACOPIA: 'PANICODEA', WEBFISHING: 'WHIFSBEING' };   // a believable wrong word for the default name
 const scramOrder = w => { if (FAKE[w]) { const used = new Set(); return [...FAKE[w]].map(ch => { const i = [...w].findIndex((c, j) => c === ch && !used.has(j)); used.add(i); return i; }); } const idx = [...w].map((c, i) => i); let seed = 7; for (const c of w) seed = (seed * 31 + c.charCodeAt(0)) % 9973; for (let i = idx.length - 1; i > 0; i--) { seed = (seed * 137 + 11) % 9973; const j = seed % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; } if (idx.every((v, i) => v === i)) idx.reverse(); return idx; };
-const wordsHtml = (fresh = new Set()) => { const f = found(); return CFG.keys.map((w, k) => { if (k > 0 && S.tape < k) return ''; const order = (k === 0 && !F.unscr) ? scramOrder(w) : [...w].map((c, i) => i); return `<div class="hw" id="hw${k}">${order.map(i => { const c = w[i]; return `<span class="lt ${fresh.has(c) && f.has(c) ? 'nl' : ''}">${!/[A-Z]/.test(c) ? esc(c) : f.has(c) ? c : '_'}</span>`; }).join('')}</div>`; }).join(''); };
-function unscramble() {
-  const el = $('#hw0'); if (!el) return;
-  const btn = elPanel.querySelector('button.o'), w = CFG.keys[0], spans = [...el.querySelectorAll('.lt')]; if (btn) btn.disabled = true;
+const wordsHtml = (fresh = new Set()) => { const f = found(); return CFG.keys.map((w, k) => { if (k > 0 && S.tape < k) return ''; const order = (!(F.un || [])[k] && !F.end) ? scramOrder(w) : [...w].map((c, i) => i); return `<div class="hw" id="hw${k}">${order.map(i => { const c = w[i]; return `<span class="lt ${fresh.has(c) && f.has(c) ? 'nl' : ''}">${!/[A-Z]/.test(c) ? esc(c) : f.has(c) ? c : '_'}</span>`; }).join('')}</div>`; }).join(''); };
+function unscramble(k) {
+  const el = $('#hw' + k); if (!el) return;
+  const btn = elPanel.querySelector('button.o'), w = CFG.keys[k], spans = [...el.querySelectorAll('.lt')]; if (btn) btn.disabled = true;
   setTimeout(() => {
     if (!document.body.contains(el)) return;
-    say('POOK: "?? THAT\'S NOT RIGHT."'); sfx.bad(); let n = 0;
+    say(k ? 'POOK: "?? NOT AGAIN."' : 'POOK: "?? THAT\'S NOT RIGHT."'); sfx.bad(); let n = 0;
     const t = setInterval(() => {
       if (!document.body.contains(el)) return clearInterval(t);
       const sh = [...w]; for (let i = sh.length - 1; i > 0; i--) { const j = rand(i + 1); [sh[i], sh[j]] = [sh[j], sh[i]]; }
@@ -296,7 +304,7 @@ function unscramble() {
         try { sp.animate([{ transform: 'translateY(-30px) scale(3)', opacity: 0 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .7 }, { transform: 'translateY(3px) scale(.85)', offset: .85 }, { transform: 'none' }], { duration: 400, delay: i * 80, fill: 'backwards', easing: 'cubic-bezier(.4,0,.2,1)' }); } catch (e) {}
         setTimeout(() => beep(85, .1, 'square', .08), i * 80 + 280);
       });
-      setTimeout(() => { F.unscr = 1; save(); if (btn) btn.disabled = false; sfx.solve(); say('POOK: "THERE."'); }, spans.length * 80 + 550);
+      setTimeout(() => { (F.un || (F.un = []))[k] = 1; save(); if (btn) btn.disabled = false; sfx.solve(); say('POOK: "THERE."'); }, spans.length * 80 + 550);
     }, 90);
   }, 2400);
 }
@@ -649,18 +657,16 @@ function tvPanel() {
   draw();
 }
 function jarPanel() {
-  const held = [0, 1, 2].find(i => has('jar' + i));
-  const s = F.jsample;
-  openPanel(`<div class="t">THREE JARS. A NOTE:</div><div>"SOMEONE SWAPPED EVERY LABEL. NOT ONE IS TRUE. ONE JAR IS ALL MEDICINE (WHITE). ONE IS ALL NOT (ORANGE). ONE IS BOTH. LOOK AT ONE PILL ONLY."</div>
-    ${[0, 1, 2].map(i => `<div class="row" style="justify-content:space-between"><span>"${JARLAB[i]}"${s && s.i === i ? ' — ' + s.col : ''}</span><span><button data-a="s${i}" ${s ? 'disabled' : ''}>PILL</button> <button data-a="t${i}">TAKE</button></span></div>`).join('')}
-    <div class="row"><button data-a="x">CLOSE</button></div>`,
+  const held = [0, 1, 2].find(i => has('jar' + i)), s = F.jsample;
+  openPanel(`<div class="t">THREE JARS. A NOTE:</div><div style="font-size:10px;line-height:1.25">"EVERY LABEL IS FALSE. ONE JAR IS ALL MEDICINE (WHITE). ONE IS ALL NOT (ORANGE). ONE IS MIXED. YOU ONLY HAVE THE STRENGTH TO OPEN ONE CAP AND TIP OUT ONE PILL."</div>
+    ${[0, 1, 2].map(i => `<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span>"${JARLAB[i]}"${s && s.i === i ? ' — ' + s.col : ''}</span><span style="white-space:nowrap"><button class="jb" data-a="s${i}" ${s ? 'disabled' : ''}>OPEN</button> <button class="jb" data-a="t${i}" ${!s || held === i ? 'disabled' : ''}>${held === i ? 'HELD' : held !== undefined ? 'SWAP' : 'TAKE'}</button></span></div>`).join('')}
+    <div class="row"><button class="jb" data-a="x">CLOSE</button></div>`,
     a => {
       if (a === 'x') return closePanel();
       const i = +a[1];
-      if (a[0] === 's') { const c = JARS[F.jperm][i]; F.jsample = { i, col: c === 'med' ? 'WHITE' : c === 'poi' ? 'ORANGE' : (rand(2) ? 'WHITE' : 'ORANGE') }; sfx.tap(); save(); return jarPanel(); }
-      drop('jar0', 'jar1', 'jar2'); give('jar' + i); sfx.take(); closePanel(); say(`TAKEN: ${NAME('jar' + i)}.`); save(); render();
+      if (a[0] === 's') { const c = JARS[F.jperm][i]; F.jsample = { i, col: c === 'med' ? 'WHITE' : c === 'poi' ? 'ORANGE' : (rand(2) ? 'WHITE' : 'ORANGE') }; sfx.tap(); save(); jarPanel(); return say(`THE CAP COMES OFF. ONE PILL: ${F.jsample.col}. YOUR HANDS ARE DONE.`); }
+      drop('jar0', 'jar1', 'jar2'); give('jar' + i); sfx.take(); save(); renderInv(); jarPanel(); say(`YOU ARE HOLDING THE "${JARLAB[i]}" JAR.`);
     });
-  if (held !== undefined) say(`YOU ARE HOLDING THE "${JARLAB[held]}" JAR.`);
 }
 const CARDS = { cardD: ['THE DARK', 'FEARS NOTHING'], cardV: ['THE VACUUM', 'FEARS ONLY WHAT IT CANNOT SEE'], cardP: ['POOK', 'FEARS THE LOUD ONE'], cardM: ['THE MAILMAN', 'FEARS TEETH'] };
 const CARD_ANS = ['cardD', 'cardV', 'cardP', 'cardM'];
@@ -694,7 +700,7 @@ const FIX = [
 ];
 const DONE_LINE = ['POOK EATS. POOK DOES NOT BLINK WHILE HE EATS.', 'POOK PLAYS. THE BALL WILL NEVER BE THE SAME.', 'POOK IS CLEAN. THE WATER IS NOT.', 'POOK SLEEPS.',
   'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THE WRONGNESS FADES.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING.', 'THE SONG PLAYS. POOK SLEEPS.'];
-function startNight() { F.unscr = 1; S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
+function startNight() { (F.un || (F.un = []))[0] = 1; S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
 let flying = 0;
 function need(i) {
   if (S.done[i]) return;
@@ -759,7 +765,7 @@ function wordsPanel() {
     a => { closePanel(); if (a === 'go') { F.pendEnd = null; save(); tapeEnd(end); } }, end != null);
   if (fresh.size) { F.newL = []; save(); sfx.solve(); }
   $('#bwords').classList.remove('blinkw');
-  if (end === 0 && !F.unscr && [...CFG.keys[0]].every(ch => !/[A-Z]/.test(ch) || found().has(ch))) unscramble();
+  if (end != null && !(F.un || [])[end] && [...CFG.keys[end]].every(ch => !/[A-Z]/.test(ch) || found().has(ch))) unscramble(end);
   const old = g, n = S.done.filter(Boolean).length; g = $('#hm').getContext('2d'); PAL = isNight() ? nightPal : dayPal;
   R(0, 0, 28, 40, 'w'); R(2, 38, 24, 2); R(6, 2, 2, 36); R(6, 2, 14, 2); R(18, 4, 1, 5);
   if (n > 0) DO(18, 12, 3, 'w'); if (n > 1) R(18, 16, 1, 9); if (n > 2) R(14, 18, 4, 1); if (n > 3) R(19, 18, 4, 1);
@@ -771,7 +777,7 @@ function copyText(t, btn) {
   const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, fallback); else fallback();
 }
-const NEEDS = ['POOK IS HUNGRY.', 'POOK IS BORED.', 'POOK IS DIRTY.', 'POOK IS TIRED FROM THE LONG DAY.', 'POOK IS THIRSTY.', 'POOK FEELS SICK.', 'POOK WANTS HIS BEAR.', 'POOK WANTS HIS SONG.'];
+const NEEDS = ['POOK IS HUNGRY.', 'POOK IS BORED.', 'POOK IS DIRTY.', 'POOK IS TIRED FROM THE LONG DAY.', 'POOK IS THIRSTY.', 'POOK IS SICK.', 'POOK IS SCARED.', 'POOK IS WIDE AWAKE.'];
 function hint() {
   if (F.pendEnd != null) return say('POOK IS ASLEEP.');
   const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
@@ -873,7 +879,7 @@ const ROOMS = [
           if (it === 'jugA') { F.jug = { jugA: 10, jugB: 0, jugC: 0 }; sfx.tap(); return say('YOU START OVER. ALL 10 CUPS ARE BACK IN THE BIG JUG. THE OTHERS ARE EMPTY.'); }
           say(CAPS[it] ? 'THE TAP ONLY FITS THE BIG JUG.' : 'USE THE BIG JUG ON THE TAP TO START OVER.');
         }),
-        H(84, 46, 32, 9, it => say(CAPS[it] ? 'NO. THE NOTE SAID NOT TO SPILL ANY.' : 'A SINK.')),
+        H(84, 46, 32, 9, it => say(CAPS[it] ? 'NO. THE NOTE SAID NOT TO SPILL ANY.' : (N && S.done[4]) ? 'THE SINK IS BONE DRY. EVERY DROP WENT TO POOK.' : N ? 'A SINK. NOTHING GOES DOWN IT TONIGHT.' : 'A SINK.')),
         H(126, 10, 20, 20, () => say(N ? 'IT IS 3:00. IT HAS BEEN 3:00 FOR SOME TIME.' : 'THE CLOCK SAYS 3:00. IT IS NOT 3:00.'))
       ];
     } },

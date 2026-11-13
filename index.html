@@ -447,7 +447,9 @@ function pook(cx, fy, o = {}) {
     R(cx - 3, hy + 5, 1, 1, W); R(cx + 3, hy + 5, 1, 1, W); R(cx - 3, hy + 7, 1, 1, K); R(cx + 3, hy + 7, 1, 1, K);
   }
   else if (!o.sleep) { R(cx - 1, hy + 6, 3, 3, O); R(cx, hy + 6, 1, 2, K); }
-  if (o.sleep) { const zx = cx + 14, zy = hy - 12 - (frame % 4); R(zx, zy, 4, 1, 'k'); R(zx + 2, zy + 1, 1, 1, 'k'); R(zx + 1, zy + 2, 1, 1, 'k'); R(zx, zy + 3, 4, 1, 'k'); }
+  if (o.sleep || (S.tape === 0 && S.done[2] && !S.done[3])) {   // asleep, or tired and nodding off: little z's drift up
+    const zd = cx > 130 ? -1 : 1, zx = cx + (zd > 0 ? 14 : -18), zy = hy - 12 - (frame % 4);
+    R(zx + zd * 6, zy - 7 - (frame % 3), 3, 1, 'k'); R(zx + zd * 6 + 1, zy - 6 - (frame % 3), 1, 1, 'k'); R(zx + zd * 6, zy - 5 - (frame % 3), 3, 1, 'k'); R(zx, zy, 4, 1, 'k'); R(zx + 2, zy + 1, 1, 1, 'k'); R(zx + 1, zy + 2, 1, 1, 'k'); R(zx, zy + 3, 4, 1, 'k'); }
 }
 
 /* item icons, 16x16 */

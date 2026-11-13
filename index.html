@@ -108,6 +108,26 @@ button{font:inherit;cursor:pointer;border-radius:0}
 #setup textarea{min-height:64px}
 #setup button{background:var(--o);color:var(--k);border:0;padding:10px;font-size:14px}
 #setup button.g{background:var(--k);color:var(--w);border:2px solid var(--w)}
+
+/* pixel-art shell: stepped corners, chunky buttons */
+:root{--px:polygon(0 12px,4px 12px,4px 8px,8px 8px,8px 4px,12px 4px,12px 0,calc(100% - 12px) 0,calc(100% - 12px) 4px,calc(100% - 8px) 4px,calc(100% - 8px) 8px,calc(100% - 4px) 8px,calc(100% - 4px) 12px,100% 12px,100% calc(100% - 12px),calc(100% - 4px) calc(100% - 12px),calc(100% - 4px) calc(100% - 8px),calc(100% - 8px) calc(100% - 8px),calc(100% - 8px) calc(100% - 4px),calc(100% - 12px) calc(100% - 4px),calc(100% - 12px) 100%,12px 100%,12px calc(100% - 4px),8px calc(100% - 4px),8px calc(100% - 8px),4px calc(100% - 8px),4px calc(100% - 12px),0 calc(100% - 12px));
+--px2:polygon(0 4px,4px 4px,4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px))}
+#device{position:relative;border:0;border-radius:0;box-shadow:none;background:var(--o);clip-path:var(--px);padding:20px 22px 24px}
+#device::before,#device::after{content:"";position:absolute;clip-path:var(--px);z-index:0}
+#device::before{inset:4px;background:var(--k)}
+#device::after{inset:8px;background:var(--w)}
+#device>*{position:relative;z-index:1}
+#bezel{border-radius:0;clip-path:var(--px2);padding:12px}
+#brand{background:linear-gradient(90deg,var(--k) 50%,transparent 50%) 0 100%/8px 4px repeat-x;padding-bottom:12px;margin-bottom:8px}
+.hb{border-radius:0;border:0;box-shadow:none;clip-path:var(--px2);width:60px;height:56px;border-bottom:8px solid var(--o)}
+.hb:active{transform:translateY(4px);box-shadow:none;border-bottom-width:4px;height:52px}
+.tl,.tr{width:16px;height:20px;border:0;margin:0;background:var(--w);clip-path:polygon(0 40%,25% 40%,25% 30%,50% 30%,50% 15%,75% 15%,75% 0,100% 0,100% 100%,75% 100%,75% 85%,50% 85%,50% 70%,25% 70%,25% 60%,0 60%)}
+.tr{transform:scaleX(-1)}
+#bmenu,#bwords{border-radius:0;clip-path:var(--px2);padding:8px 14px;box-shadow:none}
+#bwords{border-bottom:4px solid var(--k)}
+.legend{background:linear-gradient(90deg,var(--k) 50%,transparent 50%) 50% 0/8px 4px repeat-x;padding-top:12px}
+.bulb{display:inline-block;width:26px;height:26px;background:var(--k);border:2px solid var(--fg)}
+.bulb.on{background:var(--o)}
 </style>
 </head>
 <body>
@@ -321,7 +341,7 @@ const NAME = id => CARDS[id] ? `A TRADING CARD: "${CARDS[id][0]}". IT ${CARDS[id
 }[id]);
 
 /* ---------- puzzles' fixed data ---------- */
-const CUP_CODE = '327', CAB_CODE = '724';
+const CUP_CODE = '53846', CAB_CODE = '724';
 const MAZE = [
   '#############',
   '#D..#.......#',
@@ -345,7 +365,8 @@ const MAZE_ANS = (() => {
 })();
 const ARROW = { L: '←', U: '↑', D: '↓', R: '→' };
 const SW = [[0, 1], [1, 2], [1, 3], [0]];
-const lights = () => F.lights || (F.lights = [1, 1, 1, 1]);
+const lights = () => F.lights || (F.lights = [0, 0, 0, 0]);
+const bedDark = () => S.tape === 0 && !F.end && !lights().every(v => v);
 const JARS = [['poi', 'mix', 'med'], ['mix', 'med', 'poi']];
 const SONG = ['BOWL', 'BALL', 'TUB', 'BED'];
 
@@ -367,13 +388,13 @@ function pages(list, done) {
 function note(title, body) { openPanel(`<div class="t">${title}</div><pre>${body}</pre><div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => { closePanel(); }); }
 function clueNote() {
   // f = right digit, right place (filled). l = right digit, wrong place (outline). No legend: the player infers it.
-  const rows = [['391', 'f..'], ['294', 'l..'], ['673', '.ll'], ['609', '...'], ['643', '..l']];
+  const rows = [['06428', '.ll.l'], ['58094', 'fl..l'], ['94521', '.ll..'], ['29761', '...l.'], ['68317', 'lll..']];
   openPanel(`<div class="t">A NOTE ON THE FRIDGE</div><div class="sp"></div><div class="c">${rows.map(r => `<div style="margin:0;line-height:1">${[...r[0]].map((ch, i) => `<span class="dg ${r[1][i] === '.' ? '' : r[1][i]}">${ch}</span>`).join('')}</div>`).join('')}</div>
     <div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
 }
 function lockPanel(id, title, labels, answer, onOpen) {
-  F.dl = F.dl || {}; const d = F.dl[id] || (F.dl[id] = [0, 0, 0]);
-  const draw = () => openPanel(`<div class="t">${title}</div><div class="sp"></div><div class="row">${d.map((v, i) => `<div class="dial"><span>${labels[i]}</span><button data-a="u${i}">+</button><b>${v}</b><button data-a="d${i}">−</button></div>`).join('')}</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
+  F.dl = F.dl || {}; let d = F.dl[id]; if (!d || d.length !== answer.length) d = F.dl[id] = Array(answer.length).fill(0);
+  const draw = () => openPanel(`<div class="t">${title}</div><div class="sp"></div><div class="row">${d.map((v, i) => `<div class="dial"><span>${labels[i] || ''}</span><button data-a="u${i}">+</button><b>${v}</b><button data-a="d${i}">−</button></div>`).join('')}</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
     a => {
       if (a === 'x') return closePanel();
       if (a === 'go') { if (d.join('') === answer) { closePanel(); sfx.take(); onOpen(); save(); render(); } else { sfx.bad(); say('THE LOCK DOES NOT MOVE.'); } return; }
@@ -442,15 +463,14 @@ function mazePanel() {
 }
 function switchPanel() {
   const L = lights();
-  const draw = () => openPanel(`<div class="t">FOUR BULBS. FOUR SWITCHES. BAD WIRING.</div><div class="sp"></div><div class="row" style="font-size:26px;letter-spacing:10px">${L.map(v => v ? '●' : '○').join('')}</div>
+  const draw = () => openPanel(`<div class="t">LIGHT SWITCH</div><div class="sp"></div><div class="row" style="gap:16px">${L.map(v => `<span class="bulb ${v ? 'on' : ''}"></span>`).join('')}</div>
     <div class="row">${[0, 1, 2, 3].map(i => `<button data-a="${i}">SW ${i + 1}</button>`).join('')}</div><div class="sp"></div><div class="row"><button data-a="x">LEAVE</button></div>`,
     a => {
       if (a === 'x') return closePanel();
       SW[+a].forEach(b => { L[b] ^= 1; }); sfx.tap(); save(); render(); draw();
-      if (L.every(v => !v)) {
-        if (F.blanket && S.done[2]) return need(3);
-        say(F.blanket ? 'DARK. BUT POOK IS TOO DIRTY FOR THE BED.' : 'DARK. POOK SHIVERS. THE BED IS BARE.');
-      }
+      if (L.every(v => v)) return say('THE ROOM IS LIT.');
+      if (L.every(v => !v)) { if (F.blanket && S.done[2]) return need(3); return say(F.blanket ? 'DARK. BUT POOK IS TOO DIRTY FOR THE BED.' : 'DARK AGAIN.'); }
+      say('THE LIGHT STUTTERS. NOT ENOUGH TO SEE BY.');
     });
   draw();
 }
@@ -459,7 +479,7 @@ const HEX_G = [0, 0, 1, 1, 0, 2, 2, 1, 0, 2, 3, 1, 2, 3, 3, 3];
 const HEX_L = ['A NUMBER HIDES INSIDE EACH.', 'EACH ENDS IN A COLOUR.', 'AN ANIMAL HIDES INSIDE EACH.', 'A BODY PART HIDES INSIDE EACH.'];
 function hexPanel() {
   const done = F.hx || (F.hx = [0, 0, 0, 0]); let pick = [];
-  const draw = () => openPanel(`<div class="row" style="justify-content:space-between"><span>4 GROUPS OF 4. GROUPS TOUCH.</span><button data-a="x">X</button></div><div class="hexes">${HEX_W.map((w, i) => { const r = i >> 2, c = i & 3; return `<button class="hx ${done[HEX_G[i]] ? 'dn' : pick.includes(i) ? 'on' : ''}" data-a="${i}" style="left:${c * 22 + (r & 1 ? 11 : 0)}%;top:${r * 33}px"><span>${w}</span></button>`; }).join('')}</div>`,
+  const draw = () => openPanel(`<div class="row" style="justify-content:space-between"><span style="font-size:10px;line-height:1.25">"YOU'VE HEARD OF READING BETWEEN THE LINES? I JUST READ WITHIN THE LETTERS."</span><button data-a="x">X</button></div><div class="hexes">${HEX_W.map((w, i) => { const r = i >> 2, c = i & 3; return `<button class="hx ${done[HEX_G[i]] ? 'dn' : pick.includes(i) ? 'on' : ''}" data-a="${i}" style="left:${c * 22 + (r & 1 ? 11 : 0)}%;top:${r * 33}px"><span>${w}</span></button>`; }).join('')}</div>`,
     a => {
       if (a === 'x') return closePanel();
       const i = +a; if (done[HEX_G[i]]) return say(HEX_L[HEX_G[i]]);
@@ -564,7 +584,11 @@ function copyText(t, btn) {
 }
 const NEEDS = ['POOK STARES AT THE EMPTY BOWL.', 'POOK IS FED. POOK WANTS A TOY. POOK HAS NO TOY.', 'POOK IS FILTHY. KEEP HIM OFF THE BED.', 'POOK IS TIRED. THE BED IS BARE. THE LIGHTS ARE LOUD.',
   'POOK IS THIRSTY. EXACTLY THIRSTY.', 'POOK ATE SOMETHING IN THE DARK. POOK FEELS WRONG.', 'POOK WANTS HIS BEAR. THE TELEVISION IS ON.', 'POOK WANTS HIS SONG.'];
-function hint() { const st = stage(); say(F.end || st < 0 ? 'POOK IS ASLEEP. HAPPY BIRTHDAY.' : NEEDS[st]); }
+function hint() {
+  const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
+  nextTalk = Date.now() + 35000 + rand(40000); const angry = rand(5) === 0; if (angry) { angryT = Date.now() + 4500; sfx.bad(); }
+  say(`${NEEDS[st]} POOK: "${angry ? '??? WHAT ARE YOU DOING ???' : POOK_LINES[rand(POOK_LINES.length)]}"`);
+}
 function onPook(it) {
   if (!it) return hint();
   if (it === 'ball') return S.done[0] ? need(1) : say('POOK IGNORES THE BALL. POOK IS HUNGRY.');
@@ -624,7 +648,7 @@ const ROOMS = [
           ? note('A NOTE ON THE FRIDGE', 'NIGHT WATER.\n\nEXACTLY 4 CUPS.\nNOT 3. NOT 5.\n\nHE CAN TELL.')
           : clueNote()),
         H(8, 26, 30, 52, () => { if (N && !F.teddy) return searchWrong('THE FRIDGE IS EMPTY. THE LIGHT INSIDE STAYS OFF.'); say('THE FRIDGE HUMS. IT IS EMPTY, EXCEPT FOR THE HUM.'); }),
-        H(50, 10, 46, 26, () => F.cup ? say('BARE SHELVES.') : lockPanel('cup', 'A WALL CUPBOARD. THREE-DIGIT PADLOCK.', ['', '', ''], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
+        H(50, 10, 46, 26, () => F.cup ? say('BARE SHELVES.') : lockPanel('cup', 'WALL CUPBOARD LOCK', [], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
         H(50, 58, 24, 12, it => {
           if (N && F.drawer && !F.cM) { F.cM = 1; give('cardM'); sfx.take(); return say('IN THE DRAWER: A TRADING CARD. "THE MAILMAN". TAKEN.'); }
           if (F.drawer) return say('AN EMPTY DRAWER.');
@@ -729,18 +753,21 @@ const ROOMS = [
       const N = isNight();
       return [
         H(139, 28, 16, 22, () => N ? say('THE SWITCHES DO NOTHING NOW.') : S.done[3] ? say('LEAVE THE LIGHTS.') : switchPanel()),
-        H(26, 8, 30, 26, () => mazePanel()),
+        H(26, 8, 30, 26, () => bedDark() ? say('SOMETHING HANGS ON THE WALL. TOO DARK TO READ.') : mazePanel()),
         H(82, 44, 16, 34, it => {
+          if (bedDark()) return say('TOO DARK. SOMETHING SMALL STANDS BY THE BED.');
           if (!N) return note('A NOTE IN THE DRAWER', 'WHEN YOU LEAVE THE ROOM,\nWHAT DOES POOK FEEL?\n\nLOOK IN THE MIDDLE OF THINGS.');
           S.done[7] ? say('THE BOX IS STILL TURNING.') : S.done[6] ? boxPanel() : say('A MUSIC BOX. IT WAS NOT HERE YESTERDAY. POOK GROWLS WHEN YOU REACH FOR IT.');
         }),
         H(4, 42, 78, 38, it => {
+          if (bedDark()) return say('TOO DARK. THE SHAPE OF A BED.');
           if (N && !F.cD) { F.cD = 1; give('cardD'); sfx.take(); return say('UNDER THE PILLOW: A TRADING CARD, ALMOST ALL BLACK. "THE DARK". TAKEN.'); }
           if (N) return say('THE BED IS STILL WARM.');
           if (it === 'blanket') { F.blanket = 1; drop('blanket'); sfx.tap(); if (lights().every(v => !v) && S.done[2]) return need(3); return say('THE BED IS MADE. THE LIGHTS ARE STILL ON.'); }
           say(F.blanket ? 'MADE. WAITING.' : 'A BARE MATTRESS.');
         }),
         H(100, 14, 36, 64, it => {
+          if (bedDark()) return say('TOO DARK. A TALL SHAPE. A LOCK YOU CANNOT MAKE OUT.');
           if (N) { if (F.teddy) return say('COAT HANGERS. THEY SWAY.'); F.teddy = 1; give('teddy'); sfx.take(); return say('BEHIND THE COATS: HIS BEAR. IT WAS FACING THE DOOR. TAKEN.'); }
           if (F.ward) return say('COAT HANGERS. THEY SWAY.');
           wordPanel();
@@ -753,7 +780,7 @@ const ROOMS = [
 function draw() {
   g = mainG;
   if (Date.now() < scareT) return;
-  const dark = S.room === 3 && S.tape === 0 && !F.end && lights().every(v => !v);
+  const dark = S.room === 3 && bedDark();
   PAL = (isNight() || dark) ? nightPal : dayPal;
   ROOMS[S.room].draw();
   if (F.end) { if (S.room === 3) pook(52, 64, { sleep: true }); }
@@ -859,9 +886,9 @@ function menu() {
       if (a === 'tape') { while (stage() >= 0 && stage() < 4) dbgSolve(); return menu(); }
       if (a === 'reset') { S = fresh(); F = S.f; sel = null; save(); closePanel(); nextTalk = Date.now() + 45000; return boot(); }
       if (a === 'ans') return note('ANSWERS', `1 CUPBOARD ${CUP_CODE}. COIN (SOFA) OPENS DRAWER. OPENER + CAN. CAN ON BOWL.
-2 TOY BOX ${[...MAZE_ANS].map(c => ARROW[c]).join('')}. BALL ON POOK.
+2 BEDROOM STARTS DARK: SWITCHES 1 2 3 LIGHT IT. POSTER GIVES TOY BOX ${[...MAZE_ANS].map(c => ARROW[c]).join('')}. BALL ON POOK.
 3 DEN CHESS BOARD: KNIGHT G5 TO F7 (GIVES PLUG). HOT TAP, MIRROR, CABINET ${CAB_CODE} (GIVES SOAP). PLUG + SOAP ON TUB.
-4 WARDROBE TILES: HAT EGG DOG ANT EYE (MIDDLE LETTERS = AGONY). BLANKET ON BED, SWITCHES 1 2 3.
+4 WARDROBE TILES: HAT EGG DOG ANT EYE (MIDDLE LETTERS = AGONY). BLANKET ON BED, THEN SWITCHES 1 2 3 AGAIN FOR DARK.
 5 TAKE JUGS. FILL 5, POUR INTO 3, EMPTY 3, POUR 5 INTO 3, FILL 5, POUR INTO 3. BIG JUG (4) ON BOWL.
 6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
 7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN BEAR IS IN THE WARDROBE. BEAR ON POOK.

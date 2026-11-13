@@ -405,7 +405,7 @@ function lockPanel(id, title, labels, answer, onOpen) {
   draw();
 }
 function arrowPanel(onOpen) {
-  const draw = () => openPanel(`<div class="t">TOY BOX. A LOCK WITH FOUR ARROWS.</div><div class="seq">${[...(F.aseq || '')].map(c => ARROW[c]).join(' ') || '&nbsp;'}</div>
+  const draw = () => openPanel(`<div class="t">TOY BOX... IT'S LOCKED</div><div class="seq">${[...(F.aseq || '')].map(c => ARROW[c]).join(' ') || '&nbsp;'}</div>
     <div class="row"><button data-a="L">←</button><button data-a="U">↑</button><button data-a="D">↓</button><button data-a="R">→</button></div>
     <div class="sp"></div><div class="row"><button class="o" data-a="go">TRY</button><button data-a="del">UNDO</button><button data-a="clr">CLEAR</button><button data-a="x">LEAVE</button></div>`,
     a => {
@@ -436,7 +436,7 @@ function chessPanel() {
 function wordPanel() {
   const seq = F.wseq || (F.wseq = ['dog', 'eye', 'hat', 'ant', 'egg']); let pick = -1;
   const draw = () => {
-    openPanel(`<div class="t">THE WARDROBE. FIVE PICTURE TILES IN A ROW.</div><div class="sp"></div><div class="row" style="gap:4px">${seq.map((id, i) => `<button class="tile ${pick === i ? 'on' : ''}" data-a="${i}"><canvas width="16" height="16"></canvas></button>`).join('')}</div>
+    openPanel(`<div class="t">WARDROBE... IT'S LOCKED</div><div class="sp"></div><div class="row" style="gap:4px">${seq.map((id, i) => `<button class="tile ${pick === i ? 'on' : ''}" data-a="${i}"><canvas width="16" height="16"></canvas></button>`).join('')}</div>
       <div class="c">TAP TWO TILES TO SWAP THEM.</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
       a => {
         if (a === 'x') return closePanel();
@@ -525,7 +525,7 @@ let panelInv = null;
 function boxPanel() {
   const slots = F.cslots || (F.cslots = [null, null, null, null]);
   const draw = () => {
-    openPanel(`<div class="t">A MUSIC BOX. FOUR CARD SLOTS.</div><div class="c">"FROM THE ONE THAT FEARS NOTHING<br>TO THE ONE THAT FEARS THE MOST."</div>
+    openPanel(`<div class="t">MUSIC BOX... IT'S LOCKED</div><div class="c">"FROM THE ONE THAT FEARS NOTHING<br>TO THE ONE THAT FEARS THE MOST."</div>
       <div class="row" style="gap:4px;flex-wrap:nowrap">${slots.map((id, i) => `<button class="cslot" data-a="${i}">${id ? CARDS[id][0] : '—'}</button>`).join('')}</div><div class="c" style="font-size:10px">TAP A CARD BELOW TO SLOT IT. TAP A SLOT TO TAKE IT BACK.</div>
       <div class="sp"></div><div class="row"><button class="o" data-a="go">TURN THE HANDLE</button><button data-a="x">LEAVE</button></div>`,
       a => {
@@ -650,12 +650,12 @@ const ROOMS = [
           ? note('A NOTE ON THE FRIDGE', 'NIGHT WATER.\n\nEXACTLY 4 CUPS.\nNOT 3. NOT 5.\n\nHE CAN TELL.')
           : clueNote()),
         H(8, 26, 30, 52, () => { if (N && !F.teddy) return searchWrong('THE FRIDGE IS EMPTY. THE LIGHT INSIDE STAYS OFF.'); say('THE FRIDGE HUMS. IT IS EMPTY, EXCEPT FOR THE HUM.'); }),
-        H(50, 10, 46, 26, () => F.cup ? say('BARE SHELVES.') : lockPanel('cup', 'WALL CUPBOARD LOCK', [], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
+        H(50, 10, 46, 26, () => F.cup ? say('BARE SHELVES.') : lockPanel('cup', "WALL CUPBOARD... IT'S LOCKED", [], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
         H(50, 58, 24, 12, it => {
           if (N && F.drawer && !F.cM) { F.cM = 1; give('cardM'); sfx.take(); return say('IN THE DRAWER: A TRADING CARD. "THE MAILMAN". TAKEN.'); }
           if (F.drawer) return say('AN EMPTY DRAWER.');
           if (it === 'coin') { F.drawer = 1; drop('coin'); give('opener'); sfx.take(); return say('THE COIN TURNS THE SCREW. INSIDE: A CAN OPENER. TAKEN.'); }
-          say('THE DRAWER IS HELD SHUT BY ONE FLAT-HEADED SCREW.');
+          say("DRAWER... IT'S SCREWED SHUT.");
         }),
         ...(N && !F.jugs ? [H(52, 37, 24, 16, () => { F.jugs = 1; F.j5 = F.j3 = 0; give('jug5', 'jug3'); sfx.take(); say('TWO JUGS. ONE HOLDS 5 CUPS. ONE HOLDS 3. NO MARKINGS. TAKEN.'); })] : []),
         H(97, 38, 12, 12, it => { if (it === 'jug5' || it === 'jug3') { F[it === 'jug5' ? 'j5' : 'j3'] = CAPS[it]; sfx.tap(); return say(`FILLED TO THE TOP. ${NAME(it)}.`); } say('THE TAP RUNS. COLD.'); }),
@@ -731,7 +731,7 @@ const ROOMS = [
           note('WRITTEN IN THE STEAM, BY A FINGER', '▲ + ▲ + ● = 15\n▲ + ● + ● = 18\n■ × ▲ = 8\n\nTHE CABINET:  ● ■ ▲');
         }),
         H(104, 33, 36, 12, () => {
-          if (!F.cab) return lockPanel('cab', 'A MIRROR CABINET. THREE DIALS.', ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap'); say('THE CABINET OPENS. ONE BAR OF SOAP. TAKEN.'); });
+          if (!F.cab) return lockPanel('cab', "MIRROR CABINET... IT'S LOCKED", ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap'); say('THE CABINET OPENS. ONE BAR OF SOAP. TAKEN.'); });
           if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
           say('AN EMPTY CABINET.');
         }),

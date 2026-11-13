@@ -149,6 +149,11 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .fog .sym{font-family:"Courier New",ui-monospace,monospace;font-size:30px;line-height:1;vertical-align:-2px}
 .scr{position:relative;display:inline-block;text-decoration:line-through;text-decoration-thickness:3px}
 .scr::after{content:"";position:absolute;inset:-4px -8px;background:repeating-linear-gradient(168deg,var(--fg) 0 2px,transparent 2px 6px),repeating-linear-gradient(14deg,var(--fg) 0 2px,transparent 2px 8px)}
+.fly{position:fixed;left:0;top:0;z-index:30;width:34px;height:34px;background:var(--o);color:var(--k);border:3px solid var(--k);outline:2px solid var(--w);font-size:22px;line-height:28px;text-align:center;visibility:hidden;pointer-events:none;will-change:transform}
+#bwords.blinkw{animation:wblink .5s steps(2) infinite}
+@keyframes wblink{50%{background:var(--w)}}
+.nl{display:inline-block;background:var(--o);color:var(--k);padding:0 2px;animation:nlin 1.3s .5s both}
+@keyframes nlin{0%{opacity:0;transform:scale(2.4)}55%{opacity:1}100%{opacity:1;transform:scale(1)}}
 </style>
 </head>
 <body>
@@ -241,7 +246,7 @@ function awards() {
 }
 const found = () => { const s = new Set(), A = awards(); S.done.forEach((d, i) => { if (d && A[i]) A[i].forEach(c => s.add(c)); }); return s; };
 const showWord = k => { const f = found(); return [...CFG.keys[k]].map(c => /[A-Z]/.test(c) ? (f.has(c) ? c : '_') : c).join(' '); };
-const wordsHtml = () => CFG.keys.map((w, k) => (k > 0 && S.tape < k) ? '' : `<div class="hw">${esc(showWord(k))}</div>`).join('');
+const wordsHtml = (fresh = new Set()) => { const f = found(); return CFG.keys.map((w, k) => (k > 0 && S.tape < k) ? '' : `<div class="hw">${[...w].map(c => !/[A-Z]/.test(c) ? esc(c) : !f.has(c) ? '_' : fresh.has(c) ? `<span class="nl">${c}</span>` : c).join(' ')}</div>`).join(''); };
 const isDebug = () => forceDebug || /debug/i.test(location.hash);
 
 /* ---------- save state ---------- */
@@ -594,19 +599,58 @@ const FIX = [
 const DONE_LINE = ['POOK EATS. POOK DOES NOT BLINK WHILE HE EATS.', 'POOK PLAYS. THE BALL WILL NEVER BE THE SAME.', 'POOK IS CLEAN. THE WATER IS NOT.', 'POOK SLEEPS.',
   'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THE WRONGNESS FADES.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING.', 'THE SONG PLAYS. POOK SLEEPS.'];
 function startNight() { S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
+let flying = 0;
 function need(i) {
   if (S.done[i]) return;
-  S.done[i] = 1; FIX[i](); closePanel(); save(); sfx.good(); render(); say(DONE_LINE[i]);
-  const k = (i / 4) | 0, n = i % 4, got = awards()[i] || [];
-  openPanel(`<div class="sp"></div><pre class="c">${DONE_LINE[i]}\n\n${got.length ? 'POOK DROPS ' + (got.length > 1 ? got.length + ' LETTERS:' : 'A LETTER:') : 'POOK DROPS NOTHING THIS TIME.'}</pre>${got.length ? `<div class="big">${got.join(' ')}</div>` : ''}<div class="c">${wordsHtml()}</div><div class="sp"></div><div class="row"><button class="o" data-a="ok">KEEP ${got.length > 1 ? 'THEM' : 'IT'}</button></div>`,
-    () => {
-      closePanel(); sfx.tap();
-      if (n !== 3) return render();
-      keyReveal(k, () => {
-        if (k < nKeys() - 1) pages(['THE TAPE ENDS.', 'THE TAPE DOES NOT END.', 'TAPE 2\n03:00\n\nPOOK IS AWAKE.\nPOOK SHOULD NOT BE AWAKE.'], () => { startNight(); save(); render(); scare(); say('IT IS DARK. POOK IS LOOKING AT YOU.'); });
-        else pages(['POOK IS ASLEEP.\nPOOK IS SAFE.\n\nYOU DID EVERYTHING RIGHT,\nCARETAKER.', `HAPPY BIRTHDAY${CFG.name ? ',\n' + esc(CFG.name) : ''}.\n\n${CFG.message ? esc(CFG.message) : 'POOK LOVES YOU.'}`], () => { F.end = 1; S.room = 3; save(); say('POOK IS ASLEEP. HAPPY BIRTHDAY.'); });
-      });
-    }, true);
+  const got = awards()[i] || [];
+  S.done[i] = 1; FIX[i](); F.newL = [...(F.newL || []), ...got]; if (i % 4 === 3) F.pendEnd = (i / 4) | 0;
+  closePanel(); save(); sfx.good(); render(); say(DONE_LINE[i]);
+  if (got.length) flyLetters(i, got);
+}
+/* letters leap out of where they were won, bounce round the screen, then dive into the WORD button */
+function flyLetters(i, letters) {
+  const r = elCv.getBoundingClientRect(), ps = pookSpot[S.room], head = [ps[0], ps[1] - 26];
+  const src = [[148, 98], head, [45, 68], [45, 62], [148, 98], head, head, [88, 58]][i] || head;
+  const sx = r.left + src[0] / 160 * r.width, sy = r.top + src[1] / 108 * r.height;
+  const T1 = 700, T2 = 1700, T3 = 650;
+  flying += letters.length; render();
+  letters.forEach((ch, n) => {
+    const el = document.createElement('div'); el.className = 'fly'; el.textContent = ch; document.body.appendChild(el);
+    const cx = r.left + r.width / 2 + (n - (letters.length - 1) / 2) * 46, cy = r.top + r.height / 2;
+    let x = sx, y = sy, bx = cx, by = cy, rot = 0, vx = (rand(2) ? 1 : -1) * (150 + rand(90)), vy = -(130 + rand(110));
+    const t0 = performance.now() + n * 160; let last = t0;
+    const step = now => {
+      const t = now - t0; let sc = 1;
+      if (t < 0) return requestAnimationFrame(step);
+      if (t < T1) {                                   // leap to the middle (overshoot ease)
+        const p = t / T1, q = p - 1, e = 1 + 2.70158 * q * q * q + 1.70158 * q * q;
+        x = sx + (cx - sx) * e; y = sy + (cy - sy) * e - Math.sin(p * Math.PI) * 46; sc = 0.3 + 0.9 * p; rot = (1 - p) * 360; bx = x; by = y;
+      } else if (t < T1 + T2) {                       // bounce off the edges of the screen
+        const dt = Math.min(40, now - last) / 1000; x += vx * dt; y += vy * dt;
+        if (x < r.left + 18 || x > r.right - 18) { vx = -vx; x = Math.max(r.left + 18, Math.min(r.right - 18, x)); beep(520 + rand(300), .03, 'square', .02); }
+        if (y < r.top + 18 || y > r.bottom - 18) { vy = -vy; y = Math.max(r.top + 18, Math.min(r.bottom - 18, y)); beep(520 + rand(300), .03, 'square', .02); }
+        rot += vx * dt * 1.4; sc = 1.2 + Math.sin(t / 90) * 0.08; bx = x; by = y;
+      } else if (t < T1 + T2 + T3) {                  // dive into the WORD button
+        const br = $('#bwords').getBoundingClientRect(), tx = br.left + br.width / 2, ty = br.top + br.height / 2;
+        const p = (t - T1 - T2) / T3, e = p * p * p;
+        x = bx + (tx - bx) * e; y = by + (ty - by) * e - Math.sin(p * Math.PI) * 36; sc = 1.2 - 0.95 * e; rot += 14;
+      } else {
+        el.remove(); flying--; beep(1047, .07, 'square', .05); beep(1568, .1, 'square', .04, .06);
+        try { $('#bwords').animate([{ transform: 'scale(1.6)' }, { transform: 'scale(1)' }], { duration: 260, easing: 'ease-out' }); } catch (e) {}
+        if (!flying) render();
+        return;
+      }
+      last = now; el.style.transform = `translate(${x - 17}px,${y - 17}px) rotate(${rot}deg) scale(${sc})`; el.style.visibility = 'visible';
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+function tapeEnd(k) {
+  keyReveal(k, () => {
+    if (k < nKeys() - 1) pages(['THE TAPE ENDS.', 'THE TAPE DOES NOT END.', 'TAPE 2\n03:00\n\nPOOK IS AWAKE.\nPOOK SHOULD NOT BE AWAKE.'], () => { startNight(); save(); render(); scare(); say('IT IS DARK. POOK IS LOOKING AT YOU.'); });
+    else pages(['POOK IS ASLEEP.\nPOOK IS SAFE.\n\nYOU DID EVERYTHING RIGHT,\nCARETAKER.', `HAPPY BIRTHDAY${CFG.name ? ',\n' + esc(CFG.name) : ''}.\n\n${CFG.message ? esc(CFG.message) : 'POOK LOVES YOU.'}`], () => { F.end = 1; S.room = 3; save(); say('POOK IS ASLEEP. HAPPY BIRTHDAY.'); });
+  });
 }
 function keyReveal(k, next) {
   openPanel(`<div class="t">${k ? 'TAPE 2 COMPLETE' : 'POOK IS ASLEEP'}</div><div class="sp"></div><div class="c">THE WORD IS WHOLE:</div><div class="big">${esc(CFG.keys[k])}</div>
@@ -614,7 +658,11 @@ function keyReveal(k, next) {
     () => { closePanel(); sfx.tap(); if (next) next(); else render(); }, true);
 }
 function wordsPanel() {
-  openPanel(`<div class="t">WHAT POOK IS KEEPING FOR YOU</div><div style="display:flex;gap:8px;align-items:center"><canvas id="hm" width="28" height="40" style="width:70px;flex:none;margin:0"></canvas><div>${wordsHtml()}<div style="margin-top:8px;font-size:10px">LETTERS FOUND: ${[...found()].join(' ') || 'NONE YET'}</div></div></div><div class="sp"></div><div class="row"><button data-a="x">CLOSE</button></div>`, () => closePanel());
+  const fresh = new Set(F.newL || []), end = F.pendEnd;
+  openPanel(`<div class="t">WHAT POOK IS KEEPING FOR YOU</div><div style="display:flex;gap:8px;align-items:center"><canvas id="hm" width="28" height="40" style="width:70px;flex:none;margin:0"></canvas><div>${wordsHtml(fresh)}<div style="margin-top:8px;font-size:10px">LETTERS FOUND: ${[...found()].join(' ') || 'NONE YET'}</div></div></div><div class="sp"></div><div class="row">${end != null ? '<button class="o" data-a="go">CONTINUE</button>' : '<button data-a="x">CLOSE</button>'}</div>`,
+    a => { closePanel(); if (a === 'go') { F.pendEnd = null; save(); tapeEnd(end); } }, end != null);
+  if (fresh.size) { F.newL = []; save(); sfx.solve(); }
+  $('#bwords').classList.remove('blinkw');
   const old = g, n = S.done.filter(Boolean).length; g = $('#hm').getContext('2d'); PAL = isNight() ? nightPal : dayPal;
   R(0, 0, 28, 40, 'w'); R(2, 38, 24, 2); R(6, 2, 2, 36); R(6, 2, 14, 2); R(18, 4, 1, 5);
   if (n > 0) DO(18, 12, 3, 'w'); if (n > 1) R(18, 16, 1, 9); if (n > 2) R(14, 18, 4, 1); if (n > 3) R(19, 18, 4, 1);
@@ -629,6 +677,7 @@ function copyText(t, btn) {
 const NEEDS = ['POOK STARES AT THE EMPTY BOWL.', 'POOK IS FED. POOK WANTS A TOY. POOK HAS NO TOY.', 'POOK IS FILTHY. KEEP HIM OFF THE BED.', 'POOK IS TIRED. THE BED IS BARE. THE LIGHTS ARE LOUD.',
   'POOK IS THIRSTY. EXACTLY THIRSTY.', 'POOK ATE SOMETHING IN THE DARK. POOK FEELS WRONG.', 'POOK WANTS HIS BEAR. THE TELEVISION IS ON.', 'POOK WANTS HIS SONG.'];
 function hint() {
+  if (F.pendEnd != null) return say('POOK IS ASLEEP.');
   const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
   nextTalk = Date.now() + 35000 + rand(40000); const angry = rand(5) === 0; if (angry) { angryT = Date.now() + 4500; sfx.bad(); }
   say(NEEDS[st]); bubble(angry ? ANGRY_LINES[rand(ANGRY_LINES.length)] : POOK_LINES[rand(POOK_LINES.length)]);
@@ -888,6 +937,7 @@ function renderInv() {
 function render() {
   $('#screen').classList.toggle('night', isNight());
   $('#bwords').textContent = S.tape ? 'WORDS' : 'WORD';
+  $('#bwords').classList.toggle('blinkw', !flying && ((F.newL || []).length > 0 || F.pendEnd != null));
   const t = S.tape, L = t ? ['D', 'M', 'B', 'S'] : ['F', 'P', 'W', 'S'];
   $('#rname').textContent = (F.end ? 'END ' : t ? 'TAPE 2 ' : '') + ROOMS[S.room].name;
   $('#needs').innerHTML = L.map((c, i) => `<span class="nd ${S.done[t * 4 + i] ? 'on' : ''}">${c}</span>`).join('');
@@ -923,7 +973,7 @@ $('#inv').addEventListener('click', e => {
   else if (sel === id) { sel = null; say(''); }
   else {
     const a = sel, pair = [a, id].sort().join('+'); sel = null;
-    if (pair === 'can+opener') { drop('can', 'opener'); give('canopen'); sfx.take(); say('THE OPENER BITES THE CAN. IT IS OPEN. IT SMELLS LIKE A DECISION.'); }
+    if (pair === 'can+opener') { drop('can', 'opener'); give('canopen'); sfx.take(); say('THE CAN IS OPEN, IT SMELLS BAD.'); }
     else if (pair === 'jug3+jug5') pourJug(a, id);
     else say('THOSE DO NOT GO TOGETHER.');
     save();

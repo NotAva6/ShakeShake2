@@ -54,6 +54,9 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .dg{display:inline-block;width:22px;height:22px;line-height:18px;text-align:center;border:2px solid transparent;font-size:15px;margin-right:3px}
 .dg.l{border-color:var(--fg)}
 .dg.f{background:var(--o);color:var(--k);border-color:var(--fg)}
+.tile{width:48px;height:48px;padding:2px!important}
+.tile canvas{width:100%;height:100%}
+.tile.on{outline:3px solid var(--o);outline-offset:1px}
 .seq{min-height:24px;border:2px solid var(--fg);text-align:center;font-size:16px;letter-spacing:2px;padding:1px}
 #msg{border-top:2px solid var(--fg);height:52px;padding:4px 6px;font-size:12px;line-height:1.25;text-transform:uppercase;overflow:hidden}
 #inv{display:flex;border-top:2px solid var(--fg)}
@@ -207,7 +210,7 @@ const sfx = {
 /* ---------- drawing: three colours only ---------- */
 const COL = { w: '#f4ecd8', k: '#12100e', o: '#f5b26b' };
 const elCv = $('#cv'), mainG = elCv.getContext('2d');
-let g = mainG, PAL = COL, frame = 0, glitchT = 0;
+let g = mainG, PAL = COL, frame = 0, glitchT = 0, angryT = 0, scareT = 0, lastSay = 0, nextTalk = Date.now() + 45000;
 const isNight = () => S.tape === 1 && !F.end;
 const dayPal = { w: COL.w, k: COL.k, o: COL.o }, nightPal = { w: COL.k, k: COL.w, o: COL.o };
 const R = (x, y, w, h, c = 'k') => { g.fillStyle = PAL[c] || c; g.fillRect(x, y, w, h); };
@@ -241,7 +244,8 @@ function pook(cx, fy, o = {}) {
   else { R(cx - 5, hy - 1, 2, 2, K); R(cx + 4, hy - 1, 2, 2, K); if (stare) { R(cx - 6, hy - 2, 4, 4, K); R(cx + 3, hy - 2, 4, 4, K); R(cx - 5, hy - 1, 2, 2, O); R(cx + 4, hy - 1, 2, 2, O); } }
   R(cx - 1, hy + 2, 3, 2, K);
   R(cx - 3, hy + 5, 1, 1, K); R(cx + 3, hy + 5, 1, 1, K); R(cx - 2, hy + 6, 5, 1, K);
-  if (!o.sleep) { R(cx - 1, hy + 6, 3, 3, O); R(cx, hy + 6, 1, 2, K); }
+  if (!o.sleep && Date.now() < angryT) { [[7, -5], [6, -4], [5, -4], [4, -3]].forEach(p => { R(cx - p[0], hy + p[1], 1, 1, K); R(cx + p[0], hy + p[1], 1, 1, K); }); R(cx - 2, hy + 5, 5, 1, K); }
+  else if (!o.sleep) { R(cx - 1, hy + 6, 3, 3, O); R(cx, hy + 6, 1, 2, K); }
   if (o.sleep) { const zx = cx + 14, zy = hy - 12 - (frame % 4); R(zx, zy, 4, 1, 'k'); R(zx + 2, zy + 1, 1, 1, 'k'); R(zx + 1, zy + 2, 1, 1, 'k'); R(zx, zy + 3, 4, 1, 'k'); }
 }
 
@@ -264,6 +268,14 @@ const ICON = {
   crank() { R(3, 11, 7, 2); R(9, 4, 2, 8); R(9, 3, 5, 2); DO(13, 4, 1, 'o'); }
 };
 ICON.jar0 = ICON.jar1 = ICON.jar2 = ICON.jar;
+Object.assign(ICON, {
+  hat() { R(2, 12, 12, 2); R(5, 3, 6, 9); R(5, 9, 6, 2, 'o'); },
+  egg() { D(8, 10, 5, 'k'); D(8, 6, 4, 'k'); D(8, 10, 4, 'w'); D(8, 6, 3, 'w'); },
+  dog() { D(3, 9, 3, 'k'); D(13, 9, 3, 'k'); DO(8, 8, 5, 'w'); R(5, 6, 2, 2); R(10, 6, 2, 2); R(7, 9, 3, 2); R(7, 12, 3, 2, 'o'); },
+  ant() { D(3, 9, 2, 'k'); D(8, 9, 1, 'k'); D(12, 8, 2, 'k'); R(6, 11, 1, 3); R(8, 11, 1, 3); R(10, 11, 1, 3); R(5, 13, 1, 1); R(11, 13, 1, 1); R(11, 4, 1, 2); R(10, 3, 1, 1); R(13, 4, 1, 2); R(14, 3, 1, 1); },
+  eye() { R(4, 5, 8, 1); R(2, 6, 2, 1); R(12, 6, 2, 1); R(1, 7, 1, 2); R(14, 7, 1, 2); R(2, 9, 2, 1); R(12, 9, 2, 1); R(4, 10, 8, 1); R(6, 6, 4, 4, 'o'); R(7, 7, 2, 2); R(4, 2, 1, 2); R(8, 1, 1, 3); R(11, 2, 1, 2); }
+});
+const WORD_ANS = ['hat', 'egg', 'dog', 'ant', 'eye'];
 const JARLAB = ['MEDICINE', 'NOT MEDICINE', 'MIXED'];
 const NAME = id => ({
   coin: 'A COIN', opener: 'A CAN OPENER', can: 'A SEALED CAN', canopen: 'AN OPEN CAN', ball: 'A BALL', plug: 'A BATH PLUG', soap: 'SOAP',
@@ -303,7 +315,7 @@ const SONG = ['BOWL', 'BALL', 'TUB', 'BED'];
 /* ---------- messages / panels ---------- */
 const elMsg = $('#msg'), elPanel = $('#panel');
 let panelModal = false;
-function say(t) { elMsg.textContent = t || ''; }
+function say(t) { elMsg.textContent = t || ''; lastSay = Date.now(); }
 function openPanel(html, handler, modal) {
   elPanel.innerHTML = html; elPanel.hidden = false; panelModal = !!modal; elPanel.scrollTop = 0;
   elPanel.onclick = e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled && handler) handler(b.dataset.a, b); };
@@ -343,6 +355,24 @@ function arrowPanel(onOpen) {
       if (a === 'clr') seq = ''; else if (a === 'del') seq = seq.slice(0, -1); else if (seq.length < 16) { seq += a; sfx.tap(); }
       F.aseq = seq; save(); draw();
     });
+  draw();
+}
+function wordPanel() {
+  const seq = F.wseq || (F.wseq = ['dog', 'eye', 'hat', 'ant', 'egg']); let pick = -1;
+  const draw = () => {
+    openPanel(`<div class="t">THE WARDROBE. FIVE PICTURE TILES IN A ROW.</div><div class="sp"></div><div class="row" style="gap:4px">${seq.map((id, i) => `<button class="tile ${pick === i ? 'on' : ''}" data-a="${i}"><canvas width="16" height="16"></canvas></button>`).join('')}</div>
+      <div class="c">TAP TWO TILES TO SWAP THEM.</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
+      a => {
+        if (a === 'x') return closePanel();
+        if (a === 'go') {
+          if (seq.join() === WORD_ANS.join()) { closePanel(); F.ward = 1; give('blanket'); sfx.take(); say('THE TILES CLICK INTO PLACE. INSIDE: ONE BLANKET. TAKEN.'); save(); return render(); }
+          sfx.bad(); return say('THE TILES RATTLE. NOTHING OPENS.');
+        }
+        const i = +a; if (pick < 0) pick = i; else { [seq[pick], seq[i]] = [seq[i], seq[pick]]; pick = -1; save(); } sfx.tap(); draw();
+      });
+    elPanel.querySelectorAll('.tile canvas').forEach((c, i) => { g = c.getContext('2d'); PAL = dayPal; R(0, 0, 16, 16, 'w'); ICON[seq[i]](); });
+    g = mainG;
+  };
   draw();
 }
 function mazePanel() {
@@ -414,7 +444,7 @@ function boxPanel() {
 const FIX = [
   () => { F.coin = F.drawer = F.cup = 1; drop('coin', 'opener', 'can', 'canopen'); },
   () => { F.toy = 1; drop('ball'); if (!F.plug) give('plug'); },
-  () => { F.tap = F.fog = F.plug = F.soap = F.cab = 1; drop('plug', 'soap'); if (!F.ward) give('key'); },
+  () => { F.tap = F.fog = F.plug = F.soap = F.cab = 1; drop('plug', 'soap'); },
   () => { F.ward = F.blanket = 1; F.lights = [0, 0, 0, 0]; drop('key', 'blanket'); },
   () => { F.jugs = 1; drop('jug5', 'jug3'); },
   () => { drop('jar0', 'jar1', 'jar2'); },
@@ -433,7 +463,7 @@ function need(i) {
       closePanel(); sfx.tap();
       if (n !== 3) return render();
       keyReveal(k, () => {
-        if (k < nKeys() - 1) pages(['THE TAPE ENDS.', 'THE TAPE DOES NOT END.', 'TAPE 2\n03:00\n\nPOOK IS AWAKE.\nPOOK SHOULD NOT BE AWAKE.'], () => { startNight(); save(); glitch(500); say('IT IS DARK. POOK IS LOOKING AT YOU.'); });
+        if (k < nKeys() - 1) pages(['THE TAPE ENDS.', 'THE TAPE DOES NOT END.', 'TAPE 2\n03:00\n\nPOOK IS AWAKE.\nPOOK SHOULD NOT BE AWAKE.'], () => { startNight(); save(); render(); scare(); say('IT IS DARK. POOK IS LOOKING AT YOU.'); });
         else pages(['POOK IS ASLEEP.\nPOOK IS SAFE.\n\nYOU DID EVERYTHING RIGHT,\nCARETAKER.', `HAPPY BIRTHDAY${CFG.name ? ',\n' + esc(CFG.name) : ''}.\n\n${CFG.message ? esc(CFG.message) : 'POOK LOVES YOU.'}`], () => { F.end = 1; S.room = 3; save(); say('POOK IS ASLEEP. HAPPY BIRTHDAY.'); });
       });
     }, true);
@@ -458,7 +488,7 @@ function onPook(it) {
   if (it.startsWith('jar')) {
     if (!S.done[4]) return say('POOK CANNOT SWALLOW IT DRY.');
     if (JARS[F.jperm][+it[3]] === 'med') return need(5);
-    drop(it); F.jperm = rand(2); F.jsample = null; glitch(500); sfx.bad();
+    drop(it); F.jperm = rand(2); F.jsample = null; scare();
     return say('POOK SNIFFS IT. POOK BACKS AWAY. THE JAR IS BACK IN THE CABINET. THE LABELS HAVE MOVED.');
   }
   if (it === 'teddy') return S.done[5] ? need(6) : say('POOK IS TOO UNWELL TO CARE ABOUT THE BEAR.');
@@ -546,7 +576,9 @@ const ROOMS = [
         }),
         H(14, 10, 30, 24, () => {
           if (N && !F.eyes) { F.eyes = 1; glitch(400); return say('TWO SMALL LIGHTS IN THE GARDEN. THEY BLINK. THEN THERE IS NO GARDEN.'); }
-          say(N ? 'NOTHING OUT THERE. DO NOT CHECK AGAIN.' : 'A NICE DAY. PROBABLY.');
+          if (N && F.eyes === 1) { F.eyes = 2; return say('NOTHING OUT THERE. DO NOT CHECK AGAIN.'); }
+          if (N && F.eyes === 2) { F.eyes = 3; scare(); return say('YOU CHECKED AGAIN.'); }
+          say(N ? 'THE GLASS IS COLD.' : 'A NICE DAY. PROBABLY.');
         })
       ];
     } },
@@ -580,12 +612,13 @@ const ROOMS = [
           say(!F.plug ? 'THE TUB WILL NOT HOLD WATER. THE PLUG IS MISSING.' : !F.tap ? 'PLUGGED. DRY.' : 'WARM WATER. NO BUBBLES. POOK REQUIRES BUBBLES.');
         }),
         H(107, 13, 30, 20, () => {
+          if (N && !F.sc2) { F.sc2 = 1; scare(); return say('THAT WAS NOT YOUR REFLECTION.'); }
           if (N) { glitch(250); return say('A MIRROR. YOUR REFLECTION ARRIVES A LITTLE LATE.'); }
           if (!F.fog) return say('A MIRROR. YOU LOOK FINE.');
           note('WRITTEN IN THE STEAM, BY A FINGER', '▲ + ▲ + ● = 15\n▲ + ● + ● = 18\n■ × ▲ = 8\n\nTHE CABINET:  ● ■ ▲');
         }),
         H(104, 33, 36, 12, () => {
-          if (!F.cab) return lockPanel('cab', 'A MIRROR CABINET. THREE DIALS.', ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap', 'key'); say('THE CABINET OPENS. SOAP. AND A SMALL KEY. TAKEN.'); });
+          if (!F.cab) return lockPanel('cab', 'A MIRROR CABINET. THREE DIALS.', ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap'); say('THE CABINET OPENS. ONE BAR OF SOAP. TAKEN.'); });
           if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
           say('AN EMPTY CABINET.');
         }),
@@ -601,7 +634,7 @@ const ROOMS = [
       if (F.blanket) { B(34, 60, 46, 16, 'o'); R(34, 65, 46, 1); R(34, 70, 46, 1); }
       B(82, 62, 14, 16); R(84, 69, 10, 1); R(88, 71, 2, 1);                                 // nightstand
       if (N) { B(84, 55, 10, 7, 'o'); R(94, 57, 3, 1); } else { R(88, 52, 2, 10); B(84, 45, 10, 8, 'o'); }
-      B(100, 14, 36, 64); R(118, 15, 1, 62); R(115, 44, 2, 4); R(120, 44, 2, 4);            // wardrobe
+      B(100, 14, 36, 64); R(118, 15, 1, 62); R(115, 50, 2, 4); R(120, 50, 2, 4); if (!F.ward) B(113, 40, 11, 7, 'o');   // wardrobe
       if (F.ward) R(101, 15, 17, 62, 'k');
       B(141, 30, 12, 18); lights().forEach((v, i) => R(143 + (i % 2) * 5, 33 + ((i / 2) | 0) * 7, 3, 4, v ? 'o' : 'k')); // switches
     },
@@ -611,7 +644,7 @@ const ROOMS = [
         H(139, 28, 16, 22, () => N ? say('THE SWITCHES DO NOTHING NOW.') : S.done[3] ? say('LEAVE THE LIGHTS.') : switchPanel()),
         H(26, 8, 30, 26, () => mazePanel()),
         H(82, 44, 16, 34, it => {
-          if (!N) return say('A LAMP. A DRAWER WITH NOTHING IN IT.');
+          if (!N) return note('A NOTE IN THE DRAWER', 'WHEN YOU LEAVE THE ROOM,\nWHAT DOES POOK FEEL?\n\nLOOK IN THE MIDDLE OF THINGS.');
           if (!F.crank) { if (it === 'crank') { F.crank = 1; drop('crank'); sfx.take(); return say('THE CRANK FITS THE MUSIC BOX.'); } return say('A MUSIC BOX. THE CRANK IS MISSING. IT WAS NOT HERE YESTERDAY.'); }
           S.done[7] ? say('THE BOX IS STILL TURNING.') : boxPanel();
         }),
@@ -623,8 +656,7 @@ const ROOMS = [
         H(100, 14, 36, 64, it => {
           if (N) { if (F.teddy) return say('COAT HANGERS. THEY SWAY.'); F.teddy = 1; give('teddy'); sfx.take(); return say('BEHIND THE COATS: HIS BEAR. IT WAS FACING THE DOOR. TAKEN.'); }
           if (F.ward) return say('COAT HANGERS. THEY SWAY.');
-          if (it === 'key') { F.ward = 1; drop('key'); give('blanket'); sfx.take(); return say('THE KEY TURNS. INSIDE: ONE BLANKET. TAKEN.'); }
-          say('A WARDROBE. LOCKED. A SMALL KEYHOLE.');
+          wordPanel();
         })
       ];
     } }
@@ -633,6 +665,7 @@ const ROOMS = [
 /* ---------- render ---------- */
 function draw() {
   g = mainG;
+  if (Date.now() < scareT) return;
   const dark = S.room === 3 && S.tape === 0 && !F.end && lights().every(v => !v);
   PAL = (isNight() || dark) ? nightPal : dayPal;
   ROOMS[S.room].draw();
@@ -642,6 +675,29 @@ function draw() {
     for (let i = 0; i < 6; i++) { const y = rand(104), h = 2 + rand(9), dx = rand(21) - 10; g.drawImage(elCv, 0, y, 160, h, dx, y, 160, h); }
     R(0, rand(108), 160, 1, 'o');
   }
+}
+const POOK_LINES = ['I WILL PEE ON YOU WHEN YOU SLEEP.', 'YOU LOOK TASTY.', 'I KNOW WHERE YOU KEEP YOUR SOCKS.', 'I HAVE BEEN INSIDE THE WALLS. IT IS NICE IN THERE.', 'YOUR ANKLES ARE UNGUARDED.',
+  'I ATE SOMETHING OF YOURS. YOU WILL FIND OUT WHICH.', 'I LICKED EVERYTHING YOU OWN.', 'WHEN YOU BLINK, I MOVE CLOSER.', 'I AM A GOOD BOY. SAY IT.', 'I CAN SMELL YOUR BIRTHDAY.',
+  'THE MAILMAN KNOWS WHAT HE DID.', 'I WATCH YOU CHEW.', 'DO NOT LOOK UNDER THE BED. THAT IS MY SPOT.', 'I BURIED SOMETHING. IT WAS NOT A BONE.', 'YOUR PILLOW TASTES LIKE YOU.', 'I HEARD YOU OPEN CHEESE IN 2019.'];
+function pookTalk() {
+  nextTalk = Date.now() + 35000 + rand(40000);
+  if (rand(4) === 0) { angryT = Date.now() + 4500; sfx.bad(); say('POOK: "??? WHAT ARE YOU DOING ???"'); }
+  else say(`POOK: "${POOK_LINES[rand(POOK_LINES.length)]}"`);
+}
+const SCARE = 'VQFVVVVVVVVVVVVVVVUBAAAAAAAAAAAAAFBVUVVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVVVVAQAAAAAAAAAAAABARERVVVUFAAAAAAAAAABVAVVVVVVVVVVVVVVVVQEAAAAAAAAAAAAAABVRVVVVEQEAAAAAAAAAVQBUVVVVVVVVVVVVVVVFAAAAAAAAAAAAAEBEQFVVVUUAAAAAAAAAAFUBVVVVVVVVVVVVVVVVZQAAAAAAAAAAAABUVlFVVVUVAQAAAAAAAABVAFRVVVVVVVVVVVVVVVkAAAAAAAAAAAAApEZEVVVVRQAAAAAAAAAAVQFVVVVVVVVVVVVVVaVqAAAAAEBRAQAAAKUaUVVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVZWpWgAAAABAVQEAAACUKkBVVVVEAAAAAAAAAABVAVVVVVVVVVVVVVWmqhYAAAAAUFUBAAAAVapRVVVVFQEAAAAAAAAAVQFUVVVVVVVVVVVVqZoFAAAAAFBVBQAAAECpRVVVVUUAAAAAAAAAAFUBVVVVVVVVVVVVVapqFQAAAABQagEAAABApVpVVVUVAQAAAAAAAABVAFRVVVVVVVVVVZWpVQUAAAAAQGkAAAAAQJVqVVVVBAAAAAAAAAAAVQFVVVVVVVVVVVVVqlYRAQEAAVBqAQABAABVqlVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVVVVAAAARARQaQBABAAAVJlVVVUFAAAAAAAAAABVAVVVVVVVVVVVVVVVVREQEFURUGoAURUAAFFVVVVVEQAAAAAAAAAAVQBUVFVVVVVVVVVVVVUAAERVBVRZQFRVAABUVVVVVQQAAAAAAAAAAFUBVVVVVVVVVVVVVVVVEQFVVRVVWlFVVRUBVVVVZVUFAQAAAAAAAABVAVRVVVVVVVVVVVVVVQAAVVUVlFpUVVVFAFRVVZVVBQAAAAAAAAAAVQFVVVVVVVVVVVZVVRUAQFVlVZVaVVVVFRFQVVWlVhUAAAAAAAAAAFUBVFVVVVVVVZVVVVUFAECVqlqVWpWqVUUAQFVVlVoEAAAAAAAAAABVAVVVVVVVVVWqVlVVAQBRpapqpVqpqloVAQFVVVVqFQEAAAAAAAAAVQFUVVVVVVVVqVVFRQAAVKmqqpVaqqpaBQAAVVVVaQUAAAAAAAAAAFUBVVVVVVVVZaZVFREAAFWqqqqlaqqqahUQEVVVVWoRAAAAAAAAAABVAFRUVVVVVZVVVQAAAECVqqqqlaqqqmpVAABURVWpBAAAAAAAAAAAVQFVVVVVVVVVVRUAAAAApaqqqqaqqqpqVRERVRVVpQEAAAAAAAAAAFUAVFVVVVVVVVUFAAAAQKmqqqqVqqqqqlUFAEQFQJUBAAAAAAAAAABVAVVVVVVVVVVVAAAAAFCpqqqqpqqqqqpaFRBRVQBVBgAAAAAAAAAAVQBUVFVVVVVVBQAAAABUqaqqqpWqqqqqalVARFQAVBUAAAAAAAAAAFUBVVVVVVVVVQEAAABAVaWqqqqVqqqqqqpWERVVAVAVAAAAAAAAAABVAFRVVVVVVUQAAAAAQFWVqqqqVaqqqqqaVQVERAAAVQAAAAAAAAAAVQFUVVVVVVUQAAAAAFBVVamqalWqqqqqVlUVUVEBAFQBAAAAAAAAAFUAVFVVVVVVAAAAAABUVVWkqmpVlamqVlVVVURABABQAAAAAAAAAABVAVVVVVVVFQAAAAAAVVZqpapqVVWlqlZVVVUVARUAUAEAAAAAAAAAVQBUVVVVVQUAAAAAAFWlalSpalVVlWpFqVVVRQAEAEAAAAAAAAAAAFUAUFVVVVUVAAAAAEBVqqpQVVVVVVVWgWpqVVUAUAEAAAAAAAAAAABVAFBVVVVVBQAAAABAVaqqQFVVVVVVVYCWKVRVAAAAAAAAAAAAAAAAVQBQVVVVVQEAAAAAUFqqqlFVVVVVVVWApiplVQEAEQAAAAAAAAAAAFUAVFVVVVUAAAAAAFAKqmpAVVVVVVVVgKoppFUAAAAAAAAAAAAAAABVAFBVVVVVAAAAAABQGqlqUVVVVVVVVYFqKqBWAQAQAAAAAAAAAAAAVQBQVVVVVQAAAAAAUFqkWlRVVVVVVVVAqRqoVgAAAAAAAAAAAAAAAFUAUVVVVRUAAAAAAFBqVVVVVVVVVVVVEaVWqlYBAAAAAAAAAAAAAABVAFRVVVUFAAAAAABUWkVVVVVVVVVVVVVUVapWAAAAAAAAAAAAAAAAVQBQVVVVFQAAAABQpWpVVVVVVVVVVVVVVVWqVgEAAAAAAAAAAAAAAFUAUFVVBQAAAAAAVKVaVVVVVVVVVVVVVVWVqloFAAAAAAAAAAAAAABVAFFVVQEAAAAAAFWqalZVVVZVVVVVVVVVqqpqVQEAAAAAAAEAAAAAVQBAVVUAAAAAAECVqlpaVZVVVVVVVVVVlaqqqlUFAAAAAAAAAAAAAFUAEFVVAAAAAABVlapqalVlVVVVVaVmVaWqqqpWFQAAAAAAAAAAAABVAABUBQAAAABQVZWqqlWVmVVVVVWVqZmpqqmqVVUFAAAAAAAAAAAAVQAAVRUAAAAAVVWmqmplpqpWZapWpaqqqqqqqmpWFQAAAAAAAAAAAFUAAFQFAAAAAFVVlaqqVamqVZmZWpWqqqqqqqpaVRUAAAAAAAAAAABVAABVAQAAAFBVVaWqqlaqqqqqqmqlqqqqqqqqalUVAAAAAAAAAAAAVQAAVAAAAABAVVWVqqpZqaqqqqqqqaqqqqqqqlpVFQAAAAAAAAAAAFUAAFUBAAAAUFVlpaqqaqqqqqqqqqqqqqqqqqpqVRUAAAAAAAAAAABVAABUAAAAAEBVVZmqqlqqqqqaqqqqqqqqqqmqalUVAAAAAAAAAAAAVQAAVQEAAABQVWWlqqpWqqqqpqqqqqqqqqqqqmpVFQAAAAAAAAAAAFQAAFQAAAAAQFVVlaqqlZmpmZmpqqqqqqqpqapaVRUAAAAAAAAAAABVAABVAQAAAABVZaWqalZWqqqmqqqqqqpqZqqqalUVAAAAAAAAAAAARAAARAAAAABAVVWVqlpVlaqamaqqqqqaalWpqlpVVQAAAAAAAAAAABEAABAAAAAAUFVlpapqVZWqamamqqqqlmpVqqpaVRUAAAAAAAAAAAAEAAAAAAAAAEBVVZWqalWVqlpVlamqqpVqVaqqVVVVAAAAAAAAAAAAEQAAAAAAAABQVVWmqmpVpapqZmaqqqpWalWqqlZVFQAAAAAAAAAAAAAAAAAAAAAAQFVVmapqVZWqWlVVmaqqVVpVqqpVVRUAAAAAAAAAAAAQAAAAAAAAAFBVVaaqalWlqmplZqaqqlZmVaqqVlUVAAAAAAAAAAAAAAAAAAAAAABAVVWVqqpVpapZVZWpqqpVVVWpqVlVBQAAAAAAAAAAAAAAAAAAAAAAAFVVpqpqVamqZmZmqqqqVlZVqqpaVRUAAAAAAAAAAAAAAAAAAAAAAABVVZWqWlWpqlpZWZmqqlZVVaqqVVUFAAAAAAAAAAAAAAAAAAAAAABAVVWlqmpVqqpqZWalqqpWVVWqalVVAQAAAAAAAAAAAAAAAAAAAAAAQFVVValZVamqapVVmaqqWlWVqVlVVQAAAAAAAAAAAAAAAAAAAAAAAEBVVVVmalWqqmpmZmqqqlZVlapWVVUBAAAAAAAAAAAAAAAAAAAAAABAVVVVVVVVqapamZmZqqpWVZVaVVVVAAAAAAAAAAAAAAAAAAAAAAAAUFVVVVVlVaqqamWmqqqqVlWlVlVVVQEAAAAAAAAAAAAAAAAAAAAAAEBVVVVVVVWpqlqVmamqqlZVlVVVVVUAAAAAAAAAAAAAAAAAAAAAAABAVVVVpVZWqqpqZaqqqqpWVWVVVVVVAQAAAAAAAAAAAAAAAAAAAAAAQFVVVVVVVamqWpWqmaqqVlVVVVVVVQAAAAAAAAAAAAAAAAAAAAAAAABVpWZVVVWlqmplqqqqqlZVVVVVVRUAAAAAAAAAAAAAAAAAAAAAAAAAVKWqVVVVpapalamZlapVVVVVVVUVAAAAAAAAAAAAAAAAAAAAAAAAAFWlqlZVVZWqVlWqapZWVVVVVVVqFQAAAAAAAAAAAAAAAAAAAAAAAABQlapaVVVVVVVVVVVVVVVVVVWVWgUAAAAAAAAAAAAAAAAAAAAAAAAAUFWqqlZVVVVVVVVVVVVVVVVVpmoVAAARAAAAAAAAAAAAAAAAAAAAAEBVqappVVVVVVVVVVVVVVVVlapZFQBABAAAAAAAAAAAAAAAAAAAAABRlZqqqlZVVVVVVVVVVVVVVapqVRUAUBUAAAAAAAAAAAAAAAAAAAAARJWZqqqqVVVVVVVVVVVVVamqalUVAFQFAAAAAAAAAAAAAAAAAAAAAFCVqqqqqlpVVWVVZVVVVZWqqmZWFQBVJQAAAAAAAAAAAAAAAAAAAABUVampqqpqlVWplalVWVWpqpqVWgUAVWkAAAAAAAAAAAAAAAAAAAAAVVWppqqqaqVaqqqqlmpqqmqmploBAFYqAAAAAAAAAAAAAAAEAAAAAFRVpUaZqqqpmqqaqpqqqqpaqWpVAABWaQAAAAAAAAAAAAAAAQAAAABQVVVqmaqqqqqqqqqqqqpqWqpqFZBqZioAAAAAAAAAAAAAQAAAAAAAUFVVlZmpqqmqqpqqqqqqWYmpaQWgqppZAAAAAAAAAAAAAFABAAAQAZVWVZVqZlqqqqqqqqqqqlaaqmoBqaqqalABAAAAAAAAAABAAAAAVEWlWlWVmqpZqqqqmqqqqppGmZlZAKmqqmpUBQAAAAAAAAAAUAEAAFBVpWpVVaaqZqqqqqqqqqqqWmpVFQCqqqpqlRYAAAAAAAAAAFQAAACQVaWqVVWZqpqlqqqqqqqqlZlZVQWAqqqqqpUFAAAAAAAAAABVAQAAkVqlqlZVVqpqlaqqqqpqZlWlalUBkKqqqqqmWgUAAQAAAAAAVAEAAJSqlapaVVWpWkClqqqqapVVlWoVAKSqqqqqqloFAAAAAAAAEFUBAABQqpaqalVVqWpRpaqqqmqpZZVqBQCoqqqqqqpqFQABAAAAAERVBQAAlKqVqqpVValalJWamaqqqaVVVQAAqaqqqqqqqhUAAAAAAABVVQUAAFWqqqqqalWlaqWqqmqqqqqmVhUAQKqqqqqqqqpWAQEAAABAVVUFAABVqpqqqqpVlVmVqqqqqqqqmlYVAICqqqqqqqqqVUUBAAAAQFVVBgAAVaqqqqqqVlVlpaaqqqqqqqZWFRCkqqqqqqqqqlZVAQAAAEBVlQUAAJSqmqqqqlpVqampqqqqqqmaWgWoqqqqqqqqqqpVVQAAAABAZaUWAQFVqqqqqqpqVaqqpqqqqqqqqlqVqqqqqqqqqqqqVlUBAAAAQJWVWUVFVKqqqqqqqlZZqaWaqqqpqVpVpaqqqqqqqqqqqlpVAAAAAFClplZVVVWpqqqqqqpWVWqlWqqqpalaVaWqqqqqqqqqqqpqVQEAAABQlZlZVVVVpaqqqqqqWlVZpZqaqlWpWlWpqqqqqqqqqqqqqlUAAAAAUKWqalVqVaWqqqqqqqpVVqVqpmpVplpVqqqqqqqqqqqqqqpWAQAAAFSZmlpVqlmVqqqqqqqqVVVVmpZaVZVVVaqqqqqqqqqqqqqqVQEAAABUpapqVapqpaqqqqqqqlZVVaVWalVVVaWqqqqqqqqqqqqqqlYBAAAAVKmqmZWqqpqqqqqqqqpqVVVVVVVVVVWlqqqqqqqqqqqqqqpVBQAA';
+const SCARE_PX = (() => { const b = atob(SCARE), out = new Uint8Array(160 * 108); for (let i = 0; i < out.length; i++) out[i] = (b.charCodeAt(i >> 2) >> ((i & 3) * 2)) & 3; return out; })();
+function drawScare() {
+  const img = mainG.createImageData(160, 108), cols = [[18, 16, 14], [245, 178, 107], [244, 236, 216]], dx = rand(7) - 3, dy = rand(5) - 2, inv = rand(10) === 0;
+  for (let y = 0; y < 108; y++) for (let x = 0; x < 160; x++) {
+    const sx = Math.min(159, Math.max(0, x + dx)), sy = Math.min(107, Math.max(0, y + dy)); let v = SCARE_PX[sy * 160 + sx]; if (inv) v = 2 - v;
+    const c = cols[v], o = (y * 160 + x) * 4; img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 255;
+  }
+  mainG.putImageData(img, 0, 0);
+}
+function scare() {
+  if (panelModal) return; closePanel(); scareT = Date.now() + 1300;
+  [147, 185, 233, 415, 622].forEach(f => beep(f, 1.1, 'sawtooth', .07)); hiss(.9);
+  const t = setInterval(() => { if (Date.now() > scareT) { clearInterval(t); render(); } else drawScare(); }, 60); drawScare();
 }
 function glitch(ms) { glitchT = Date.now() + ms; hiss(Math.min(ms / 1000, .4)); const t = setInterval(() => { draw(); if (Date.now() > glitchT) { clearInterval(t); draw(); } }, 50); }
 function renderInv() {
@@ -661,11 +717,16 @@ function render() {
     + (isDemo ? '<div style="font-size:9px;text-align:center;color:var(--o)">DEMO KEYS — ADD #SETUP TO THE ADDRESS</div>' : '');
   renderInv(); draw();
 }
-setInterval(() => { frame++; if (elPanel.hidden) draw(); if (elPanel.hidden && isNight() && rand(140) === 0) glitch(180); }, 260);
+setInterval(() => {
+  frame++; if (elPanel.hidden) draw();
+  const idle = elPanel.hidden && $('#splash').hidden && $('#setup').hidden && Date.now() > scareT;
+  if (idle && isNight() && rand(140) === 0) glitch(180);
+  if (idle && S.boot && !F.end && Date.now() > nextTalk && Date.now() - lastSay > 6000) pookTalk();
+}, 260);
 
 /* ---------- input ---------- */
 elCv.addEventListener('click', e => {
-  if (!elPanel.hidden) return;
+  if (!elPanel.hidden || Date.now() < scareT) return;
   const r = elCv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 160, y = (e.clientY - r.top) / r.height * 108;
   if (F.end) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
   const it = sel; sel = null;
@@ -699,17 +760,19 @@ function menu() {
   const dbg = isDebug(), st = stage();
   openPanel(`<div class="t">MENU</div><div class="row"><button data-a="snd">SOUND: ${muted ? 'OFF' : 'ON'}</button><button data-a="x">CLOSE</button></div>
     ${dbg ? `<div class="t">DEBUG — NEXT PUZZLE: ${st < 0 ? 'NONE' : (st + 1) + ' OF ' + 4 * nKeys()}</div>
-    <div class="row"><button class="o" data-a="skip">SOLVE NEXT PUZZLE</button><button data-a="tape">JUMP TO TAPE 2</button><button data-a="ans">SHOW ANSWERS</button><button data-a="reset">RESET EVERYTHING</button></div>` : ''}`,
+    <div class="row"><button class="o" data-a="skip">SOLVE NEXT PUZZLE</button><button data-a="tape">JUMP TO TAPE 2</button><button data-a="ans">SHOW ANSWERS</button><button data-a="scare">TEST JUMPSCARE</button><button data-a="talk">TEST POOK LINE</button><button data-a="reset">RESET EVERYTHING</button></div>` : ''}`,
     a => {
       if (a === 'x') return closePanel();
       if (a === 'snd') { muted = !muted; store.set('pook-mute', muted); sfx.tap(); return menu(); }
       if (a === 'skip') { dbgSolve(); return menu(); }
+      if (a === 'scare') { closePanel(); return scare(); }
+      if (a === 'talk') { closePanel(); return pookTalk(); }
       if (a === 'tape') { while (stage() >= 0 && stage() < 4) dbgSolve(); return menu(); }
       if (a === 'reset') { S = fresh(); S.boot = true; F = S.f; sel = null; save(); closePanel(); say('RESET.'); return render(); }
       if (a === 'ans') return note('ANSWERS', `1 CUPBOARD ${CUP_CODE}. COIN (SOFA) OPENS DRAWER. OPENER + CAN. CAN ON BOWL.
 2 TOY BOX ${[...MAZE_ANS].map(c => ARROW[c]).join('')}. BALL ON POOK.
-3 HOT TAP, MIRROR, CABINET ${CAB_CODE}. PLUG + SOAP ON TUB.
-4 KEY ON WARDROBE, BLANKET ON BED, SWITCHES 1 2 3.
+3 HOT TAP, MIRROR, CABINET ${CAB_CODE}. PLUG + SOAP ON TUB (AFTER PLAY).
+4 WARDROBE TILES: HAT EGG DOG ANT EYE (MIDDLE LETTERS = AGONY). BLANKET ON BED, SWITCHES 1 2 3.
 5 TAKE JUGS. FILL 5, POUR INTO 3, EMPTY 3, POUR 5 INTO 3, FILL 5, POUR INTO 3. BIG JUG (4) ON BOWL.
 6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
 7 TV. BEAR IS IN THE WARDROBE. BEAR ON POOK.

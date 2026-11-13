@@ -513,7 +513,7 @@ let panelModal = false, curTitle = null;
 let rantOn = false;
 function say(t) { if (rantOn) return; elMsg.textContent = t || ''; lastSay = Date.now(); }
 function rant() { if (!pookShaking()) return; rantOn = true; $('#msg').classList.add('rant'); elMsg.innerHTML = '<span class="rt">' + 'I WANT MY BEAR '.repeat(16) + '</span>'; }
-function drawFace() { const o = g; g = $('#pface').getContext('2d'); g.clearRect(0, 0, 30, 26); pook(15 + (pookShaking() ? rand(3) - 1 : 0), 38); g = o; }
+function drawFace() { const o = g; g = $('#pface').getContext('2d'); g.clearRect(0, 0, 30, 26); const am = shakeAmp(); pook(15 + (am > 1 ? rand(5) - 2 : am ? rand(3) - 1 : 0), 38 + (am > 1 ? rand(3) - 1 : 0)); g = o; }
 function openPanel(html, handler, modal) {
   // on puzzle screens Pook's face sits bottom-right and he speaks the title (and any wrong-answer text)
   let title = null; $('#bub').hidden = true;
@@ -843,8 +843,8 @@ function onPook(it) {
   if (it.startsWith('jar')) {
     if (!S.done[4]) return say('POOK CANNOT SWALLOW IT DRY.');
     if (JARS[F.jperm][+it[3]] === 'med') return need(5);
-    drop(it); F.jperm = rand(2); F.jsample = null; scare();
-    return say('POOK SNIFFS IT. POOK BACKS AWAY. THE JAR IS BACK IN THE CABINET. THE LABELS HAVE MOVED.');
+    drop(it); F.jperm = rand(2); F.jsample = null; save();
+    return scare(() => pages(['THE CABINET SHAKES.\n\nIT HAS RESET.'], () => say('POOK IS STILL SICK.')));
   }
   if (it === 'teddy') return S.done[5] ? need(6) : say('POOK IS TOO UNWELL TO CARE ABOUT THE BEAR.');
   if (CAPS[it] && jamt(it) === 5) { angryT = Date.now() + 4000; sfx.bad(); return bubble("I'M A DOG, I CAN'T DRINK OUT OF THAT... IDIOT."); }
@@ -1055,8 +1055,9 @@ const ROOMS = [
 ];
 
 /* ---------- render ---------- */
+const shakeAmp = () => !pookShaking() ? 0 : F.warned ? 4 : 1;
 const pookShaking = () => isNight() && !!S.done[5] && !S.done[6];   // scared: trembles until he has his bear
-setInterval(() => { if (!S.boot || !pookShaking() || Date.now() < scareT) return; if (elPanel.hidden) { if (Date.now() > glitchT) draw(); } else if (!$('#pface').hidden) drawFace(); }, 80);
+setInterval(() => { if (!S.boot || !pookShaking() || Date.now() < scareT) return; if (elPanel.hidden) { if (Date.now() > glitchT) draw(); } else if (!$('#pface').hidden) drawFace(); }, 60);
 const asleep = () => !!F.end || (S.tape === 0 && !!S.done[3]) || !!S.done[7];
 function draw() {
   g = mainG;
@@ -1065,7 +1066,7 @@ function draw() {
   PAL = (isNight() || dark) ? nightPal : dayPal;
   ROOMS[S.room].draw();
   if (asleep()) { if (S.room === 3) pook(52, 64, { sleep: true }); }
-  else pook(pookSpot[S.room][0] + (pookShaking() ? rand(3) - 1 : 0), pookSpot[S.room][1]);
+  else { const am = shakeAmp(); pook(pookSpot[S.room][0] + (am ? rand(2 * am + 1) - am : 0), pookSpot[S.room][1] + (am > 1 ? rand(3) - 1 : 0)); }
   if (Date.now() < glitchT) {
     for (let i = 0; i < 6; i++) { const y = rand(104), h = 2 + rand(9), dx = rand(21) - 10; g.drawImage(elCv, 0, y, 160, h, dx, y, 160, h); }
     R(0, rand(108), 160, 1, 'o');

@@ -189,6 +189,8 @@ button{font:inherit;cursor:pointer;border-radius:0}
 @keyframes vj{0%,93%{transform:none}94%{transform:translateX(3px)}96%{transform:translateX(-2px)}98%{transform:none}}
 .vhs .vb{top:4px;bottom:auto}
 .vhs pre{padding-top:16px}
+.vhs .warn{align-self:center;font-size:26px;letter-spacing:5px;padding:2px 14px;background:var(--o);color:var(--k);animation:wflash .5s steps(2) infinite}
+@keyframes wflash{50%{background:var(--k);color:var(--o)}}
 </style>
 </head>
 <body>
@@ -646,9 +648,15 @@ function hexPanel() {
     });
   draw();
 }
+function warnPanel() {
+  for (let i = 0; i < 9; i++) beep(i % 2 ? 660 : 440, .34, 'sawtooth', .06, i * .34);   // two-tone siren
+  openPanel(`<div class="vhs"><div class="warn">WARNING</div><pre class="c">THE HOUSE IS NOW BOOBY TRAPPED.\n\nYOU MUST CLICK CAREFULLY\nFROM THIS POINT ON.</pre></div><div class="row"><button class="o" data-a="go">CONTINUE</button></div>`, () => { F.warned = 1; save(); sfx.tap(); tvPanel(); });
+  say('THE TELEVISION SCREAMS.');
+}
 function tvPanel() {
   if (!F.tv) return hexPanel();
   if (!F.liar) { newLiar(); save(); }
+  if (!F.warned) return warnPanel();
   const txt = x => x.t === 'in' ? `IT IS ${PLACES[x.v]}.` : x.t === 'not' ? `IT IS NOT ${PLACES[x.v]}.` : x.t === 'lie' ? `CHANNEL ${x.v + 1} IS LYING.` : `CHANNEL ${x.v + 1} TELLS THE TRUTH.`;
   const CH = ['STAND BY.\n\nHIS BEAR IS IN THIS HOUSE.\nSOFA. TUB. WARDROBE.\nFRIDGE. CUPBOARD.\n\nFIVE CHANNELS KNOW WHERE.\nONLY ONE OF THEM TELLS THE TRUTH.', ...F.liar.st.map(txt)];
   let c = F.tvc || 0;
@@ -699,7 +707,7 @@ const FIX = [
   () => { F.cM = F.cP = F.cV = F.cD = 1; drop('cardM', 'cardP', 'cardV', 'cardD'); }
 ];
 const DONE_LINE = ['POOK EATS. POOK DOES NOT BLINK WHILE HE EATS.', 'POOK PLAYS. THE BALL WILL NEVER BE THE SAME.', 'POOK IS CLEAN. THE WATER IS NOT.', 'POOK SLEEPS.',
-  'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THE WRONGNESS FADES.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING.', 'THE SONG PLAYS. POOK SLEEPS.'];
+  'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THE WRONGNESS FADES.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING. ALL HIS ATTENTION IS ON THE BEAR. THE HOUSE GOES BACK TO NORMAL.', 'THE SONG PLAYS. POOK SLEEPS.'];
 function startNight() { (F.un || (F.un = []))[0] = 1; S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
 let flying = 0;
 function need(i) {
@@ -777,7 +785,7 @@ function copyText(t, btn) {
   const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, fallback); else fallback();
 }
-const NEEDS = ['POOK IS HUNGRY.', 'POOK IS BORED.', 'POOK IS DIRTY.', 'POOK IS TIRED FROM THE LONG DAY.', 'POOK IS THIRSTY.', 'POOK IS SICK.', 'POOK IS SCARED.', 'POOK IS WIDE AWAKE.'];
+const NEEDS = ['POOK IS HUNGRY.', 'POOK IS BORED.', 'POOK IS DIRTY.', 'POOK IS TIRED FROM THE LONG DAY.', 'POOK IS THIRSTY.', 'POOK IS SICK.', 'POOK IS SCARED. HE WILL NOT STOP SHAKING.', 'POOK IS WIDE AWAKE.'];
 function hint() {
   if (F.pendEnd != null) return say('POOK IS ASLEEP.');
   const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
@@ -820,8 +828,8 @@ function searchPlace(id, line) {
   if (!F.liar) newLiar();
   if (F.liar.ans === id) { F.teddy = 1; give('teddy'); sfx.take(); return say('THERE: HIS BEAR. IT WAS FACING THE DOOR. TAKEN.'); }
   newLiar(); save();
-  if (!F.sc3) { F.sc3 = 1; scare(); } else { glitch(400); sfx.bad(); }
-  say('NOT HERE. SOMETHING MOVED WHILE YOU LOOKED. THE TELEVISION HAS CHANGED ITS STORY.');
+  scare();
+  say('A TRAP. IT WAS NOT HERE. SOMETHING MOVED WHILE YOU LOOKED. THE TELEVISION HAS CHANGED ITS STORY.');
 }
 function pourJug(from, to) {
   const J = F.jug || (F.jug = {}), amt = Math.min(J[from] || 0, CAPS[to] - (J[to] || 0));
@@ -1003,6 +1011,8 @@ const ROOMS = [
 ];
 
 /* ---------- render ---------- */
+const pookShaking = () => isNight() && !!S.done[5] && !S.done[6];   // scared: trembles until he has his bear
+setInterval(() => { if (S.boot && pookShaking() && elPanel.hidden && Date.now() > scareT && Date.now() > glitchT) draw(); }, 80);
 function draw() {
   g = mainG;
   if (Date.now() < scareT) return;
@@ -1010,7 +1020,7 @@ function draw() {
   PAL = (isNight() || dark) ? nightPal : dayPal;
   ROOMS[S.room].draw();
   if (F.end) { if (S.room === 3) pook(52, 64, { sleep: true }); }
-  else pook(pookSpot[S.room][0], pookSpot[S.room][1]);
+  else pook(pookSpot[S.room][0] + (pookShaking() ? rand(3) - 1 : 0), pookSpot[S.room][1]);
   if (Date.now() < glitchT) {
     for (let i = 0; i < 6; i++) { const y = rand(104), h = 2 + rand(9), dx = rand(21) - 10; g.drawImage(elCv, 0, y, 160, h, dx, y, 160, h); }
     R(0, rand(108), 160, 1, 'o');

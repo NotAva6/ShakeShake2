@@ -380,7 +380,7 @@ function openPanel(html, handler, modal) {
   elPanel.innerHTML = html; elPanel.hidden = false; panelModal = !!modal; elPanel.scrollTop = 0;
   elPanel.onclick = e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled && handler) handler(b.dataset.a, b); };
 }
-function closePanel() { elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; panelInv = null; }
+function closePanel() { elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; panelInv = null; panelKind = null; }
 function pages(list, done) {
   let i = 0;
   const show = () => openPanel(`<div class="sp"></div><pre class="c">${list[i]}</pre><div class="sp"></div><div class="row"><button class="o" data-a="ok">OK</button></div>`,
@@ -879,8 +879,9 @@ $('#br').addEventListener('click', () => go(1));
 let forceDebug = false;
 document.addEventListener('keydown', e => { if (e.key === 'F1') { e.preventDefault(); forceDebug = true; if (!panelModal) menu(); } });
 $('#codes').addEventListener('click', e => { const b = e.target.closest('.crow'); if (!b || !elPanel.hidden) return; const k = +b.dataset.k; if (S.done.slice(k * 4, k * 4 + 4).every(Boolean)) keyReveal(k, null); });
-$('#bmenu').addEventListener('click', () => { if (!panelModal) menu(); });
-$('#bwords').addEventListener('click', () => { if (!panelModal) { sfx.tap(); wordsPanel(); } });
+let panelKind = null;
+$('#bmenu').addEventListener('click', () => { if (panelModal) return; sfx.tap(); if (panelKind === 'menu') return closePanel(); menu(); panelKind = 'menu'; });
+$('#bwords').addEventListener('click', () => { if (panelModal) return; sfx.tap(); if (panelKind === 'words') return closePanel(); wordsPanel(); panelKind = 'words'; });
 function menu() {
   const dbg = isDebug(), st = stage();
   openPanel(`<div class="t">MENU</div><div class="row"><button data-a="snd">SOUND: ${muted ? 'OFF' : 'ON'}</button><button data-a="x">CLOSE</button></div>

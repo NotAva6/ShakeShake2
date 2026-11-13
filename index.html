@@ -702,6 +702,7 @@ function warnPanel() {
   rant();
 }
 function tvPanel() {
+  if (!F.tvSeen) { F.tvSeen = 1; save(); }
   setTimeout(tvNoise, 0);
   if (!F.tv) return hexPanel();
   if (!F.liar) { newLiar(); save(); }
@@ -1124,18 +1125,21 @@ function blackout(done) {
 }
 let waterNode = null;
 let tvNode = null, tvGain = null;
+/* an old TV left on: mostly a low electrical hum, with a little soft hiss on top. Stops once the TV has been looked at. */
 function tvNoise() {
-  const on = !muted && S.boot && pookShaking() && !F.tv && $('#splash').hidden;
+  const on = !muted && S.boot && pookShaking() && !F.tvSeen && $('#splash').hidden;
   if (on && !tvNode) {
     try {
-      const a = ac(), n = a.sampleRate * 2, buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
+      const a = ac(), srcs = []; tvGain = a.createGain(); tvGain.connect(a.destination);
+      [[120, .5], [240, .28], [360, .12], [480, .05]].forEach(([f, v]) => { const o = a.createOscillator(), gn = a.createGain(); o.type = 'sine'; o.frequency.value = f; gn.gain.value = v; o.connect(gn); gn.connect(tvGain); o.start(); srcs.push(o); });
+      const n = a.sampleRate * 2, buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
       for (let i = 0; i < n; i++) ch[i] = Math.random() * 2 - 1;
-      const src = a.createBufferSource(), f = a.createBiquadFilter(); tvGain = a.createGain();
-      src.buffer = buf; src.loop = true; f.type = 'highpass'; f.frequency.value = 2500;
-      src.connect(f); f.connect(tvGain); tvGain.connect(a.destination); src.start(); tvNode = src;
+      const src = a.createBufferSource(), f = a.createBiquadFilter(), ng = a.createGain();
+      src.buffer = buf; src.loop = true; f.type = 'lowpass'; f.frequency.value = 1100; ng.gain.value = 0.16;
+      src.connect(f); f.connect(ng); ng.connect(tvGain); src.start(); srcs.push(src); tvNode = srcs;
     } catch (e) {}
-  } else if (!on && tvNode) { try { tvNode.stop(); } catch (e) {} tvNode = null; tvGain = null; }
-  if (tvGain) tvGain.gain.value = S.room === 1 ? 0.03 : 0.012;      // louder in the den, where the TV is
+  } else if (!on && tvNode) { tvNode.forEach(x => { try { x.stop(); } catch (e) {} }); tvNode = null; tvGain = null; }
+  if (tvGain) tvGain.gain.value = S.room === 1 ? 0.07 : 0.03;      // louder in the den, where the TV is
 }
 function water() {
   tvNoise();

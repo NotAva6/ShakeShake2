@@ -633,7 +633,7 @@ function wordPanel() {
       a => {
         if (a === 'x') return closePanel();
         if (a === 'go') {
-          if (seq.join() === WORD_ANS.join()) { closePanel(); F.ward = 1; give('blanket'); sfx.solve(); say('THE TILES CLICK INTO PLACE. INSIDE: ONE BLANKET. TAKEN.'); save(); return render(); }
+          if (seq.join() === WORD_ANS.join()) { closePanel(); F.ward = 1; give('blanket'); sfx.solve(); say('THE TILES CLICK INTO PLACE. INSIDE: ONE BLANKET.'); save(); return render(); }
           sfx.bad(); return say('THE TILES RATTLE. NOTHING OPENS.');
         }
         const i = +a; if (pick < 0) pick = i; else { [seq[pick], seq[i]] = [seq[i], seq[pick]]; pick = -1; save(); } sfx.tap(); draw();
@@ -880,7 +880,7 @@ function newLiar() {
 function searchPlace(id, line) {
   if (F.teddy || !F.tv) return say(line);
   if (!F.liar) newLiar();
-  if (F.liar.ans === id) { F.teddy = 1; give('teddy'); sfx.take(); return say('THERE: HIS BEAR. IT WAS FACING THE DOOR. TAKEN.'); }
+  if (F.liar.ans === id) { F.teddy = 1; give('teddy'); sfx.take(); return say('THERE: HIS BEAR. IT WAS FACING THE DOOR.'); }
   newLiar(); save();
   scare();
   say('A TRAP. IT WAS NOT HERE. SOMETHING MOVED WHILE YOU LOOKED. THE TELEVISION HAS CHANGED ITS STORY.');
@@ -928,14 +928,14 @@ const ROOMS = [
           ? note('A NOTE ON THE FRIDGE', 'POOK WILL ONLY DRINK EXACTLY 5 CUPS.\n\nTHERE ARE ONLY 10 CUPS OF WATER LEFT.\nDO NOT SPILL ANY.\n\nUSE THE BIG JUG ON THE TAP TO START OVER.')
           : clueNote()),
         H(8, 26, 30, 52, () => { if (N) return searchPlace('FRIDGE', 'THE FRIDGE IS EMPTY. THE LIGHT INSIDE STAYS OFF.'); say('THE FRIDGE HUMS. IT IS EMPTY, EXCEPT FOR THE HUM.'); }),
-        H(50, 10, 46, 26, () => (N && F.cup) ? searchPlace('CUPBOARD', 'BARE SHELVES.') : F.cup ? say('BARE SHELVES.') : lockPanel('cup', "WALL CUPBOARD... IT'S LOCKED", [], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
+        H(50, 10, 46, 26, () => (N && F.cup) ? searchPlace('CUPBOARD', 'BARE SHELVES.') : F.cup ? say('BARE SHELVES.') : lockPanel('cup', "WALL CUPBOARD... IT'S LOCKED", [], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD.'); })),
         H(50, 58, 24, 12, it => {
-          if (N && F.drawer && !F.cM) { F.cM = 1; give('cardM'); sfx.take(); return say('IN THE DRAWER: A TRADING CARD. "THE MAILMAN". TAKEN.'); }
+          if (N && F.drawer && !F.cM) { F.cM = 1; give('cardM'); sfx.take(); return say('IN THE DRAWER: A TRADING CARD. "THE MAILMAN".'); }
           if (F.drawer) return say('AN EMPTY DRAWER.');
-          if (it === 'coin') { F.drawer = 1; drop('coin'); give('opener'); sfx.take(); return say('THE COIN TURNS THE SCREW. INSIDE: A CAN OPENER. TAKEN.'); }
+          if (it === 'coin') { F.drawer = 1; drop('coin'); give('opener'); sfx.take(); return say('THE COIN TURNS THE SCREW. INSIDE: A CAN OPENER.'); }
           say("DRAWER... IT'S SCREWED SHUT.");
         }),
-        ...(N && !F.jugs ? [H(49, 35, 32, 18, () => { F.jugs = 1; F.jug = { jugA: 10, jugB: 0, jugC: 0 }; give('jugA', 'jugB', 'jugC'); sfx.take(); say('THREE JUGS. THEY HOLD 10, 7 AND 3 CUPS. THE BIG ONE IS FULL. NO MARKINGS. TAKEN.'); })] : []),
+        ...(N && !F.jugs ? [H(49, 35, 32, 18, () => { F.jugs = 1; F.jug = { jugA: 10, jugB: 0, jugC: 0 }; give('jugA', 'jugB', 'jugC'); sfx.take(); say('THREE JUGS. THEY HOLD 10, 7 AND 3 CUPS. THE BIG ONE IS FULL. NO MARKINGS.'); })] : []),
         H(98, 36, 10, 11, it => {
           if (!N) return say('THE TAP RUNS. COLD.');
           if (it === 'jugA') { F.jug = { jugA: 10, jugB: 0, jugC: 0 }; sfx.tap(); return say('YOU START OVER. ALL 10 CUPS ARE BACK IN THE BIG JUG. THE OTHERS ARE EMPTY.'); }
@@ -961,12 +961,12 @@ const ROOMS = [
     hot() {
       const N = isNight();
       return [
-        H(126, 83, 32, 22, () => (isNight() && F.toy && !F.cP) ? (F.cP = 1, give('cardP'), sfx.take(), say('IN THE TOY BOX: A TRADING CARD. "POOK". HE LOOKS YOUNGER ON IT. TAKEN.')) : F.toy ? say('EMPTY. TOOTH MARKS ON THE LID.') : arrowPanel(() => { F.toy = 1; give('ball'); say('THE TOY BOX OPENS. ONE BALL. IT IS DAMP. TAKEN.'); })),
+        H(126, 83, 32, 22, () => (isNight() && F.toy && !F.cP) ? (F.cP = 1, give('cardP'), sfx.take(), say('IN THE TOY BOX: A TRADING CARD. "POOK". HE LOOKS YOUNGER ON IT.')) : F.toy ? say('EMPTY. TOOTH MARKS ON THE LID.') : arrowPanel(() => { F.toy = 1; give('ball'); say('THE TOY BOX OPENS. ONE BALL. IT IS DAMP.'); })),
         H(52, 12, 22, 22, () => N ? say('THE BOARD HANGS FACE DOWN.') : F.chess ? say('THE BOARD HANGS CROOKED. POOK IS A SORE LOSER.') : chessPanel()),
         H(88, 28, 36, 36, () => (N && S.done[5]) ? tvPanel() : say('THE TV IS OFF. IT IS UNPLUGGED. IT IS STILL WARM.')),
         H(4, 46, 72, 32, () => {
           if (N) return searchPlace('SOFA', 'NOTHING UNDER THE CUSHIONS BUT CRUMBS.');
-          if (!F.coin) { F.coin = 1; give('coin'); sfx.take(); return say('UNDER THE CUSHION: CRUMBS, AND ONE COIN. TAKEN.'); }
+          if (!F.coin) { F.coin = 1; give('coin'); sfx.take(); return say('UNDER THE CUSHION: CRUMBS, AND ONE COIN.'); }
           say('CRUMBS.');
         }),
         H(14, 10, 30, 24, () => {
@@ -1013,11 +1013,11 @@ const ROOMS = [
           mirrorPanel();
         }),
         H(104, 33, 36, 12, () => {
-          if (!F.cab) return lockPanel('cab', "MIRROR CABINET... IT'S LOCKED", ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap'); say('THE CABINET OPENS. ONE BAR OF SOAP. TAKEN.'); });
+          if (!F.cab) return lockPanel('cab', "MIRROR CABINET... IT'S LOCKED", ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap'); say('THE CABINET OPENS. ONE BAR OF SOAP.'); });
           if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
           say('AN EMPTY CABINET.');
         }),
-        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. "THE VACUUM". TAKEN.'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })
+        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. "THE VACUUM".'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })
       ];
     } },
   { name: 'BEDROOM',
@@ -1045,7 +1045,7 @@ const ROOMS = [
         }),
         H(4, 42, 78, 38, it => {
 
-          if (N && !F.cD) { F.cD = 1; give('cardD'); sfx.take(); return say('UNDER THE PILLOW: A TRADING CARD, ALMOST ALL BLACK. "THE DARK". TAKEN.'); }
+          if (N && !F.cD) { F.cD = 1; give('cardD'); sfx.take(); return say('UNDER THE PILLOW: A TRADING CARD, ALMOST ALL BLACK. "THE DARK".'); }
           if (N) return say('THE BED IS STILL WARM.');
           if (it === 'blanket') { if (bedDark()) return say('IT IS TOO DARK TO MAKE THE BED.'); F.blanket = 1; drop('blanket'); sfx.tap(); return say('THE BED IS MADE.'); }
           if (!F.blanket) return say("IT'S TOO COLD.");

@@ -130,6 +130,11 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .bulb.on{background:var(--o)}
 #bub{position:absolute;z-index:1;max-width:64%;background:var(--bg);color:var(--fg);border:2px solid var(--fg);padding:3px 5px;font-size:10px;line-height:1.2;text-transform:uppercase;pointer-events:none}
 #bub::after{content:"";position:absolute;right:16px;bottom:-8px;width:6px;height:6px;background:var(--bg);border:2px solid var(--fg);border-top:0}
+#msg{position:relative}
+#pface{position:absolute;right:2px;bottom:0;width:60px;height:52px;image-rendering:pixelated;image-rendering:crisp-edges}
+#msg.talk{padding:2px 68px 2px 4px}
+#msg.talk #msgt{display:block;position:relative;height:100%;border:2px solid var(--fg);padding:2px 5px;font-size:11px;line-height:1.2}
+#msg.talk #msgt::after{content:"";position:absolute;right:-8px;bottom:10px;width:6px;height:6px;background:var(--bg);border:2px solid var(--fg);border-left:0}
 </style>
 </head>
 <body>
@@ -140,7 +145,7 @@ button{font:inherit;cursor:pointer;border-radius:0}
     <div id="bezel"><div id="screen">
       <div id="status"><span id="rname"></span><span id="needs"></span></div>
       <div id="stage"><canvas id="cv" width="160" height="108"></canvas><div id="panel" hidden></div><div id="bub" hidden></div></div>
-      <div id="msg"></div>
+      <div id="msg"><span id="msgt"></span><canvas id="pface" width="30" height="26" hidden></canvas></div>
       <div id="inv"></div>
       <div id="fx"></div>
     </div></div>
@@ -373,14 +378,20 @@ const JARS = [['poi', 'mix', 'med'], ['mix', 'med', 'poi']];
 const SONG = ['BOWL', 'BALL', 'TUB', 'BED'];
 
 /* ---------- messages / panels ---------- */
-const elMsg = $('#msg'), elPanel = $('#panel');
-let panelModal = false;
+const elMsg = $('#msgt'), elPanel = $('#panel');
+let panelModal = false, curTitle = null;
 function say(t) { elMsg.textContent = t || ''; lastSay = Date.now(); }
+function drawFace() { const o = g; g = $('#pface').getContext('2d'); g.clearRect(0, 0, 30, 26); pook(15, 38); g = o; }
 function openPanel(html, handler, modal) {
+  // on puzzle screens Pook's face sits bottom-right and he speaks the title (and any wrong-answer text)
+  let title = null;
+  if (!modal) html = html.replace(/<div class="t">([\s\S]*?)<\/div>/, (m, t) => { title = t; return ''; });
+  $('#msg').classList.toggle('talk', !modal); $('#pface').hidden = !!modal;
+  if (!modal) { if (title !== null && title !== curTitle) { curTitle = title; elMsg.innerHTML = title; lastSay = Date.now(); } drawFace(); }
   elPanel.innerHTML = html; elPanel.hidden = false; panelModal = !!modal; elPanel.scrollTop = 0;
   elPanel.onclick = e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled && handler) handler(b.dataset.a, b); };
 }
-function closePanel() { elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; panelInv = null; panelKind = null; }
+function closePanel() { $('#msg').classList.remove('talk'); $('#pface').hidden = true; if (curTitle !== null) elMsg.textContent = ''; curTitle = null; elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; panelInv = null; panelKind = null; }
 function pages(list, done) {
   let i = 0;
   const show = () => openPanel(`<div class="sp"></div><pre class="c">${list[i]}</pre><div class="sp"></div><div class="row"><button class="o" data-a="ok">OK</button></div>`,
@@ -841,7 +852,7 @@ function render() {
   renderInv(); draw();
 }
 setInterval(() => {
-  frame++; if (elPanel.hidden) draw();
+  frame++; if (elPanel.hidden) draw(); else if (!$('#pface').hidden) drawFace();
   const idle = elPanel.hidden && $('#splash').hidden && $('#setup').hidden && Date.now() > scareT;
   if (idle && isNight() && rand(140) === 0) glitch(180);
   if (idle && S.boot && !F.end && Date.now() > nextTalk && Date.now() - lastSay > 6000) pookTalk();

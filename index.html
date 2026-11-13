@@ -73,7 +73,23 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .hb.a{background:var(--o);color:var(--k);box-shadow:0 4px 0 var(--k)}
 .tl{width:0;height:0;border-style:solid;border-width:10px 15px 10px 0;border-color:transparent var(--w) transparent transparent;margin-right:4px}
 .tr{width:0;height:0;border-style:solid;border-width:10px 0 10px 15px;border-color:transparent transparent transparent var(--w);margin-left:4px}
-#bmenu{font-size:10px;background:var(--k);color:var(--w);border:0;border-radius:10px;padding:6px 12px;letter-spacing:1px}
+#bmenu,#bwords{font-size:10px;background:var(--k);color:var(--w);border:0;border-radius:10px;padding:7px 14px;letter-spacing:1px}
+#bwords{background:var(--o);color:var(--k);box-shadow:0 3px 0 var(--k)}
+.mid{display:flex;flex-direction:column;gap:9px;align-items:center}
+.hw{font-size:16px;white-space:nowrap;margin:3px 0}
+.chess{display:grid;grid-template-columns:repeat(8,21px);grid-auto-rows:21px;border:2px solid var(--fg);flex:none}
+#panel .sq{border:0;padding:0;font-size:17px;line-height:21px;background:var(--bg);color:var(--fg);font-weight:400;font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols2","DejaVu Sans",sans-serif}
+#panel .sq.dk{background:var(--o);color:var(--k)}
+#panel .sq.on{outline:3px solid var(--fg);outline-offset:-3px}
+#pwr{width:92px;height:92px;border-radius:50%;border:4px solid var(--o);background:none;display:flex;align-items:center;justify-content:center;animation:blink 2.4s ease-in-out infinite alternate}
+#pwr span{display:block;width:36px;height:36px;border:4px solid var(--o);border-top-color:transparent;border-radius:50%;position:relative}
+#pwr span::after{content:"";position:absolute;left:50%;top:-14px;width:4px;height:22px;margin-left:-2px;background:var(--o)}
+.hexes{position:relative;height:143px;flex:none}
+#panel .hx{position:absolute;width:22%;height:44px;border:0;padding:0;background:var(--fg);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+#panel .hx span{position:absolute;inset:2px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:var(--bg);color:var(--fg);display:flex;align-items:center;justify-content:center;font-size:9px}
+#panel .hx.on span{background:var(--o);color:var(--k)}
+#panel .hx.dn span{background:var(--fg);color:var(--bg)}
+#panel .cslot{flex:1;min-height:36px;font-size:9px;padding:2px;word-break:break-word}
 .legend{text-align:center;font-size:9px;letter-spacing:1px;margin-top:10px}
 @keyframes flick{0%,91%,100%{opacity:1}92%{opacity:.84}93%{opacity:1}96%{opacity:.93}97%{opacity:1}}
 
@@ -82,6 +98,8 @@ button{font:inherit;cursor:pointer;border-radius:0}
 #splash p{margin:0;max-width:340px;min-height:1.7em}
 #splash .tap{font-size:11px;color:var(--w);animation:blink 1.4s steps(2) infinite}
 @keyframes blink{50%{opacity:0}}
+#pwr{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
 
 /* gift-giver setup (not part of the game) */
 #setup{position:fixed;inset:0;z-index:20;background:var(--k);color:var(--w);overflow:auto;padding:16px}
@@ -94,7 +112,7 @@ button{font:inherit;cursor:pointer;border-radius:0}
 </head>
 <body>
 <div id="wrap">
-  <div id="codes"></div>
+  <div id="codes" hidden></div>
   <div id="device">
     <div id="brand">POOK<span>POCKET COMPANION</span></div>
     <div id="bezel"><div id="screen">
@@ -106,7 +124,7 @@ button{font:inherit;cursor:pointer;border-radius:0}
     </div></div>
     <div id="controls">
       <button class="hb" id="bl" aria-label="Previous room"><span class="tl"></span></button>
-      <button id="bmenu">MENU</button>
+      <div class="mid"><button id="bwords">WORDS</button><button id="bmenu">MENU</button></div>
       <button class="hb" id="br" aria-label="Next room"><span class="tr"></span></button>
     </div>
     <div class="legend">&lt; &gt; CHANGE ROOM &nbsp;·&nbsp; TAP THE SCREEN</div>
@@ -119,15 +137,15 @@ button{font:inherit;cursor:pointer;border-radius:0}
 'use strict';
 /* ====================================================================
    GIFT SETTINGS — the only part you need to edit.
-   key:     the first Steam key exactly as given (dashes are fine).
-   key2:    the second Steam key (leave blank for a one-key game).
+   key:     the first game's name (revealed letter by letter on tape one).
+   key2:    the second game's name (tape two; leave blank for one game).
    name:    who it is for (optional).
    message: shown with the final key (optional).
    Or leave blank and open the page with #setup on the end of the
    address to make a personal link from your phone.
    Press F1 (or add #debug to the address) for skip options in the MENU.
    ==================================================================== */
-const BAKED = { key: '', key2: '', name: '', message: '' };
+const BAKED = { key: 'ENDACOPIA', key2: 'WEBFISHING', name: '', message: '' };
 /* ==================================================================== */
 
 const DEMO_KEYS = ['DEMO-KEY1-GOES-HERE', 'DEMO-KEY2-ALSO-HERE'];
@@ -170,6 +188,19 @@ function pieces(k) {
   for (let i = 0; i < 4; i++) { const len = Math.ceil((raw.length - p) / (4 - i)); out.push(raw.slice(p, p + len)); p += len; }
   return out;
 }
+/* hangman letters: each need met awards letters; a letter found counts for both names */
+function awards() {
+  const out = [], seen = new Set(), V = 'AEIOU';
+  CFG.keys.forEach(w => {
+    const L = [...new Set(w.replace(/[^A-Z]/g, ''))].filter(c => !seen.has(c)); L.forEach(c => seen.add(c));
+    const ord = [...L.filter(c => !V.includes(c)).sort().reverse(), ...L.filter(c => V.includes(c))];
+    for (let n = 0, p = 0; n < 4; n++) { const len = Math.ceil((ord.length - p) / (4 - n)); out.push(ord.slice(p, p + len)); p += len; }
+  });
+  return out;
+}
+const found = () => { const s = new Set(), A = awards(); S.done.forEach((d, i) => { if (d && A[i]) A[i].forEach(c => s.add(c)); }); return s; };
+const showWord = k => { const f = found(); return [...CFG.keys[k]].map(c => /[A-Z]/.test(c) ? (f.has(c) ? c : '_') : c).join(' '); };
+const wordsHtml = () => CFG.keys.map((w, k) => (k > 0 && S.tape < k) ? '' : `<div class="hw">${esc(showWord(k))}</div>`).join('');
 const isDebug = () => forceDebug || /debug/i.test(location.hash);
 
 /* ---------- save state ---------- */
@@ -276,8 +307,14 @@ Object.assign(ICON, {
   eye() { R(4, 5, 8, 1); R(2, 6, 2, 1); R(12, 6, 2, 1); R(1, 7, 1, 2); R(14, 7, 1, 2); R(2, 9, 2, 1); R(12, 9, 2, 1); R(4, 10, 8, 1); R(6, 6, 4, 4, 'o'); R(7, 7, 2, 2); R(4, 2, 1, 2); R(8, 1, 1, 3); R(11, 2, 1, 2); }
 });
 const WORD_ANS = ['hat', 'egg', 'dog', 'ant', 'eye'];
+Object.assign(ICON, {
+  cardD() { B(3, 1, 10, 14, 'w'); R(5, 3, 6, 7); R(5, 12, 6, 1); },
+  cardV() { B(3, 1, 10, 14, 'w'); R(7, 3, 2, 6); R(5, 8, 6, 2, 'o'); R(5, 12, 6, 1); },
+  cardP() { B(3, 1, 10, 14, 'w'); DO(8, 6, 2, 'w'); R(7, 5, 1, 1); R(9, 5, 1, 1); R(7, 8, 3, 1, 'o'); R(5, 12, 6, 1); },
+  cardM() { B(3, 1, 10, 14, 'w'); B(5, 4, 6, 5, 'o'); R(6, 5, 1, 1); R(7, 6, 2, 1); R(9, 5, 1, 1); R(5, 12, 6, 1); }
+});
 const JARLAB = ['MEDICINE', 'NOT MEDICINE', 'MIXED'];
-const NAME = id => ({
+const NAME = id => CARDS[id] ? `A TRADING CARD: "${CARDS[id][0]}". IT ${CARDS[id][1]}` : ({
   coin: 'A COIN', opener: 'A CAN OPENER', can: 'A SEALED CAN', canopen: 'AN OPEN CAN', ball: 'A BALL', plug: 'A BATH PLUG', soap: 'SOAP',
   key: 'A SMALL KEY', blanket: 'A BLANKET', jug5: `BIG JUG (${F.j5 || 0} OF 5)`, jug3: `SMALL JUG (${F.j3 || 0} OF 3)`,
   jar0: `JAR LABELLED "${JARLAB[0]}"`, jar1: `JAR LABELLED "${JARLAB[1]}"`, jar2: `JAR LABELLED "${JARLAB[2]}"`, teddy: 'HIS BEAR', crank: 'A SMALL CRANK'
@@ -320,7 +357,7 @@ function openPanel(html, handler, modal) {
   elPanel.innerHTML = html; elPanel.hidden = false; panelModal = !!modal; elPanel.scrollTop = 0;
   elPanel.onclick = e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled && handler) handler(b.dataset.a, b); };
 }
-function closePanel() { elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; }
+function closePanel() { elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; panelInv = null; }
 function pages(list, done) {
   let i = 0;
   const show = () => openPanel(`<div class="sp"></div><pre class="c">${list[i]}</pre><div class="sp"></div><div class="row"><button class="o" data-a="ok">OK</button></div>`,
@@ -357,6 +394,22 @@ function arrowPanel(onOpen) {
     });
   draw();
 }
+const CHESS = ['......rk', 'pp....pp', '........', 'q.....N.', '........', '.Q......', '.....PPP', '......K.'];
+const GLYPH = { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙', k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
+function chessPanel() {
+  let pick = -1; const flat = CHESS.join('');
+  const draw = () => openPanel(`<div style="display:flex;gap:8px;align-items:flex-start"><div class="chess">${[...flat].map((ch, i) => `<button class="sq ${((i >> 3) + i) & 1 ? 'dk' : ''} ${pick === i ? 'on' : ''}" data-a="${i}">${ch === '.' ? '' : GLYPH[ch] + '︎'}</button>`).join('')}</div>
+    <div style="display:flex;flex-direction:column;gap:8px"><div>POOK PLAYS BLACK.</div><div>WHITE TO MOVE.</div><div>END IT IN ONE.</div><button data-a="x">LEAVE</button></div></div>`,
+    a => {
+      if (a === 'x') return closePanel();
+      const i = +a, mine = /[A-Z]/.test(flat[i]);
+      if (mine) { pick = pick === i ? -1 : i; sfx.tap(); return draw(); }
+      if (pick < 0) return say('THAT IS NOT YOUR PIECE.');
+      if (pick === 30 && i === 13) { closePanel(); F.chess = 1; give('plug'); sfx.take(); angryT = Date.now() + 6000; say('KNIGHT TO F7. CHECKMATE. POOK FLIPS THE BOARD. BEHIND IT: A BATH PLUG. TAKEN.'); save(); return render(); }
+      pick = -1; sfx.bad(); say('POOK PUTS YOUR PIECE BACK. THAT IS NOT THE BEST MOVE.'); draw();
+    });
+  draw();
+}
 function wordPanel() {
   const seq = F.wseq || (F.wseq = ['dog', 'eye', 'hat', 'ant', 'egg']); let pick = -1;
   const draw = () => {
@@ -377,7 +430,7 @@ function wordPanel() {
 }
 function mazePanel() {
   const cw = MAZE[0].length * 8, ch = MAZE.length * 8;
-  openPanel(`<div class="t">A POSTER: "POOK'S WAY HOME"</div><canvas id="mz" width="${cw}" height="${ch}" style="width:${cw * 1.75}px;max-width:100%"></canvas><div class="c">ONE ARROW FOR EACH STRAIGHT RUN.</div><div class="row"><button data-a="x">STEP BACK</button></div>`, () => closePanel());
+  openPanel(`<div class="t">A POSTER: "POOK'S WAY HOME"</div><canvas id="mz" width="${cw}" height="${ch}" style="width:${cw * 1.75}px;max-width:100%"></canvas><div class="row"><button data-a="x">STEP BACK</button></div>`, () => closePanel());
   const old = g; g = $('#mz').getContext('2d');
   R(0, 0, cw, ch, 'w');
   MAZE.forEach((row, y) => [...row].forEach((c, x) => {
@@ -401,7 +454,28 @@ function switchPanel() {
     });
   draw();
 }
+const HEX_W = ['BONE', 'CANINE', 'TIRED', 'STEAL', 'KITTEN', 'DOGMA', 'PLANT', 'SULTAN', 'WEIGHT', 'BEEF', 'FARMER', 'SUBLIME', 'SCOWL', 'HEART', 'CHIPS', 'CLIPS'];
+const HEX_G = [0, 0, 1, 1, 0, 2, 2, 1, 0, 2, 3, 1, 2, 3, 3, 3];
+const HEX_L = ['A NUMBER HIDES INSIDE EACH.', 'EACH ENDS IN A COLOUR.', 'AN ANIMAL HIDES INSIDE EACH.', 'A BODY PART HIDES INSIDE EACH.'];
+function hexPanel() {
+  const done = F.hx || (F.hx = [0, 0, 0, 0]); let pick = [];
+  const draw = () => openPanel(`<div class="row" style="justify-content:space-between"><span>4 GROUPS OF 4. GROUPS TOUCH.</span><button data-a="x">X</button></div><div class="hexes">${HEX_W.map((w, i) => { const r = i >> 2, c = i & 3; return `<button class="hx ${done[HEX_G[i]] ? 'dn' : pick.includes(i) ? 'on' : ''}" data-a="${i}" style="left:${c * 22 + (r & 1 ? 11 : 0)}%;top:${r * 33}px"><span>${w}</span></button>`; }).join('')}</div>`,
+    a => {
+      if (a === 'x') return closePanel();
+      const i = +a; if (done[HEX_G[i]]) return say(HEX_L[HEX_G[i]]);
+      pick = pick.includes(i) ? pick.filter(x => x !== i) : [...pick, i]; sfx.tap();
+      if (pick.length === 4) {
+        if (new Set(pick.map(x => HEX_G[x])).size === 1) {
+          const gi = HEX_G[pick[0]]; done[gi] = 1; pick = []; save(); sfx.take(); say(HEX_L[gi]);
+          if (done.every(Boolean)) { F.tv = 1; save(); tvPanel(); return say('THE STATIC CLEARS. THE TELEVISION HAS SOMETHING TO SAY.'); }
+        } else { sfx.bad(); say('THE STATIC SNARLS. THAT IS NOT A GROUP.'); pick = []; }
+      }
+      draw();
+    });
+  draw(); say('THE TELEVISION IS ALL STATIC. WORDS FLOAT IN IT.');
+}
 function tvPanel() {
+  if (!F.tv) return hexPanel();
   const CH = ['STAND BY.\n\nHIS BEAR IS IN THIS HOUSE.\nSOFA. TUB. WARDROBE. FRIDGE.\n\nFOUR CHANNELS KNOW WHERE.\nONLY ONE OF THEM TELLS THE TRUTH.',
     'IT IS UNDER THE SOFA.', 'IT IS IN THE TUB.', 'IT IS NOT IN THE WARDROBE.', 'IT IS NOT UNDER THE SOFA.'];
   let c = 0;
@@ -423,42 +497,44 @@ function jarPanel() {
     });
   if (held !== undefined) say(`YOU ARE HOLDING THE "${JARLAB[held]}" JAR.`);
 }
+const CARDS = { cardD: ['THE DARK', 'FEARS NOTHING'], cardV: ['THE VACUUM', 'FEARS ONLY WHAT IT CANNOT SEE'], cardP: ['POOK', 'FEARS THE LOUD ONE'], cardM: ['THE MAILMAN', 'FEARS TEETH'] };
+const CARD_ANS = ['cardD', 'cardV', 'cardP', 'cardM'];
+let panelInv = null;
 function boxPanel() {
-  const seq = F.bseq || (F.bseq = []);
-  const draw = () => openPanel(`<div class="t">A MUSIC BOX. ENGRAVED:</div><div class="c">"PLAY HIS DAY BACK TO HIM."</div><div class="seq">${seq.join(' · ') || '&nbsp;'}</div>
-    <div class="row">${['TUB', 'BOWL', 'BED', 'BALL'].map(k => `<button data-a="${k}">${k}</button>`).join('')}</div><div class="sp"></div><div class="row"><button data-a="clr">CLEAR</button><button data-a="x">LEAVE</button></div>`,
-    a => {
-      if (a === 'x') return closePanel();
-      if (a === 'clr') { seq.length = 0; save(); return draw(); }
-      if (seq.length >= 4) return;
-      seq.push(a); sfx.note(seq.length - 1); save(); draw();
-      if (seq.length === 4) {
-        if (seq.join() === SONG.join()) return setTimeout(() => need(7), 500);
-        sfx.bad(); say('THE BOX CLICKS SHUT. WRONG ORDER.'); seq.length = 0; save(); setTimeout(() => { if (!elPanel.hidden && !panelModal) draw(); }, 500);
-      }
-    });
+  const slots = F.cslots || (F.cslots = [null, null, null, null]);
+  const draw = () => {
+    openPanel(`<div class="t">A MUSIC BOX. FOUR CARD SLOTS.</div><div class="c">"FROM THE ONE THAT FEARS NOTHING<br>TO THE ONE THAT FEARS THE MOST."</div>
+      <div class="row" style="gap:4px;flex-wrap:nowrap">${slots.map((id, i) => `<button class="cslot" data-a="${i}">${id ? CARDS[id][0] : '—'}</button>`).join('')}</div><div class="c" style="font-size:10px">TAP A CARD BELOW TO SLOT IT. TAP A SLOT TO TAKE IT BACK.</div>
+      <div class="sp"></div><div class="row"><button class="o" data-a="go">TURN THE HANDLE</button><button data-a="x">LEAVE</button></div>`,
+      a => {
+        if (a === 'x') return closePanel();
+        if (a === 'go') { if (slots.join() === CARD_ANS.join()) return need(7); sfx.bad(); return say(slots.includes(null) ? 'THE HANDLE WILL NOT TURN. A SLOT IS EMPTY.' : 'THE BOX PLAYS ONE SOUR NOTE AND STOPS.'); }
+        const i = +a; if (slots[i]) { give(slots[i]); slots[i] = null; sfx.tap(); save(); renderInv(); draw(); }
+      });
+    panelInv = id => { if (!CARDS[id]) return; const i = slots.indexOf(null); if (i < 0) return; slots[i] = id; drop(id); sfx.tap(); say(`${CARDS[id][0]}. IT ${CARDS[id][1]}.`); save(); renderInv(); draw(); };
+  };
   draw();
 }
 
 /* ---------- needs (one code piece each) ---------- */
 const FIX = [
   () => { F.coin = F.drawer = F.cup = 1; drop('coin', 'opener', 'can', 'canopen'); },
-  () => { F.toy = 1; drop('ball'); if (!F.plug) give('plug'); },
-  () => { F.tap = F.fog = F.plug = F.soap = F.cab = 1; drop('plug', 'soap'); },
+  () => { F.toy = 1; drop('ball'); },
+  () => { F.tap = F.fog = F.plug = F.soap = F.cab = F.chess = 1; drop('plug', 'soap'); },
   () => { F.ward = F.blanket = 1; F.lights = [0, 0, 0, 0]; drop('key', 'blanket'); },
   () => { F.jugs = 1; drop('jug5', 'jug3'); },
   () => { drop('jar0', 'jar1', 'jar2'); },
-  () => { F.teddy = 1; drop('teddy'); if (!F.crank) give('crank'); },
-  () => { F.crank = 1; drop('crank'); }
+  () => { F.teddy = F.tv = 1; drop('teddy'); },
+  () => { F.cM = F.cP = F.cV = F.cD = 1; drop('cardM', 'cardP', 'cardV', 'cardD'); }
 ];
 const DONE_LINE = ['POOK EATS. POOK DOES NOT BLINK WHILE HE EATS.', 'POOK PLAYS. THE BALL WILL NEVER BE THE SAME.', 'POOK IS CLEAN. THE WATER IS NOT.', 'POOK SLEEPS.',
-  'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THE WRONGNESS FADES.', 'POOK HOLDS HIS BEAR. SOMETHING FELL OUT OF IT: A CRANK.', 'THE SONG PLAYS. POOK SLEEPS.'];
+  'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THE WRONGNESS FADES.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING.', 'THE SONG PLAYS. POOK SLEEPS.'];
 function startNight() { S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
 function need(i) {
   if (S.done[i]) return;
-  S.done[i] = 1; FIX[i](); S.hi = 0; closePanel(); save(); sfx.good(); render(); say(DONE_LINE[i]);
-  const k = (i / 4) | 0, n = i % 4;
-  openPanel(`<div class="sp"></div><pre class="c">${DONE_LINE[i]}\n\nPOOK DROPS A TAG. IT READS:</pre><div class="big">${esc(pieces(k)[n])}</div><div class="c">PIECE ${n + 1} OF 4</div><div class="sp"></div><div class="row"><button class="o" data-a="ok">KEEP IT</button></div>`,
+  S.done[i] = 1; FIX[i](); closePanel(); save(); sfx.good(); render(); say(DONE_LINE[i]);
+  const k = (i / 4) | 0, n = i % 4, got = awards()[i] || [];
+  openPanel(`<div class="sp"></div><pre class="c">${DONE_LINE[i]}\n\n${got.length ? 'POOK DROPS ' + (got.length > 1 ? got.length + ' LETTERS:' : 'A LETTER:') : 'POOK DROPS NOTHING THIS TIME.'}</pre>${got.length ? `<div class="big">${got.join(' ')}</div>` : ''}<div class="c">${wordsHtml()}</div><div class="sp"></div><div class="row"><button class="o" data-a="ok">KEEP ${got.length > 1 ? 'THEM' : 'IT'}</button></div>`,
     () => {
       closePanel(); sfx.tap();
       if (n !== 3) return render();
@@ -469,9 +545,17 @@ function need(i) {
     }, true);
 }
 function keyReveal(k, next) {
-  openPanel(`<div class="t">TAPE ${k + 1} COMPLETE — STEAM KEY${nKeys() > 1 ? ' ' + (k + 1) + ' OF ' + nKeys() : ''}</div><div class="sp"></div><div class="big" style="font-size:16px;letter-spacing:1px">${esc(CFG.keys[k])}</div>
-    <div class="c">STEAM &gt; GAMES &gt; ACTIVATE A PRODUCT</div><div class="sp"></div><div class="row"><button class="o" data-a="ok">${next ? 'CONTINUE' : 'CLOSE'}</button><button data-a="copy">COPY KEY</button></div>`,
-    (a, b) => { if (a === 'copy') return copyText(CFG.keys[k], b); closePanel(); sfx.tap(); if (next) next(); else render(); }, true);
+  openPanel(`<div class="t">TAPE ${k + 1} COMPLETE</div><div class="sp"></div><div class="c">THE WORD IS WHOLE:</div><div class="big">${esc(CFG.keys[k])}</div>
+    <div class="c">IT IS A GAME. POOK WAS KEEPING IT FOR YOU.<br>IT IS YOURS NOW.</div><div class="sp"></div><div class="row"><button class="o" data-a="ok">${next ? 'CONTINUE' : 'CLOSE'}</button></div>`,
+    () => { closePanel(); sfx.tap(); if (next) next(); else render(); }, true);
+}
+function wordsPanel() {
+  openPanel(`<div class="t">WHAT POOK IS KEEPING FOR YOU</div><div style="display:flex;gap:8px;align-items:center"><canvas id="hm" width="28" height="40" style="width:70px;flex:none;margin:0"></canvas><div>${wordsHtml()}<div style="margin-top:8px;font-size:10px">LETTERS FOUND: ${[...found()].join(' ') || 'NONE YET'}</div></div></div><div class="sp"></div><div class="row"><button data-a="x">CLOSE</button></div>`, () => closePanel());
+  const old = g, n = S.done.filter(Boolean).length; g = $('#hm').getContext('2d'); PAL = isNight() ? nightPal : dayPal;
+  R(0, 0, 28, 40, 'w'); R(2, 38, 24, 2); R(6, 2, 2, 36); R(6, 2, 14, 2); R(18, 4, 1, 5);
+  if (n > 0) DO(18, 12, 3, 'w'); if (n > 1) R(18, 16, 1, 9); if (n > 2) R(14, 18, 4, 1); if (n > 3) R(19, 18, 4, 1);
+  if (n > 4) { R(16, 25, 2, 1); R(15, 26, 1, 5); } if (n > 5) { R(19, 25, 2, 1); R(21, 26, 1, 5); } if (n > 6) R(17, 11, 1, 1, 'o'); if (n > 7) R(19, 11, 1, 1, 'o');
+  g = old;
 }
 function copyText(t, btn) {
   const ok = () => { const old = btn.textContent; btn.textContent = 'COPIED'; setTimeout(() => { btn.textContent = old; }, 1500); };
@@ -542,6 +626,7 @@ const ROOMS = [
         H(8, 26, 30, 52, () => { if (N && !F.teddy) return searchWrong('THE FRIDGE IS EMPTY. THE LIGHT INSIDE STAYS OFF.'); say('THE FRIDGE HUMS. IT IS EMPTY, EXCEPT FOR THE HUM.'); }),
         H(50, 10, 46, 26, () => F.cup ? say('BARE SHELVES.') : lockPanel('cup', 'A WALL CUPBOARD. THREE-DIGIT PADLOCK.', ['', '', ''], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
         H(50, 58, 24, 12, it => {
+          if (N && F.drawer && !F.cM) { F.cM = 1; give('cardM'); sfx.take(); return say('IN THE DRAWER: A TRADING CARD. "THE MAILMAN". TAKEN.'); }
           if (F.drawer) return say('AN EMPTY DRAWER.');
           if (it === 'coin') { F.drawer = 1; drop('coin'); give('opener'); sfx.take(); return say('THE COIN TURNS THE SCREW. INSIDE: A CAN OPENER. TAKEN.'); }
           say('THE DRAWER IS HELD SHUT BY ONE FLAT-HEADED SCREW.');
@@ -558,6 +643,7 @@ const ROOMS = [
       base();
       B(14, 10, 30, 24); R(28, 11, 1, 22); R(15, 22, 28, 1);                              // window
       if (N && !F.eyes) { R(19, 16, 2, 2, 'o'); R(23, 16, 2, 2, 'o'); } else if (!N) D(36, 16, 3, 'o');
+      B(52, 12, 22, 22); if (F.chess) R(54, 14, 18, 18, 'k'); else for (let i = 0; i < 16; i++) if (((i >> 2) + i) & 1) R(53 + (i & 3) * 5, 13 + (i >> 2) * 5, 5, 5, 'o');   // chess board
       B(8, 46, 64, 14); B(4, 54, 8, 24); B(68, 54, 8, 24); B(11, 58, 58, 20); R(40, 59, 1, 12); R(12, 70, 56, 1); // sofa
       B(88, 36, 36, 28); B(91, 39, 24, 20, N ? 'k' : 'w'); R(118, 42, 3, 3); R(118, 48, 3, 3, 'o'); R(100, 28, 1, 8); R(106, 30, 1, 6); // tv
       if (N) for (let i = 0; i < 90; i++) R(92 + rand(22), 40 + rand(18), 1, 1, rand(5) ? 'w' : 'o'); else R(94, 42, 5, 1);
@@ -567,7 +653,8 @@ const ROOMS = [
     hot() {
       const N = isNight();
       return [
-        H(126, 83, 32, 22, () => F.toy ? say('EMPTY. TOOTH MARKS ON THE LID.') : arrowPanel(() => { F.toy = 1; give('ball', 'plug'); say('THE TOY BOX OPENS. A BALL. AND A BATH PLUG. POOK HIDES THINGS.'); })),
+        H(126, 83, 32, 22, () => (isNight() && F.toy && !F.cP) ? (F.cP = 1, give('cardP'), sfx.take(), say('IN THE TOY BOX: A TRADING CARD. "POOK". HE LOOKS YOUNGER ON IT. TAKEN.')) : F.toy ? say('EMPTY. TOOTH MARKS ON THE LID.') : arrowPanel(() => { F.toy = 1; give('ball'); say('THE TOY BOX OPENS. ONE BALL. IT IS DAMP. TAKEN.'); })),
+        H(52, 12, 22, 22, () => N ? say('THE BOARD HANGS FACE DOWN.') : F.chess ? say('THE BOARD HANGS CROOKED. POOK IS A SORE LOSER.') : chessPanel()),
         H(88, 28, 36, 36, () => N ? tvPanel() : say('THE TV IS OFF. IT IS UNPLUGGED. IT IS STILL WARM.')),
         H(4, 46, 72, 32, () => {
           if (N) return F.teddy ? say('CRUMBS.') : searchWrong('NOTHING UNDER THE CUSHIONS.');
@@ -622,7 +709,7 @@ const ROOMS = [
           if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
           say('AN EMPTY CABINET.');
         }),
-        H(90, 44, 12, 18, () => say('A TOWEL. DAMP. NOBODY HAS USED IT.'))
+        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. "THE VACUUM". TAKEN.'); } say('A TOWEL. DAMP. NOBODY HAS USED IT.'); })
       ];
     } },
   { name: 'BEDROOM',
@@ -645,10 +732,10 @@ const ROOMS = [
         H(26, 8, 30, 26, () => mazePanel()),
         H(82, 44, 16, 34, it => {
           if (!N) return note('A NOTE IN THE DRAWER', 'WHEN YOU LEAVE THE ROOM,\nWHAT DOES POOK FEEL?\n\nLOOK IN THE MIDDLE OF THINGS.');
-          if (!F.crank) { if (it === 'crank') { F.crank = 1; drop('crank'); sfx.take(); return say('THE CRANK FITS THE MUSIC BOX.'); } return say('A MUSIC BOX. THE CRANK IS MISSING. IT WAS NOT HERE YESTERDAY.'); }
-          S.done[7] ? say('THE BOX IS STILL TURNING.') : boxPanel();
+          S.done[7] ? say('THE BOX IS STILL TURNING.') : S.done[6] ? boxPanel() : say('A MUSIC BOX. IT WAS NOT HERE YESTERDAY. POOK GROWLS WHEN YOU REACH FOR IT.');
         }),
         H(4, 42, 78, 38, it => {
+          if (N && !F.cD) { F.cD = 1; give('cardD'); sfx.take(); return say('UNDER THE PILLOW: A TRADING CARD, ALMOST ALL BLACK. "THE DARK". TAKEN.'); }
           if (N) return say('THE BED IS STILL WARM.');
           if (it === 'blanket') { F.blanket = 1; drop('blanket'); sfx.tap(); if (lights().every(v => !v) && S.done[2]) return need(3); return say('THE BED IS MADE. THE LIGHTS ARE STILL ON.'); }
           say(F.blanket ? 'MADE. WAITING.' : 'A BARE MATTRESS.');
@@ -678,7 +765,7 @@ function draw() {
 }
 const POOK_LINES = ['I WILL PEE ON YOU WHEN YOU SLEEP.', 'YOU LOOK TASTY.', 'I KNOW WHERE YOU KEEP YOUR SOCKS.', 'I HAVE BEEN INSIDE THE WALLS. IT IS NICE IN THERE.', 'YOUR ANKLES ARE UNGUARDED.',
   'I ATE SOMETHING OF YOURS. YOU WILL FIND OUT WHICH.', 'I LICKED EVERYTHING YOU OWN.', 'WHEN YOU BLINK, I MOVE CLOSER.', 'I AM A GOOD BOY. SAY IT.', 'I CAN SMELL YOUR BIRTHDAY.',
-  'THE MAILMAN KNOWS WHAT HE DID.', 'I WATCH YOU CHEW.', 'DO NOT LOOK UNDER THE BED. THAT IS MY SPOT.', 'I BURIED SOMETHING. IT WAS NOT A BONE.', 'YOUR PILLOW TASTES LIKE YOU.', 'I HEARD YOU OPEN CHEESE IN 2019.'];
+  'THE MAILMAN KNOWS WHAT HE DID.', 'I WATCH YOU CHEW.', 'DO NOT LOOK UNDER THE BED. THAT IS MY SPOT.', 'I BURIED SOMETHING. IT WAS NOT A BONE.', 'YOUR PILLOW TASTES LIKE YOU.', 'I HEARD YOU OPEN CHEESE IN 2019.', 'I HEARD YOU WERE A BIRD PERSON.'];
 function pookTalk() {
   nextTalk = Date.now() + 35000 + rand(40000);
   if (rand(4) === 0) { angryT = Date.now() + 4500; sfx.bad(); say('POOK: "??? WHAT ARE YOU DOING ???"'); }
@@ -737,7 +824,8 @@ elCv.addEventListener('click', e => {
   save(); if (elPanel.hidden) render(); else renderInv();
 });
 $('#inv').addEventListener('click', e => {
-  const b = e.target.closest('.sl'); if (!b || !b.dataset.i || !elPanel.hidden) return; const id = b.dataset.i;
+  const b = e.target.closest('.sl'); if (!b || !b.dataset.i) return; const id = b.dataset.i;
+  if (!elPanel.hidden) { if (panelInv && !panelModal) panelInv(id); return; }
   if (!sel) { sel = id; sfx.tap(); say(`${NAME(id)}. NOW TAP WHERE TO USE IT.`); }
   else if (sel === id) { sel = null; say(''); }
   else {
@@ -756,6 +844,7 @@ let forceDebug = false;
 document.addEventListener('keydown', e => { if (e.key === 'F1') { e.preventDefault(); forceDebug = true; if (!panelModal) menu(); } });
 $('#codes').addEventListener('click', e => { const b = e.target.closest('.crow'); if (!b || !elPanel.hidden) return; const k = +b.dataset.k; if (S.done.slice(k * 4, k * 4 + 4).every(Boolean)) keyReveal(k, null); });
 $('#bmenu').addEventListener('click', () => { if (!panelModal) menu(); });
+$('#bwords').addEventListener('click', () => { if (!panelModal) { sfx.tap(); wordsPanel(); } });
 function menu() {
   const dbg = isDebug(), st = stage();
   openPanel(`<div class="t">MENU</div><div class="row"><button data-a="snd">SOUND: ${muted ? 'OFF' : 'ON'}</button><button data-a="x">CLOSE</button></div>
@@ -768,15 +857,15 @@ function menu() {
       if (a === 'scare') { closePanel(); return scare(); }
       if (a === 'talk') { closePanel(); return pookTalk(); }
       if (a === 'tape') { while (stage() >= 0 && stage() < 4) dbgSolve(); return menu(); }
-      if (a === 'reset') { S = fresh(); S.boot = true; F = S.f; sel = null; save(); closePanel(); say('RESET.'); return render(); }
+      if (a === 'reset') { S = fresh(); F = S.f; sel = null; save(); closePanel(); nextTalk = Date.now() + 45000; return boot(); }
       if (a === 'ans') return note('ANSWERS', `1 CUPBOARD ${CUP_CODE}. COIN (SOFA) OPENS DRAWER. OPENER + CAN. CAN ON BOWL.
 2 TOY BOX ${[...MAZE_ANS].map(c => ARROW[c]).join('')}. BALL ON POOK.
-3 HOT TAP, MIRROR, CABINET ${CAB_CODE}. PLUG + SOAP ON TUB (AFTER PLAY).
+3 DEN CHESS BOARD: KNIGHT G5 TO F7 (GIVES PLUG). HOT TAP, MIRROR, CABINET ${CAB_CODE} (GIVES SOAP). PLUG + SOAP ON TUB.
 4 WARDROBE TILES: HAT EGG DOG ANT EYE (MIDDLE LETTERS = AGONY). BLANKET ON BED, SWITCHES 1 2 3.
 5 TAKE JUGS. FILL 5, POUR INTO 3, EMPTY 3, POUR 5 INTO 3, FILL 5, POUR INTO 3. BIG JUG (4) ON BOWL.
 6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
-7 TV. BEAR IS IN THE WARDROBE. BEAR ON POOK.
-8 CRANK ON MUSIC BOX. ${SONG.join(' ')}.`);
+7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN BEAR IS IN THE WARDROBE. BEAR ON POOK.
+8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER: DARK, VACUUM, POOK, MAILMAN.`);
     });
 }
 function dbgSolve() {
@@ -791,8 +880,8 @@ function dbgSolve() {
 function setup() {
   const c = store.get('pook-cfg') || BAKED, el = $('#setup');
   el.innerHTML = `<div class="in"><div style="font-size:18px;color:var(--o)">GIFT SETUP</div><div>Only for the gift-giver. Fill this in, make the link, and send that link on the day.</div>
-    <label>Steam key 1 (tape one)<input id="skey" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX" value="${esc(c.key || '')}"></label>
-    <label>Steam key 2 (tape two — blank for a one-key game)<input id="skey2" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX" value="${esc(c.key2 || '')}"></label>
+    <label>Game 1 name (tape one)<input id="skey" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX" value="${esc(c.key || '')}"></label>
+    <label>Game 2 name (tape two — blank for one game)<input id="skey2" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX" value="${esc(c.key2 || '')}"></label>
     <label>Their name (optional)<input id="sname" autocomplete="off" value="${esc(c.name || '')}"></label>
     <label>Message shown at the very end (optional)<textarea id="smsg">${esc(c.message || '')}</textarea></label>
     <button id="smake">MAKE LINK</button>
@@ -818,11 +907,17 @@ function splash(done) {
   const finish = () => { fin = true; clearTimeout(timer); lines.forEach((t, i) => { $('#sp' + i).textContent = t; }); $('#sp2').style.visibility = 'visible'; };
   const step = () => {
     if (li >= lines.length) return finish();
-    $('#sp' + li).textContent = lines[li].slice(0, ++ci);
+    $('#sp' + li).textContent = lines[li].slice(0, ++ci); if (ci % 2) beep(170, .02, 'square', .02);
     if (ci >= lines[li].length) { li++; ci = 0; timer = setTimeout(step, 1800); } else timer = setTimeout(step, 75);
   };
   timer = setTimeout(step, 1000);
   el.onclick = () => { if (!fin) return finish(); el.hidden = true; el.onclick = null; clearTimeout(timer); sfx.tap(); done(); };
+}
+
+function power(next) {
+  const el = $('#splash'); el.onclick = null;
+  el.innerHTML = '<button id="pwr" aria-label="Power"><span></span></button><p class="tap" style="animation:none">POWER</p>'; el.hidden = false;
+  $('#pwr').onclick = e => { e.stopPropagation(); beep(880, .07); beep(1320, .12, 'square', .04, .08); next(); };
 }
 
 /* ---------- boot ---------- */
@@ -830,10 +925,9 @@ function boot() {
   loadCfg(); F = S.f; $('#setup').hidden = true;
   if (/(^|#|&)setup\b/.test(location.hash)) return setup();
   closePanel(); render(); say('');
-  $('#splash').hidden = true;
-  if (!S.boot) splash(() => pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n................ OK\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.`,
+  power(() => { if (S.boot) { $('#splash').hidden = true; return; } splash(() => pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n................ OK\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.`,
     'POOK HAS NEEDS.\nMEET THEM, AND POOK WILL GIVE BACK\nWHAT HE IS KEEPING FOR YOU.\n\nTAP THINGS. PICK THINGS UP.\nUSE THEM ON OTHER THINGS.', 'DO NOT LEAVE POOK ALONE\nFOR TOO LONG.'],
-    () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); }));
+    () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); })); });
 }
 window.addEventListener('hashchange', boot);
 boot();

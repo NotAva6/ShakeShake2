@@ -195,6 +195,10 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .dt{position:absolute;left:0;top:4px;border:2px solid var(--fg);background:var(--bg);color:var(--fg);text-align:center;font-size:16px;transition:transform .2s cubic-bezier(.3,1.5,.5,1);touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
 .dt.ok{background:var(--o);color:var(--k)}
 .dt.drag{transition:none;z-index:2;box-shadow:0 5px 0 var(--fg)}
+#msg.rant{overflow:visible;z-index:6}
+#msg.rant #msgt{overflow:visible}
+.rt{position:absolute;left:-5px;top:0;width:124%;font-size:13px;line-height:1.02;letter-spacing:1px;transform:rotate(-2.5deg);pointer-events:none;text-shadow:1px 1px 0 var(--o);animation:rtj .11s steps(2) infinite}
+@keyframes rtj{50%{transform:rotate(-2.5deg) translate(1px,-1px)}}
 </style>
 </head>
 <body>
@@ -506,8 +510,10 @@ const SONG = ['BOWL', 'BALL', 'TUB', 'BED'];
 /* ---------- messages / panels ---------- */
 const elMsg = $('#msgt'), elPanel = $('#panel');
 let panelModal = false, curTitle = null;
-function say(t) { elMsg.textContent = t || ''; lastSay = Date.now(); }
-function drawFace() { const o = g; g = $('#pface').getContext('2d'); g.clearRect(0, 0, 30, 26); pook(15, 38); g = o; }
+let rantOn = false;
+function say(t) { if (rantOn) return; elMsg.textContent = t || ''; lastSay = Date.now(); }
+function rant() { if (!pookShaking()) return; rantOn = true; $('#msg').classList.add('rant'); elMsg.innerHTML = '<span class="rt">' + 'I WANT MY BEAR '.repeat(16) + '</span>'; }
+function drawFace() { const o = g; g = $('#pface').getContext('2d'); g.clearRect(0, 0, 30, 26); pook(15 + (pookShaking() ? rand(3) - 1 : 0), 38); g = o; }
 function openPanel(html, handler, modal) {
   // on puzzle screens Pook's face sits bottom-right and he speaks the title (and any wrong-answer text)
   let title = null; $('#bub').hidden = true;
@@ -517,7 +523,7 @@ function openPanel(html, handler, modal) {
   elPanel.innerHTML = html; elPanel.hidden = false; panelModal = !!modal; elPanel.scrollTop = 0;
   elPanel.onclick = e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled && handler) handler(b.dataset.a, b); };
 }
-function closePanel() { $('#msg').classList.remove('talk'); $('#pface').hidden = true; if (curTitle !== null) elMsg.textContent = ''; curTitle = null; elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; panelInv = null; panelKind = null; }
+function closePanel() { $('#msg').classList.remove('talk', 'rant'); $('#pface').hidden = true; if (curTitle !== null || rantOn) elMsg.textContent = ''; rantOn = false; curTitle = null; elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; panelInv = null; panelKind = null; }
 function pages(list, done) {
   let i = 0;
   const show = () => {
@@ -689,18 +695,18 @@ function hexPanel() {
 function warnPanel() {
   for (let i = 0; i < 9; i++) beep(i % 2 ? 660 : 440, .34, 'sawtooth', .06, i * .34);   // two-tone siren
   openPanel(`<div class="vhs"><div class="warn">WARNING</div><pre class="c">THE HOUSE IS NOW BOOBY TRAPPED.\n\nYOU MUST CLICK CAREFULLY\nFROM THIS POINT ON.</pre></div><div class="row"><button class="o" data-a="go">CONTINUE</button></div>`, () => { F.warned = 1; save(); sfx.tap(); tvPanel(); });
-  say('THE TELEVISION SCREAMS.');
+  rant();
 }
 function tvPanel() {
   if (!F.tv) return hexPanel();
   if (!F.liar) { newLiar(); save(); }
   if (!F.warned) return warnPanel();
   const txt = x => x.t === 'in' ? `IT IS ${PLACES[x.v]}.` : x.t === 'not' ? `IT IS NOT ${PLACES[x.v]}.` : x.t === 'lie' ? `CHANNEL ${x.v + 1} IS LYING.` : `CHANNEL ${x.v + 1} TELLS THE TRUTH.`;
-  const CH = ['STAND BY.\n\nHIS BEAR IS IN THIS HOUSE.\nSOFA. TUB. WARDROBE.\nFRIDGE. CUPBOARD.\n\nFIVE CHANNELS KNOW WHERE.\nONLY ONE OF THEM TELLS THE TRUTH.', ...F.liar.st.map(txt)];
+  const CH = ['STAND BY.\n\nHIS BEAR IS IN THIS HOUSE.\nSOFA, TUB, WARDROBE,\nFRIDGE, OR CUPBOARD.\n\nFIVE CHANNELS KNOW WHERE.\nONLY ONE OF THEM TELLS THE TRUTH.', ...F.liar.st.map(txt)];
   let c = F.tvc || 0;
   const draw = () => openPanel(`<div class="vhs"><i class="vt">PLAY ▸ CH ${c}</i><i class="vb">SP 03:00:0${c}</i><pre class="c">${CH[c]}</pre></div><div class="row"><button data-a="-">CH −</button><button data-a="+">CH +</button><button data-a="x">LOOK AWAY</button></div>`,
-    a => { if (a === 'x') return closePanel(); c = (c + (a === '+' ? 1 : 5)) % 6; F.tvc = c; hiss(.12); draw(); });
-  draw();
+    a => { if (a === 'x') return closePanel(); c = (c + (a === '+' ? 1 : 5)) % 6; F.tvc = c; hiss(.12); draw(); rant(); });
+  draw(); rant();
 }
 function jarPanel() {
   const held = [0, 1, 2].find(i => has('jar' + i)), s = F.jsample;
@@ -1050,7 +1056,7 @@ const ROOMS = [
 
 /* ---------- render ---------- */
 const pookShaking = () => isNight() && !!S.done[5] && !S.done[6];   // scared: trembles until he has his bear
-setInterval(() => { if (S.boot && pookShaking() && elPanel.hidden && Date.now() > scareT && Date.now() > glitchT) draw(); }, 80);
+setInterval(() => { if (!S.boot || !pookShaking() || Date.now() < scareT) return; if (elPanel.hidden) { if (Date.now() > glitchT) draw(); } else if (!$('#pface').hidden) drawFace(); }, 80);
 const asleep = () => !!F.end || (S.tape === 0 && !!S.done[3]) || !!S.done[7];
 function draw() {
   g = mainG;

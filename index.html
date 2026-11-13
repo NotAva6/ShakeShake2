@@ -128,6 +128,8 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .legend{background:linear-gradient(90deg,var(--k) 50%,transparent 50%) 50% 0/8px 4px repeat-x;padding-top:12px}
 .bulb{display:inline-block;width:26px;height:26px;background:var(--k);border:2px solid var(--fg)}
 .bulb.on{background:var(--o)}
+#bub{position:absolute;z-index:1;max-width:64%;background:var(--bg);color:var(--fg);border:2px solid var(--fg);padding:3px 5px;font-size:10px;line-height:1.2;text-transform:uppercase;pointer-events:none}
+#bub::after{content:"";position:absolute;right:16px;bottom:-8px;width:6px;height:6px;background:var(--bg);border:2px solid var(--fg);border-top:0}
 </style>
 </head>
 <body>
@@ -137,14 +139,14 @@ button{font:inherit;cursor:pointer;border-radius:0}
     <div id="brand">POOK<span>POCKET COMPANION</span></div>
     <div id="bezel"><div id="screen">
       <div id="status"><span id="rname"></span><span id="needs"></span></div>
-      <div id="stage"><canvas id="cv" width="160" height="108"></canvas><div id="panel" hidden></div></div>
+      <div id="stage"><canvas id="cv" width="160" height="108"></canvas><div id="panel" hidden></div><div id="bub" hidden></div></div>
       <div id="msg"></div>
       <div id="inv"></div>
       <div id="fx"></div>
     </div></div>
     <div id="controls">
       <button class="hb" id="bl" aria-label="Previous room"><span class="tl"></span></button>
-      <div class="mid"><button id="bwords">WORDS</button><button id="bmenu">MENU</button></div>
+      <div class="mid"><button id="bwords">WORD</button><button id="bmenu">MENU</button></div>
       <button class="hb" id="br" aria-label="Next room"><span class="tr"></span></button>
     </div>
     <div class="legend">&lt; &gt; CHANGE ROOM &nbsp;·&nbsp; TAP THE SCREEN</div>
@@ -565,7 +567,7 @@ function need(i) {
     }, true);
 }
 function keyReveal(k, next) {
-  openPanel(`<div class="t">TAPE ${k + 1} COMPLETE</div><div class="sp"></div><div class="c">THE WORD IS WHOLE:</div><div class="big">${esc(CFG.keys[k])}</div>
+  openPanel(`<div class="t">${k ? 'TAPE 2 COMPLETE' : 'POOK IS ASLEEP'}</div><div class="sp"></div><div class="c">THE WORD IS WHOLE:</div><div class="big">${esc(CFG.keys[k])}</div>
     <div class="c">IT IS A GAME. POOK WAS KEEPING IT FOR YOU.<br>IT IS YOURS NOW.</div><div class="sp"></div><div class="row"><button class="o" data-a="ok">${next ? 'CONTINUE' : 'CLOSE'}</button></div>`,
     () => { closePanel(); sfx.tap(); if (next) next(); else render(); }, true);
 }
@@ -587,7 +589,7 @@ const NEEDS = ['POOK STARES AT THE EMPTY BOWL.', 'POOK IS FED. POOK WANTS A TOY.
 function hint() {
   const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
   nextTalk = Date.now() + 35000 + rand(40000); const angry = rand(5) === 0; if (angry) { angryT = Date.now() + 4500; sfx.bad(); }
-  say(`${NEEDS[st]} POOK: "${angry ? '??? WHAT ARE YOU DOING ???' : POOK_LINES[rand(POOK_LINES.length)]}"`);
+  say(NEEDS[st]); bubble(angry ? '??? WHAT ARE YOU DOING ???' : POOK_LINES[rand(POOK_LINES.length)]);
 }
 function onPook(it) {
   if (!it) return hint();
@@ -793,10 +795,16 @@ function draw() {
 const POOK_LINES = ['I WILL PEE ON YOU WHEN YOU SLEEP.', 'YOU LOOK TASTY.', 'I KNOW WHERE YOU KEEP YOUR SOCKS.', 'I HAVE BEEN INSIDE THE WALLS. IT IS NICE IN THERE.', 'YOUR ANKLES ARE UNGUARDED.',
   'I ATE SOMETHING OF YOURS. YOU WILL FIND OUT WHICH.', 'I LICKED EVERYTHING YOU OWN.', 'WHEN YOU BLINK, I MOVE CLOSER.', 'I AM A GOOD BOY. SAY IT.', 'I CAN SMELL YOUR BIRTHDAY.',
   'THE MAILMAN KNOWS WHAT HE DID.', 'I WATCH YOU CHEW.', 'DO NOT LOOK UNDER THE BED. THAT IS MY SPOT.', 'I BURIED SOMETHING. IT WAS NOT A BONE.', 'YOUR PILLOW TASTES LIKE YOU.', 'I HEARD YOU OPEN CHEESE IN 2019.', 'I HEARD YOU WERE A BIRD PERSON.'];
+let bubT = 0;
+function bubble(t) {
+  const el = $('#bub'), ps = pookSpot[S.room]; el.textContent = t; el.hidden = false;
+  el.style.right = Math.max(1, (160 - ps[0] - 16) / 160 * 100) + '%'; el.style.bottom = (108 - ps[1] + 42) / 108 * 100 + '%';
+  clearTimeout(bubT); bubT = setTimeout(() => { el.hidden = true; }, 5500);
+}
 function pookTalk() {
   nextTalk = Date.now() + 35000 + rand(40000);
-  if (rand(4) === 0) { angryT = Date.now() + 4500; sfx.bad(); say('POOK: "??? WHAT ARE YOU DOING ???"'); }
-  else say(`POOK: "${POOK_LINES[rand(POOK_LINES.length)]}"`);
+  if (rand(4) === 0) { angryT = Date.now() + 4500; sfx.bad(); bubble('??? WHAT ARE YOU DOING ???'); }
+  else bubble(POOK_LINES[rand(POOK_LINES.length)]);
 }
 const SCARE = 'VQFVVVVVVVVVVVVVVVUBAAAAAAAAAAAAAFBVUVVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVVVVAQAAAAAAAAAAAABARERVVVUFAAAAAAAAAABVAVVVVVVVVVVVVVVVVQEAAAAAAAAAAAAAABVRVVVVEQEAAAAAAAAAVQBUVVVVVVVVVVVVVVVFAAAAAAAAAAAAAEBEQFVVVUUAAAAAAAAAAFUBVVVVVVVVVVVVVVVVZQAAAAAAAAAAAABUVlFVVVUVAQAAAAAAAABVAFRVVVVVVVVVVVVVVVkAAAAAAAAAAAAApEZEVVVVRQAAAAAAAAAAVQFVVVVVVVVVVVVVVaVqAAAAAEBRAQAAAKUaUVVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVZWpWgAAAABAVQEAAACUKkBVVVVEAAAAAAAAAABVAVVVVVVVVVVVVVWmqhYAAAAAUFUBAAAAVapRVVVVFQEAAAAAAAAAVQFUVVVVVVVVVVVVqZoFAAAAAFBVBQAAAECpRVVVVUUAAAAAAAAAAFUBVVVVVVVVVVVVVapqFQAAAABQagEAAABApVpVVVUVAQAAAAAAAABVAFRVVVVVVVVVVZWpVQUAAAAAQGkAAAAAQJVqVVVVBAAAAAAAAAAAVQFVVVVVVVVVVVVVqlYRAQEAAVBqAQABAABVqlVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVVVVAAAARARQaQBABAAAVJlVVVUFAAAAAAAAAABVAVVVVVVVVVVVVVVVVREQEFURUGoAURUAAFFVVVVVEQAAAAAAAAAAVQBUVFVVVVVVVVVVVVUAAERVBVRZQFRVAABUVVVVVQQAAAAAAAAAAFUBVVVVVVVVVVVVVVVVEQFVVRVVWlFVVRUBVVVVZVUFAQAAAAAAAABVAVRVVVVVVVVVVVVVVQAAVVUVlFpUVVVFAFRVVZVVBQAAAAAAAAAAVQFVVVVVVVVVVVZVVRUAQFVlVZVaVVVVFRFQVVWlVhUAAAAAAAAAAFUBVFVVVVVVVZVVVVUFAECVqlqVWpWqVUUAQFVVlVoEAAAAAAAAAABVAVVVVVVVVVWqVlVVAQBRpapqpVqpqloVAQFVVVVqFQEAAAAAAAAAVQFUVVVVVVVVqVVFRQAAVKmqqpVaqqpaBQAAVVVVaQUAAAAAAAAAAFUBVVVVVVVVZaZVFREAAFWqqqqlaqqqahUQEVVVVWoRAAAAAAAAAABVAFRUVVVVVZVVVQAAAECVqqqqlaqqqmpVAABURVWpBAAAAAAAAAAAVQFVVVVVVVVVVRUAAAAApaqqqqaqqqpqVRERVRVVpQEAAAAAAAAAAFUAVFVVVVVVVVUFAAAAQKmqqqqVqqqqqlUFAEQFQJUBAAAAAAAAAABVAVVVVVVVVVVVAAAAAFCpqqqqpqqqqqpaFRBRVQBVBgAAAAAAAAAAVQBUVFVVVVVVBQAAAABUqaqqqpWqqqqqalVARFQAVBUAAAAAAAAAAFUBVVVVVVVVVQEAAABAVaWqqqqVqqqqqqpWERVVAVAVAAAAAAAAAABVAFRVVVVVVUQAAAAAQFWVqqqqVaqqqqqaVQVERAAAVQAAAAAAAAAAVQFUVVVVVVUQAAAAAFBVVamqalWqqqqqVlUVUVEBAFQBAAAAAAAAAFUAVFVVVVVVAAAAAABUVVWkqmpVlamqVlVVVURABABQAAAAAAAAAABVAVVVVVVVFQAAAAAAVVZqpapqVVWlqlZVVVUVARUAUAEAAAAAAAAAVQBUVVVVVQUAAAAAAFWlalSpalVVlWpFqVVVRQAEAEAAAAAAAAAAAFUAUFVVVVUVAAAAAEBVqqpQVVVVVVVWgWpqVVUAUAEAAAAAAAAAAABVAFBVVVVVBQAAAABAVaqqQFVVVVVVVYCWKVRVAAAAAAAAAAAAAAAAVQBQVVVVVQEAAAAAUFqqqlFVVVVVVVWApiplVQEAEQAAAAAAAAAAAFUAVFVVVVUAAAAAAFAKqmpAVVVVVVVVgKoppFUAAAAAAAAAAAAAAABVAFBVVVVVAAAAAABQGqlqUVVVVVVVVYFqKqBWAQAQAAAAAAAAAAAAVQBQVVVVVQAAAAAAUFqkWlRVVVVVVVVAqRqoVgAAAAAAAAAAAAAAAFUAUVVVVRUAAAAAAFBqVVVVVVVVVVVVEaVWqlYBAAAAAAAAAAAAAABVAFRVVVUFAAAAAABUWkVVVVVVVVVVVVVUVapWAAAAAAAAAAAAAAAAVQBQVVVVFQAAAABQpWpVVVVVVVVVVVVVVVWqVgEAAAAAAAAAAAAAAFUAUFVVBQAAAAAAVKVaVVVVVVVVVVVVVVWVqloFAAAAAAAAAAAAAABVAFFVVQEAAAAAAFWqalZVVVZVVVVVVVVVqqpqVQEAAAAAAAEAAAAAVQBAVVUAAAAAAECVqlpaVZVVVVVVVVVVlaqqqlUFAAAAAAAAAAAAAFUAEFVVAAAAAABVlapqalVlVVVVVaVmVaWqqqpWFQAAAAAAAAAAAABVAABUBQAAAABQVZWqqlWVmVVVVVWVqZmpqqmqVVUFAAAAAAAAAAAAVQAAVRUAAAAAVVWmqmplpqpWZapWpaqqqqqqqmpWFQAAAAAAAAAAAFUAAFQFAAAAAFVVlaqqVamqVZmZWpWqqqqqqqpaVRUAAAAAAAAAAABVAABVAQAAAFBVVaWqqlaqqqqqqmqlqqqqqqqqalUVAAAAAAAAAAAAVQAAVAAAAABAVVWVqqpZqaqqqqqqqaqqqqqqqlpVFQAAAAAAAAAAAFUAAFUBAAAAUFVlpaqqaqqqqqqqqqqqqqqqqqpqVRUAAAAAAAAAAABVAABUAAAAAEBVVZmqqlqqqqqaqqqqqqqqqqmqalUVAAAAAAAAAAAAVQAAVQEAAABQVWWlqqpWqqqqpqqqqqqqqqqqqmpVFQAAAAAAAAAAAFQAAFQAAAAAQFVVlaqqlZmpmZmpqqqqqqqpqapaVRUAAAAAAAAAAABVAABVAQAAAABVZaWqalZWqqqmqqqqqqpqZqqqalUVAAAAAAAAAAAARAAARAAAAABAVVWVqlpVlaqamaqqqqqaalWpqlpVVQAAAAAAAAAAABEAABAAAAAAUFVlpapqVZWqamamqqqqlmpVqqpaVRUAAAAAAAAAAAAEAAAAAAAAAEBVVZWqalWVqlpVlamqqpVqVaqqVVVVAAAAAAAAAAAAEQAAAAAAAABQVVWmqmpVpapqZmaqqqpWalWqqlZVFQAAAAAAAAAAAAAAAAAAAAAAQFVVmapqVZWqWlVVmaqqVVpVqqpVVRUAAAAAAAAAAAAQAAAAAAAAAFBVVaaqalWlqmplZqaqqlZmVaqqVlUVAAAAAAAAAAAAAAAAAAAAAABAVVWVqqpVpapZVZWpqqpVVVWpqVlVBQAAAAAAAAAAAAAAAAAAAAAAAFVVpqpqVamqZmZmqqqqVlZVqqpaVRUAAAAAAAAAAAAAAAAAAAAAAABVVZWqWlWpqlpZWZmqqlZVVaqqVVUFAAAAAAAAAAAAAAAAAAAAAABAVVWlqmpVqqpqZWalqqpWVVWqalVVAQAAAAAAAAAAAAAAAAAAAAAAQFVVValZVamqapVVmaqqWlWVqVlVVQAAAAAAAAAAAAAAAAAAAAAAAEBVVVVmalWqqmpmZmqqqlZVlapWVVUBAAAAAAAAAAAAAAAAAAAAAABAVVVVVVVVqapamZmZqqpWVZVaVVVVAAAAAAAAAAAAAAAAAAAAAAAAUFVVVVVlVaqqamWmqqqqVlWlVlVVVQEAAAAAAAAAAAAAAAAAAAAAAEBVVVVVVVWpqlqVmamqqlZVlVVVVVUAAAAAAAAAAAAAAAAAAAAAAABAVVVVpVZWqqpqZaqqqqpWVWVVVVVVAQAAAAAAAAAAAAAAAAAAAAAAQFVVVVVVVamqWpWqmaqqVlVVVVVVVQAAAAAAAAAAAAAAAAAAAAAAAABVpWZVVVWlqmplqqqqqlZVVVVVVRUAAAAAAAAAAAAAAAAAAAAAAAAAVKWqVVVVpapalamZlapVVVVVVVUVAAAAAAAAAAAAAAAAAAAAAAAAAFWlqlZVVZWqVlWqapZWVVVVVVVqFQAAAAAAAAAAAAAAAAAAAAAAAABQlapaVVVVVVVVVVVVVVVVVVWVWgUAAAAAAAAAAAAAAAAAAAAAAAAAUFWqqlZVVVVVVVVVVVVVVVVVpmoVAAARAAAAAAAAAAAAAAAAAAAAAEBVqappVVVVVVVVVVVVVVVVlapZFQBABAAAAAAAAAAAAAAAAAAAAABRlZqqqlZVVVVVVVVVVVVVVapqVRUAUBUAAAAAAAAAAAAAAAAAAAAARJWZqqqqVVVVVVVVVVVVVamqalUVAFQFAAAAAAAAAAAAAAAAAAAAAFCVqqqqqlpVVWVVZVVVVZWqqmZWFQBVJQAAAAAAAAAAAAAAAAAAAABUVampqqpqlVWplalVWVWpqpqVWgUAVWkAAAAAAAAAAAAAAAAAAAAAVVWppqqqaqVaqqqqlmpqqmqmploBAFYqAAAAAAAAAAAAAAAEAAAAAFRVpUaZqqqpmqqaqpqqqqpaqWpVAABWaQAAAAAAAAAAAAAAAQAAAABQVVVqmaqqqqqqqqqqqqpqWqpqFZBqZioAAAAAAAAAAAAAQAAAAAAAUFVVlZmpqqmqqpqqqqqqWYmpaQWgqppZAAAAAAAAAAAAAFABAAAQAZVWVZVqZlqqqqqqqqqqqlaaqmoBqaqqalABAAAAAAAAAABAAAAAVEWlWlWVmqpZqqqqmqqqqppGmZlZAKmqqmpUBQAAAAAAAAAAUAEAAFBVpWpVVaaqZqqqqqqqqqqqWmpVFQCqqqpqlRYAAAAAAAAAAFQAAACQVaWqVVWZqpqlqqqqqqqqlZlZVQWAqqqqqpUFAAAAAAAAAABVAQAAkVqlqlZVVqpqlaqqqqpqZlWlalUBkKqqqqqmWgUAAQAAAAAAVAEAAJSqlapaVVWpWkClqqqqapVVlWoVAKSqqqqqqloFAAAAAAAAEFUBAABQqpaqalVVqWpRpaqqqmqpZZVqBQCoqqqqqqpqFQABAAAAAERVBQAAlKqVqqpVValalJWamaqqqaVVVQAAqaqqqqqqqhUAAAAAAABVVQUAAFWqqqqqalWlaqWqqmqqqqqmVhUAQKqqqqqqqqpWAQEAAABAVVUFAABVqpqqqqpVlVmVqqqqqqqqmlYVAICqqqqqqqqqVUUBAAAAQFVVBgAAVaqqqqqqVlVlpaaqqqqqqqZWFRCkqqqqqqqqqlZVAQAAAEBVlQUAAJSqmqqqqlpVqampqqqqqqmaWgWoqqqqqqqqqqpVVQAAAABAZaUWAQFVqqqqqqpqVaqqpqqqqqqqqlqVqqqqqqqqqqqqVlUBAAAAQJWVWUVFVKqqqqqqqlZZqaWaqqqpqVpVpaqqqqqqqqqqqlpVAAAAAFClplZVVVWpqqqqqqpWVWqlWqqqpalaVaWqqqqqqqqqqqpqVQEAAABQlZlZVVVVpaqqqqqqWlVZpZqaqlWpWlWpqqqqqqqqqqqqqlUAAAAAUKWqalVqVaWqqqqqqqpVVqVqpmpVplpVqqqqqqqqqqqqqqpWAQAAAFSZmlpVqlmVqqqqqqqqVVVVmpZaVZVVVaqqqqqqqqqqqqqqVQEAAABUpapqVapqpaqqqqqqqlZVVaVWalVVVaWqqqqqqqqqqqqqqlYBAAAAVKmqmZWqqpqqqqqqqqpqVVVVVVVVVVWlqqqqqqqqqqqqqqpVBQAA';
 const SCARE_PX = (() => { const b = atob(SCARE), out = new Uint8Array(160 * 108); for (let i = 0; i < out.length; i++) out[i] = (b.charCodeAt(i >> 2) >> ((i & 3) * 2)) & 3; return out; })();
@@ -809,7 +817,7 @@ function drawScare() {
   mainG.putImageData(img, 0, 0);
 }
 function scare() {
-  if (panelModal) return; closePanel(); scareT = Date.now() + 1300;
+  if (panelModal) return; closePanel(); $('#bub').hidden = true; scareT = Date.now() + 1300;
   [147, 185, 233, 415, 622].forEach(f => beep(f, 1.1, 'sawtooth', .07)); hiss(.9);
   const t = setInterval(() => { if (Date.now() > scareT) { clearInterval(t); render(); } else drawScare(); }, 60); drawScare();
 }
@@ -823,8 +831,9 @@ function renderInv() {
 }
 function render() {
   $('#screen').classList.toggle('night', isNight());
+  $('#bwords').textContent = S.tape ? 'WORDS' : 'WORD';
   const t = S.tape, L = t ? ['D', 'M', 'B', 'S'] : ['F', 'P', 'W', 'S'];
-  $('#rname').textContent = (F.end ? 'END ' : 'TAPE ' + (t + 1) + ' ') + ROOMS[S.room].name;
+  $('#rname').textContent = (F.end ? 'END ' : t ? 'TAPE 2 ' : '') + ROOMS[S.room].name;
   $('#needs').innerHTML = L.map((c, i) => `<span class="nd ${S.done[t * 4 + i] ? 'on' : ''}">${c}</span>`).join('');
   $('#codes').innerHTML = CFG.keys.map((key, k) => (k > 0 && S.tape < k) ? '' :
     `<button class="crow" data-k="${k}"><span class="lab">KEY ${k + 1}</span>${pieces(k).map((p, n) => `<span class="cs ${S.done[k * 4 + n] ? 'got' : ''}">${S.done[k * 4 + n] ? esc(p) : '?'.repeat(p.length || 1)}</span>`).join('')}</button>`).join('')
@@ -864,7 +873,7 @@ $('#inv').addEventListener('click', e => {
   }
   renderInv();
 });
-function go(d) { if (panelModal) return; closePanel(); sel = null; S.room = (S.room + d + 4) % 4; sfx.tap(); say(''); save(); render(); }
+function go(d) { if (panelModal) return; closePanel(); $('#bub').hidden = true; sel = null; S.room = (S.room + d + 4) % 4; sfx.tap(); say(''); save(); render(); }
 $('#bl').addEventListener('click', () => go(-1));
 $('#br').addEventListener('click', () => go(1));
 let forceDebug = false;

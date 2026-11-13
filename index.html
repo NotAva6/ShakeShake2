@@ -475,6 +475,17 @@ function clueNote() {
   openPanel(`<div class="t">A NOTE ON THE FRIDGE</div><div class="sp"></div><div class="c">${rows.map(r => `<div style="margin:0;line-height:1">${[...r[0]].map((ch, i) => `<span class="dg ${r[1][i] === '.' ? '' : r[1][i]}">${ch}</span>`).join('')}</div>`).join('')}</div>
     <div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
 }
+function hintNote() {
+  openPanel(`<div class="t">${F.ward ? 'A NOTE IN THE DRAWER. SOMEONE HAS SCRIBBLED ON IT.' : 'A NOTE IN THE DRAWER'}</div><div class="sp"></div><canvas id="hn" width="152" height="90" style="width:228px;max-width:100%"></canvas><div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
+  const c = $('#hn').getContext('2d'), K = COL.k, W = COL.w; c.fillStyle = W; c.fillRect(0, 0, 152, 90);
+  const box = (x, y, t) => { c.fillStyle = K; c.fillRect(x, y, 22, 22); c.fillStyle = W; c.fillRect(x + t, y + t, 22 - 2 * t, 22 - 2 * t); };
+  const sq = pts => { c.strokeStyle = K; c.lineWidth = 1; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0] + .5, p[1] + .5) : c.moveTo(p[0] + .5, p[1] + .5)); c.stroke(); };
+  box(6, 6, 1); box(6, 34, 3); box(6, 62, 1); [38, 66, 94, 122].forEach(x => box(x, 34, 3));
+  sq([[13, 10], [18, 14], [16, 19], [12, 18], [13, 10], [12, 22], [17, 25], [23, 23]]);
+  sq([[12, 41], [13, 46], [16, 47], [18, 43], [17, 40], [19, 45], [19, 51], [17, 50]]);
+  sq([[18, 68], [14, 66], [12, 70], [16, 71], [18, 69], [12, 72], [13, 80], [17, 81], [20, 77]]);
+  if (F.ward) for (let i = 0; i < 16; i++) sq([[2 + rand(20), 4 + rand(82)], [40 + rand(40), 4 + rand(82)], [70 + rand(40), 4 + rand(82)], [120 + rand(30), 4 + rand(82)]]);
+}
 function mirrorPanel() {
   openPanel(`<div class="t">WRITTEN IN THE STEAM, BY A FINGER</div><div class="fog"><div style="transform:rotate(-3deg)"><b class="sym">▲</b> + <b class="sym">▲</b> + <b class="sym">●</b> = 15<i class="drip" style="left:24%;height:16px"></i></div><div style="transform:rotate(2deg);margin-left:18px"><b class="sym">▲</b> + <b class="sym">●</b> + <b class="sym">●</b> = 18<i class="drip" style="left:72%;height:22px"></i></div><div style="transform:rotate(-1deg);margin-left:-12px"><b class="sym">■</b> × <b class="sym">▲</b> = 8<i class="drip" style="left:38%;height:12px"></i></div></div><div class="row"><button data-a="x">STEP BACK</button></div>`, () => closePanel());
 }
@@ -501,19 +512,28 @@ function arrowPanel(onOpen) {
     });
   draw();
 }
-const CHESS = ['......rk', 'pp....pp', '........', 'q.....N.', '........', '.Q......', '.....PPP', '......K.'];
+const CHESS = ['.....r.k', 'pp....pp', '.......N', 'q.......', '..Q.....', '........', '.....PPP', '......K.'];
 const GLYPH = { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙', k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
 function chessPanel() {
-  let pick = -1; const flat = CHESS.join('');
-  const draw = () => openPanel(`<div style="display:flex;gap:8px;align-items:flex-start"><div class="chess">${[...flat].map((ch, i) => `<button class="sq ${((i >> 3) + i) & 1 ? 'dk' : ''} ${pick === i ? 'on' : ''}" data-a="${i}">${ch === '.' ? '' : GLYPH[ch] + '︎'}</button>`).join('')}</div>
+  // mate in two: queen sacrifice on g8, rook must take, knight mates on f7
+  let board = [...CHESS.join('')], pick = -1, step = 0, busy = false;
+  const reset = () => { board = [...CHESS.join('')]; pick = -1; step = 0; busy = false; };
+  const draw = () => openPanel(`<div style="display:flex;gap:8px;align-items:flex-start"><div class="chess">${board.map((ch, i) => `<button class="sq ${((i >> 3) + i) & 1 ? 'dk' : ''} ${pick === i ? 'on' : ''}" data-a="${i}">${ch === '.' ? '' : GLYPH[ch] + '︎'}</button>`).join('')}</div>
     <div style="display:flex;flex-direction:column;gap:8px"><div>POOK PLAYS BLACK.</div><div>WHITE TO MOVE.</div><button data-a="x">LEAVE</button></div></div>`,
     a => {
       if (a === 'x') return closePanel();
-      const i = +a, mine = /[A-Z]/.test(flat[i]);
+      if (busy) return;
+      const i = +a, mine = /[A-Z]/.test(board[i]);
       if (mine) { pick = pick === i ? -1 : i; sfx.tap(); return draw(); }
       if (pick < 0) return say('THAT IS NOT YOUR PIECE.');
-      if (pick === 30 && i === 13) { closePanel(); F.chess = 1; give('plug'); sfx.flip(); angryT = Date.now() + 6000; say('POOK IS MAD HE LOST. HE FLIPPED THE BOARD, UNDER IT WAS A BATH PLUG.'); save(); return render(); }
-      pick = -1; sfx.bad(); angryT = Date.now() + 3000; say('POOK FROWNS... YOU COULD DO BETTER.'); draw();
+      const want = step === 0 ? [34, 6] : [23, 13];
+      if (pick !== want[0] || i !== want[1]) { reset(); sfx.bad(); angryT = Date.now() + 3000; say('POOK FROWNS... YOU COULD DO BETTER.'); return draw(); }
+      board[i] = board[pick]; board[pick] = '.'; pick = -1; sfx.tap();
+      if (step === 0) {
+        step = 1; busy = true; draw(); say('CHECK. POOK STARES AT THE BOARD.');
+        return setTimeout(() => { if (elPanel.hidden || !busy) return; board[6] = 'r'; board[5] = '.'; busy = false; sfx.look(); say('POOK TAKES YOUR QUEEN. POOK LOOKS VERY PLEASED.'); draw(); }, 1100);
+      }
+      closePanel(); F.chess = 1; give('plug'); sfx.flip(); angryT = Date.now() + 6000; say('POOK IS MAD HE LOST. HE FLIPPED THE BOARD, UNDER IT WAS A BATH PLUG.'); save(); render();
     });
   draw();
 }
@@ -521,8 +541,7 @@ function wordPanel() {
   const seq = F.wseq || (F.wseq = ['dog', 'eye', 'hat', 'ant', 'egg']); let pick = -1;
   const draw = () => {
     openPanel(`<div class="t">WARDROBE... IT'S LOCKED</div><div class="sp"></div><div class="row" style="gap:4px">${seq.map((id, i) => `<button class="tile ${pick === i ? 'on' : ''}" data-a="${i}"><canvas width="16" height="16"></canvas></button>`).join('')}</div>
-      <div class="row" style="gap:4px">${seq.map(() => '<span class="gb"><i></i><i class="m"></i><i></i></span>').join('')}</div>
-      <div class="row" style="gap:6px;font-size:10px"><span>LIKE</span><canvas id="exi" width="16" height="16" style="width:32px;height:32px;margin:0"></canvas><span class="gb ex"><i>S</i><i class="m">U</i><i>N</i></span><span>· TAP TWO TILES TO SWAP</span></div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
+      <div class="c" style="font-size:10px">TAP TWO TILES TO SWAP.</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
       a => {
         if (a === 'x') return closePanel();
         if (a === 'go') {
@@ -532,7 +551,6 @@ function wordPanel() {
         const i = +a; if (pick < 0) pick = i; else { [seq[pick], seq[i]] = [seq[i], seq[pick]]; pick = -1; save(); } sfx.tap(); draw();
       });
     elPanel.querySelectorAll('.tile canvas').forEach((c, i) => { g = c.getContext('2d'); PAL = dayPal; R(0, 0, 16, 16, 'w'); ICON[seq[i]](); });
-    g = $('#exi').getContext('2d'); R(0, 0, 16, 16, 'w'); ICON.sun();
     g = mainG;
   };
   draw();
@@ -923,7 +941,7 @@ const ROOMS = [
         H(26, 8, 30, 26, () => bedDark() ? say('SOMETHING HANGS ON THE WALL. TOO DARK TO READ.') : mazePanel()),
         H(82, 44, 16, 34, it => {
           if (bedDark()) return say('TOO DARK. SOMETHING SMALL STANDS BY THE BED.');
-          if (!N) return note(F.ward ? 'A NOTE IN THE DRAWER. SOMEONE HAS SCRIBBLED IT OUT.' : 'A NOTE IN THE DRAWER', `<span class="${F.ward ? 'scr' : ''}">WHEN YOU LEAVE THE ROOM,\nWHAT DOES POOK FEEL?\n\nLOOK IN THE MIDDLE OF THINGS.</span>`);
+          if (!N) return hintNote();
           S.done[7] ? say('THE BOX IS STILL TURNING.') : S.done[6] ? boxPanel() : say('A MUSIC BOX. IT WAS NOT HERE YESTERDAY. POOK GROWLS WHEN YOU REACH FOR IT.');
         }),
         H(4, 42, 78, 38, it => {
@@ -1094,8 +1112,8 @@ function menu() {
       if (a === 'reset') { S = fresh(); F = S.f; sel = null; save(); closePanel(); nextTalk = Date.now() + 45000; return boot(); }
       if (a === 'ans') return note('ANSWERS', `1 CUPBOARD ${CUP_CODE}. COIN (SOFA) OPENS DRAWER. OPENER + CAN. CAN ON BOWL.
 2 BEDROOM STARTS DARK: SWITCHES ${SW_ANS} LIGHT IT. POSTER GIVES TOY BOX ${[...MAZE_ANS].map(c => ARROW[c]).join('')}. BALL ON POOK.
-3 DEN CHESS BOARD: KNIGHT G5 TO F7 (GIVES PLUG). HOT TAP, MIRROR, CABINET ${CAB_CODE} (GIVES SOAP). PLUG + SOAP ON TUB.
-4 WARDROBE TILES: HAT EGG DOG ANT EYE (MIDDLE LETTERS = AGONY). BLANKET ON BED, THEN SWITCHES ${SW_ANS} AGAIN FOR DARK.
+3 DEN CHESS BOARD: QUEEN C4 TO G8 (A SACRIFICE), POOK TAKES WITH THE ROOK, THEN KNIGHT H6 TO F7 IS MATE (GIVES PLUG). HOT TAP, MIRROR, CABINET ${CAB_CODE} (GIVES SOAP). PLUG + SOAP ON TUB.
+4 NIGHTSTAND NOTE = MIDDLE LETTERS OF 3-LETTER WORDS. WARDROBE TILES: HAT EGG DOG ANT EYE (AGONY). BLANKET ON BED, THEN SWITCHES ${SW_ANS} AGAIN FOR DARK.
 5 THREE JUGS 10/7/3, BIG ONE FULL. POUR 10>7, 7>3, 3>10, 7>3, 3>10, 7>3, 10>7, 7>3. THE 7-JUG NOW HOLDS 5: USE IT ON THE BOWL. (BIG JUG ON TAP = START OVER.)
 6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
 7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN READ THE 5 CHANNELS. RIGHT NOW THE BEAR IS ${F.liar ? PLACES[F.liar.ans] : 'NOT PLACED UNTIL THE TV TUNES'} (MOVES AFTER A WRONG SEARCH). BEAR ON POOK.

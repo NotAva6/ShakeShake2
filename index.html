@@ -548,7 +548,7 @@ function chessPanel() {
   let board = [...CHESS.join('')], pick = -1, step = 0, busy = false;
   const reset = () => { board = [...CHESS.join('')]; pick = -1; step = 0; busy = false; };
   const draw = () => openPanel(`<div style="display:flex;gap:8px;align-items:flex-start"><div class="chess">${board.map((ch, i) => `<button class="sq ${((i >> 3) + i) & 1 ? 'dk' : ''} ${pick === i ? 'on' : ''}" data-a="${i}">${ch === '.' ? '' : GLYPH[ch] + '︎'}</button>`).join('')}</div>
-    <div style="display:flex;flex-direction:column;gap:8px"><div>POOK PLAYS BLACK.</div><div>WHITE TO MOVE.</div><button data-a="x">LEAVE</button></div></div>`,
+    <div style="display:flex;flex-direction:column;gap:8px;align-self:stretch"><div>POOK PLAYS BLACK.</div><div>WHITE TO MOVE.</div><button data-a="x">LEAVE</button><div style="margin-top:auto;border-top:2px solid var(--fg);padding-top:4px">${step === 0 ? '2 MOVES' : '1 MOVE'} REMAINING</div></div></div>`,
     a => {
       if (a === 'x') return closePanel();
       if (busy) return;

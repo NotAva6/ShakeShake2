@@ -147,6 +147,8 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .gb.ex i{width:17px;height:17px;font-size:11px;line-height:15px}
 .gb.ex i.m{width:20px;height:20px;line-height:14px}
 .fog .sym{font-family:"Courier New",ui-monospace,monospace;font-size:30px;line-height:1;vertical-align:-2px}
+.scr{position:relative;display:inline-block;text-decoration:line-through;text-decoration-thickness:3px}
+.scr::after{content:"";position:absolute;inset:-4px -8px;background:repeating-linear-gradient(168deg,var(--fg) 0 2px,transparent 2px 6px),repeating-linear-gradient(14deg,var(--fg) 0 2px,transparent 2px 8px)}
 </style>
 </head>
 <body>
@@ -273,6 +275,8 @@ function hiss(d = 0.25) {
 }
 const sfx = {
   tap() { beep(440, .04); }, take() { beep(520, .06); beep(700, .08, 'square', .04, .07); },
+  look() { beep(300, .04, 'triangle', .06); }, solve() { [659, 880, 1319].forEach((f, i) => beep(f, .1, 'square', .04, i * .07)); },
+  flip() { hiss(.35); [420, 310, 230, 170].forEach((f, i) => beep(f, .06, 'square', .05, i * .06)); beep(85, .3, 'sawtooth', .07, .26); },
   bad() { beep(110, .2, 'sawtooth', .04); }, good() { [392, 523, 659, 784].forEach((f, i) => beep(f, .16, 'square', .04, i * .12)); },
   note(i) { beep([262, 330, 392, 523][i], .35, 'triangle', .1); }
 };
@@ -355,7 +359,7 @@ Object.assign(ICON, {
 });
 const JARLAB = ['MEDICINE', 'NOT MEDICINE', 'MIXED'];
 const NAME = id => CARDS[id] ? `A TRADING CARD: "${CARDS[id][0]}". IT ${CARDS[id][1]}` : ({
-  coin: 'A COIN', opener: 'A CAN OPENER', can: 'A SEALED CAN', canopen: 'AN OPEN CAN', ball: 'A BALL', plug: 'A BATH PLUG', soap: 'SOAP',
+  coin: 'A COIN WITH A SURPRISING AMOUNT OF UTILITY', opener: 'A CAN OPENER', can: 'A SEALED CAN', canopen: 'AN OPEN CAN', ball: 'A BALL', plug: 'A BATH PLUG', soap: 'SOAP',
   key: 'A SMALL KEY', blanket: 'A BLANKET', jug5: `BIG JUG (${F.j5 || 0} OF 5)`, jug3: `SMALL JUG (${F.j3 || 0} OF 3)`,
   jar0: `JAR LABELLED "${JARLAB[0]}"`, jar1: `JAR LABELLED "${JARLAB[1]}"`, jar2: `JAR LABELLED "${JARLAB[2]}"`, teddy: 'HIS BEAR', crank: 'A SMALL CRANK'
 }[id]);
@@ -435,7 +439,7 @@ function lockPanel(id, title, labels, answer, onOpen) {
   const draw = () => openPanel(`<div class="t">${title}</div><div class="sp"></div><div class="row">${d.map((v, i) => `<div class="dial"><span>${labels[i] || ''}</span><button data-a="u${i}">+</button><b>${v}</b><button data-a="d${i}">−</button></div>`).join('')}</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
     a => {
       if (a === 'x') return closePanel();
-      if (a === 'go') { if (d.join('') === answer) { closePanel(); sfx.take(); onOpen(); save(); render(); } else { sfx.bad(); say('THE LOCK DOES NOT MOVE.'); } return; }
+      if (a === 'go') { if (d.join('') === answer) { closePanel(); sfx.solve(); onOpen(); save(); render(); } else { sfx.bad(); say('THE LOCK DOES NOT MOVE.'); } return; }
       const i = +a[1]; d[i] = (d[i] + (a[0] === 'u' ? 1 : 9)) % 10; sfx.tap(); save(); draw();
     });
   draw();
@@ -447,7 +451,7 @@ function arrowPanel(onOpen) {
     a => {
       let seq = F.aseq || '';
       if (a === 'x') return closePanel();
-      if (a === 'go') { if (seq === MAZE_ANS) { closePanel(); sfx.take(); onOpen(); save(); render(); } else { sfx.bad(); say('THE LOCK DOES NOT MOVE.'); } return; }
+      if (a === 'go') { if (seq === MAZE_ANS) { closePanel(); sfx.solve(); onOpen(); save(); render(); } else { sfx.bad(); say('THE LOCK DOES NOT MOVE.'); } return; }
       if (a === 'clr') seq = ''; else if (a === 'del') seq = seq.slice(0, -1); else if (seq.length < 16) { seq += a; sfx.tap(); }
       F.aseq = seq; save(); draw();
     });
@@ -464,7 +468,7 @@ function chessPanel() {
       const i = +a, mine = /[A-Z]/.test(flat[i]);
       if (mine) { pick = pick === i ? -1 : i; sfx.tap(); return draw(); }
       if (pick < 0) return say('THAT IS NOT YOUR PIECE.');
-      if (pick === 30 && i === 13) { closePanel(); F.chess = 1; give('plug'); sfx.take(); angryT = Date.now() + 6000; say('POOK IS MAD HE LOST. HE FLIPPED THE BOARD, UNDER IT WAS A BATH PLUG.'); save(); return render(); }
+      if (pick === 30 && i === 13) { closePanel(); F.chess = 1; give('plug'); sfx.flip(); angryT = Date.now() + 6000; say('POOK IS MAD HE LOST. HE FLIPPED THE BOARD, UNDER IT WAS A BATH PLUG.'); save(); return render(); }
       pick = -1; sfx.bad(); angryT = Date.now() + 3000; say('POOK FROWNS... YOU COULD DO BETTER.'); draw();
     });
   draw();
@@ -478,7 +482,7 @@ function wordPanel() {
       a => {
         if (a === 'x') return closePanel();
         if (a === 'go') {
-          if (seq.join() === WORD_ANS.join()) { closePanel(); F.ward = 1; give('blanket'); sfx.take(); say('THE TILES CLICK INTO PLACE. INSIDE: ONE BLANKET. TAKEN.'); save(); return render(); }
+          if (seq.join() === WORD_ANS.join()) { closePanel(); F.ward = 1; give('blanket'); sfx.solve(); say('THE TILES CLICK INTO PLACE. INSIDE: ONE BLANKET. TAKEN.'); save(); return render(); }
           sfx.bad(); return say('THE TILES RATTLE. NOTHING OPENS.');
         }
         const i = +a; if (pick < 0) pick = i; else { [seq[pick], seq[i]] = [seq[i], seq[pick]]; pick = -1; save(); } sfx.tap(); draw();
@@ -526,7 +530,7 @@ function hexPanel() {
       pick = pick.includes(i) ? pick.filter(x => x !== i) : [...pick, i]; sfx.tap();
       if (pick.length === 4) {
         if (new Set(pick.map(x => HEX_G[x])).size === 1) {
-          const gi = HEX_G[pick[0]]; done[gi] = 1; pick = []; save(); sfx.take(); say(HEX_L[gi]);
+          const gi = HEX_G[pick[0]]; done[gi] = 1; pick = []; save(); sfx.solve(); say(HEX_L[gi]);
           if (done.every(Boolean)) { F.tv = 1; save(); tvPanel(); return say('THE STATIC CLEARS. THE TELEVISION HAS SOMETHING TO SAY.'); }
         } else { sfx.bad(); say('THE STATIC SNARLS. THAT IS NOT A GROUP.'); pick = []; }
       }
@@ -773,7 +777,7 @@ const ROOMS = [
           if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
           say('AN EMPTY CABINET.');
         }),
-        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. "THE VACUUM". TAKEN.'); } say('A TOWEL. DAMP. NOBODY HAS USED IT.'); })
+        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. "THE VACUUM". TAKEN.'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })
       ];
     } },
   { name: 'BEDROOM',
@@ -796,7 +800,7 @@ const ROOMS = [
         H(26, 8, 30, 26, () => bedDark() ? say('SOMETHING HANGS ON THE WALL. TOO DARK TO READ.') : mazePanel()),
         H(82, 44, 16, 34, it => {
           if (bedDark()) return say('TOO DARK. SOMETHING SMALL STANDS BY THE BED.');
-          if (!N) return note('A NOTE IN THE DRAWER', 'WHEN YOU LEAVE THE ROOM,\nWHAT DOES POOK FEEL?\n\nLOOK IN THE MIDDLE OF THINGS.');
+          if (!N) return note(F.ward ? 'A NOTE IN THE DRAWER. SOMEONE HAS SCRIBBLED IT OUT.' : 'A NOTE IN THE DRAWER', `<span class="${F.ward ? 'scr' : ''}">WHEN YOU LEAVE THE ROOM,\nWHAT DOES POOK FEEL?\n\nLOOK IN THE MIDDLE OF THINGS.</span>`);
           S.done[7] ? say('THE BOX IS STILL TURNING.') : S.done[6] ? boxPanel() : say('A MUSIC BOX. IT WAS NOT HERE YESTERDAY. POOK GROWLS WHEN YOU REACH FOR IT.');
         }),
         H(4, 42, 78, 38, it => {
@@ -860,6 +864,19 @@ function scare() {
   [147, 185, 233, 415, 622].forEach(f => beep(f, 1.1, 'sawtooth', .07)); hiss(.9);
   const t = setInterval(() => { if (Date.now() > scareT) { clearInterval(t); render(); } else drawScare(); }, 60); drawScare();
 }
+let waterNode = null;
+function water() {
+  const on = !muted && S.boot && S.room === 2 && S.tape === 0 && !!F.tap && !F.end && $('#splash').hidden;
+  if (on && !waterNode) {
+    try {
+      const a = ac(), n = a.sampleRate * 2, buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) ch[i] = Math.random() * 2 - 1;
+      const src = a.createBufferSource(), f = a.createBiquadFilter(), gn = a.createGain();
+      src.buffer = buf; src.loop = true; f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 0.6; gn.gain.value = 0.04;
+      src.connect(f); f.connect(gn); gn.connect(a.destination); src.start(); waterNode = src;
+    } catch (e) {}
+  } else if (!on && waterNode) { try { waterNode.stop(); } catch (e) {} waterNode = null; }
+}
 function glitch(ms) { glitchT = Date.now() + ms; hiss(Math.min(ms / 1000, .4)); const t = setInterval(() => { draw(); if (Date.now() > glitchT) { clearInterval(t); draw(); } }, 50); }
 function renderInv() {
   const el = $('#inv'); let h = '';
@@ -877,7 +894,7 @@ function render() {
   $('#codes').innerHTML = CFG.keys.map((key, k) => (k > 0 && S.tape < k) ? '' :
     `<button class="crow" data-k="${k}"><span class="lab">KEY ${k + 1}</span>${pieces(k).map((p, n) => `<span class="cs ${S.done[k * 4 + n] ? 'got' : ''}">${S.done[k * 4 + n] ? esc(p) : '?'.repeat(p.length || 1)}</span>`).join('')}</button>`).join('')
     + (isDemo ? '<div style="font-size:9px;text-align:center;color:var(--o)">DEMO KEYS — ADD #SETUP TO THE ADDRESS</div>' : '');
-  renderInv(); draw();
+  renderInv(); draw(); water();
 }
 setInterval(() => {
   frame++; if (elPanel.hidden) draw(); else if (!$('#pface').hidden) drawFace();
@@ -896,7 +913,7 @@ elCv.addEventListener('click', e => {
   const ps = pookSpot[S.room];
   const spots = [H(ps[0] - 14, ps[1] - 40, 28, 42, onPook), ...ROOMS[S.room].hot()];
   const h = spots.find(s => x >= s.x && x < s.x + s.w && y >= s.y && y < s.y + s.h);
-  if (h) h.a(it); else say(it ? 'NOTHING HAPPENS.' : 'NOTHING THERE.');
+  if (h) { sfx.look(); h.a(it); } else say(it ? 'NOTHING HAPPENS.' : 'NOTHING THERE.');
   save(); if (elPanel.hidden) render(); else renderInv();
 });
 $('#inv').addEventListener('click', e => {
@@ -929,7 +946,7 @@ function menu() {
     <div class="row"><button class="o" data-a="skip">SOLVE NEXT PUZZLE</button><button data-a="tape">JUMP TO TAPE 2</button><button data-a="ans">SHOW ANSWERS</button><button data-a="scare">TEST JUMPSCARE</button><button data-a="talk">TEST POOK LINE</button><button data-a="reset">RESET EVERYTHING</button></div>` : ''}`,
     a => {
       if (a === 'x') return closePanel();
-      if (a === 'snd') { muted = !muted; store.set('pook-mute', muted); sfx.tap(); return menu(); }
+      if (a === 'snd') { muted = !muted; store.set('pook-mute', muted); water(); sfx.tap(); return menu(); }
       if (a === 'skip') { dbgSolve(); return menu(); }
       if (a === 'scare') { closePanel(); return scare(); }
       if (a === 'talk') { closePanel(); return pookTalk(); }

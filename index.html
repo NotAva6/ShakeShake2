@@ -199,6 +199,9 @@ button{font:inherit;cursor:pointer;border-radius:0}
 #msg.rant #msgt{overflow:visible}
 .rt{position:absolute;left:-5px;top:0;width:124%;font-size:13px;line-height:1.02;letter-spacing:1px;transform:rotate(-2.5deg);pointer-events:none;text-shadow:1px 1px 0 var(--o);animation:rtj .11s steps(2) infinite}
 @keyframes rtj{50%{transform:rotate(-2.5deg) translate(1px,-1px)}}
+#inv .sl,.cslot{touch-action:none}
+.cghost{position:fixed;left:0;top:0;z-index:35;width:66px;min-height:46px;display:flex;align-items:center;justify-content:center;background:var(--w);color:var(--k);border:2px solid var(--k);box-shadow:4px 4px 0 var(--o);font-size:9px;padding:3px;text-align:center;pointer-events:none}
+.cslot canvas{width:32px;height:32px;image-rendering:pixelated;image-rendering:crisp-edges;display:block;margin:0 auto;pointer-events:none}
 </style>
 </head>
 <body>
@@ -468,14 +471,14 @@ Object.assign(ICON, {
 });
 const WORD_ANS = ['hat', 'egg', 'dog', 'ant', 'eye'];
 ICON.sun = () => { DO(8, 8, 3, 'o'); R(8, 1, 1, 3); R(8, 12, 1, 3); R(1, 8, 3, 1); R(12, 8, 3, 1); [[3, 3], [4, 4], [12, 3], [11, 4], [3, 12], [4, 11], [12, 12], [11, 11]].forEach(p => R(p[0], p[1], 1, 1)); };
-Object.assign(ICON, {
-  cardD() { B(3, 1, 10, 14, 'w'); R(5, 3, 6, 7); R(5, 12, 6, 1); },
-  cardV() { B(3, 1, 10, 14, 'w'); R(7, 3, 2, 6); R(5, 8, 6, 2, 'o'); R(5, 12, 6, 1); },
-  cardP() { B(3, 1, 10, 14, 'w'); DO(8, 6, 2, 'w'); R(7, 5, 1, 1); R(9, 5, 1, 1); R(7, 8, 3, 1, 'o'); R(5, 12, 6, 1); },
-  cardM() { B(3, 1, 10, 14, 'w'); B(5, 4, 6, 5, 'o'); R(6, 5, 1, 1); R(7, 6, 2, 1); R(9, 5, 1, 1); R(5, 12, 6, 1); }
+Object.assign(ICON, {   // trading cards: each shows something that can be counted in the house
+  cardM() { B(2, 1, 12, 14, 'w'); D(7, 9, 2, 'o'); D(9, 6, 1, 'o'); R(11, 6, 2, 1, 'o'); R(9, 5, 1, 1); R(4, 12, 8, 1); },
+  cardV() { B(2, 1, 12, 14, 'w'); B(5, 5, 6, 8, 'w'); R(6, 3, 4, 2); R(6, 8, 4, 2, 'o'); },
+  cardP() { B(2, 1, 12, 14, 'w'); B(4, 4, 8, 8, 'o'); R(8, 5, 1, 6); R(5, 8, 6, 1); },
+  cardD() { B(2, 1, 12, 14, 'w'); B(5, 3, 6, 10, 'w'); R(7, 5, 2, 3, 'o'); R(7, 9, 2, 2); }
 });
 const JARLAB = ['MEDICINE', 'NOT MEDICINE', 'MIXED'];
-const NAME = id => CARDS[id] ? `A TRADING CARD. "${CARDS[id][0]} ${CARDS[id][1]}"` : ({
+const NAME = id => CARDS[id] ? `A TRADING CARD: "${CARDS[id][0]}"` : ({
   coin: 'A COIN WITH A SURPRISING AMOUNT OF UTILITY', opener: 'A CAN OPENER', can: 'A SEALED CAN', canopen: 'AN OPEN CAN', ball: 'A BALL', plug: 'A BATH PLUG', soap: 'SOAP',
   key: 'A SMALL KEY', blanket: 'A BLANKET', jugA: `BIG JUG (${jamt('jugA')} OF 10)`, jugB: `MIDDLE JUG (${jamt('jugB')} OF 7)`, jugC: `SMALL JUG (${jamt('jugC')} OF 3)`,
   jar0: `JAR LABELLED "${JARLAB[0]}"`, jar1: `JAR LABELLED "${JARLAB[1]}"`, jar2: `JAR LABELLED "${JARLAB[2]}"`, teddy: 'HIS BEAR', crank: 'A SMALL CRANK'
@@ -528,7 +531,7 @@ function openPanel(html, handler, modal) {
   elPanel.innerHTML = html; elPanel.hidden = false; panelModal = !!modal; elPanel.scrollTop = 0;
   elPanel.onclick = e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled && handler) handler(b.dataset.a, b); };
 }
-function closePanel() { $('#msg').classList.remove('talk', 'rant'); $('#pface').hidden = true; if (curTitle !== null || rantOn) elMsg.textContent = ''; rantOn = false; curTitle = null; elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; panelInv = null; panelKind = null; }
+function closePanel() { $('#msg').classList.remove('talk', 'rant'); $('#pface').hidden = true; if (curTitle !== null || rantOn) elMsg.textContent = ''; rantOn = false; curTitle = null; elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; panelInv = null; panelKind = null; boxRedraw = null; }
 function pages(list, done) {
   let i = 0;
   const show = () => {
@@ -727,24 +730,63 @@ function jarPanel() {
       drop('jar0', 'jar1', 'jar2'); give('jar' + i); sfx.take(); save(); renderInv(); jarPanel(); say(`YOU ARE HOLDING THE "${JARLAB[i]}" JAR.`);
     });
 }
-const CARDS = { cardD: ['THE DARK', 'IS NEVER FIRST IN LINE'], cardV: ['THE VACUUM', 'STANDS SOMEWHERE AFTER THE MAILMAN'], cardP: ['POOK', 'STANDS SOMEWHERE BEFORE THE MAILMAN'], cardM: ['THE MAILMAN', 'REFUSES TO STAND NEXT TO THE DARK'] };
-const CARD_ANS = ['cardP', 'cardM', 'cardV', 'cardD'];
+const CARDS = { cardM: ['RUBBER DUCKS'], cardV: ['JARS'], cardP: ['WINDOW PANES'], cardD: ['LIGHT SWITCHES'] };
+const CARD_ANS = ['cardM', 'cardV', 'cardP', 'cardD'];   // 1 duck, 3 jars, 4 panes, 6 switches
 let panelInv = null;
+let boxRedraw = null, cardDrag = null, dragDone = 0;
 function boxPanel() {
   const slots = F.cslots || (F.cslots = [null, null, null, null]);
+  const text = id => `A TRADING CARD: "${CARDS[id][0]}".`;
   const draw = () => {
-    openPanel(`<div class="t">MUSIC BOX... IT'S LOCKED</div><div class="c">"FOUR IN A LINE, LEFT TO RIGHT.<br>EVERY CARD MUST BE HAPPY WHERE IT STANDS."</div>
-      <div class="row" style="gap:4px;flex-wrap:nowrap">${slots.map((id, i) => `<button class="cslot" data-a="${i}">${id ? CARDS[id][0] : '—'}</button>`).join('')}</div><div class="c" style="font-size:10px">TAP A CARD BELOW TO SLOT IT. TAP A SLOT TO TAKE IT BACK.</div>
+    openPanel(`<div class="t">MUSIC BOX... IT'S LOCKED</div><div class="c">"COUNT THEM IN THIS HOUSE.<br>FEWEST ON THE LEFT. MOST ON THE RIGHT."</div>
+      <div class="row" style="gap:4px;flex-wrap:nowrap">${slots.map((id, i) => `<button class="cslot" data-a="${i}" data-card="${id || ''}">${id ? '<canvas width="16" height="16"></canvas>' : '—'}</button>`).join('')}</div><div class="c" style="font-size:10px">DRAG A CARD INTO A SLOT. TAP A CARD TO READ IT.</div>
       <div class="sp"></div><div class="row"><button class="o" data-a="go">TURN THE HANDLE</button><button data-a="x">LEAVE</button></div>`,
       a => {
         if (a === 'x') return closePanel();
-        if (a === 'go') { if (slots.includes(null)) return say('THE HANDLE WILL NOT TURN. A SLOT IS EMPTY.'); if (slots.join() === CARD_ANS.join()) { if (F.boxBusy) return; F.boxBusy = 1; sfx.lull(); say('THE HANDLE TURNS. A SMALL, SLOW SONG.'); return setTimeout(() => { F.boxBusy = 0; need(7); }, 1900); } sfx.sour(); return say('SOMEBODY IN THE LINE IS UNHAPPY. THE BOX STAYS QUIET.'); }
-        const i = +a; if (slots[i]) { const id = slots[i]; give(id); slots[i] = null; sfx.tap(); save(); renderInv(); draw(); say(`${CARDS[id][0]} ${CARDS[id][1]}.`); }
+        if (a === 'go') {
+          if (slots.includes(null)) return say('THE HANDLE WILL NOT TURN. A SLOT IS EMPTY.');
+          if (slots.join() === CARD_ANS.join()) { if (F.boxBusy) return; F.boxBusy = 1; sfx.lull(); say('THE HANDLE TURNS. A SMALL, SLOW SONG.'); return setTimeout(() => { F.boxBusy = 0; need(7); }, 1900); }
+          sfx.sour(); return say('THE BOX STAYS QUIET. THE COUNT IS WRONG.');
+        }
+        const i = +a; if (Date.now() > dragDone && slots[i]) { sfx.tap(); say(text(slots[i])); }
       });
-    panelInv = id => { if (!CARDS[id]) return; const i = slots.indexOf(null); if (i < 0) return; slots[i] = id; drop(id); sfx.tap(); say(`${CARDS[id][0]} ${CARDS[id][1]}.`); save(); renderInv(); draw(); };
+    elPanel.querySelectorAll('.cslot canvas').forEach(c => { g = c.getContext('2d'); PAL = dayPal; R(0, 0, 16, 16, 'w'); ICON[c.parentNode.dataset.card](); });
+    g = mainG;
+    $('#msg').classList.remove('talk'); $('#pface').hidden = true;     // Pook is busy with his bear: nobody reads these aloud
+    panelInv = id => { if (CARDS[id] && Date.now() > dragDone) { sfx.tap(); say(text(id)); } };
+    boxRedraw = draw;
   };
   draw();
 }
+/* drag a card from the inventory (or from a slot) onto a slot; drop a slotted card anywhere else to take it back */
+document.addEventListener('pointerdown', e => {
+  if (!boxRedraw) return;
+  const sl = e.target.closest('#inv .sl'), cs = e.target.closest('.cslot'), id = sl ? sl.dataset.i : cs ? cs.dataset.card : '';
+  if (CARDS[id]) cardDrag = { id, from: cs ? +cs.dataset.a : -1, x: e.clientX, y: e.clientY, ghost: null };
+});
+document.addEventListener('pointermove', e => {
+  const d = cardDrag; if (!d) return;
+  if (!d.ghost) {
+    if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
+    d.ghost = document.createElement('div'); d.ghost.className = 'cghost'; d.ghost.textContent = CARDS[d.id][0]; document.body.appendChild(d.ghost); sfx.tap();
+  }
+  d.ghost.style.transform = `translate(${e.clientX - 33}px,${e.clientY - 30}px) rotate(-5deg)`;
+});
+function endCardDrag(e) {
+  const d = cardDrag; cardDrag = null; if (!d || !d.ghost) return;
+  d.ghost.remove(); dragDone = Date.now() + 350;
+  const slots = F.cslots, el = document.elementFromPoint(e.clientX, e.clientY), cs = el && el.closest('.cslot');
+  if (!slots || !boxRedraw) return;
+  if (cs) {
+    const to = +cs.dataset.a, other = slots[to];
+    if (d.from >= 0) slots[d.from] = other; else { drop(d.id); if (other) give(other); }
+    slots[to] = d.id; sfx.take();
+  } else if (d.from >= 0) { slots[d.from] = null; give(d.id); sfx.tap(); }
+  else return;
+  save(); renderInv(); boxRedraw();
+}
+document.addEventListener('pointerup', endCardDrag);
+document.addEventListener('pointercancel', endCardDrag);
 
 /* ---------- needs (one code piece each) ---------- */
 const FIX = [
@@ -931,7 +973,7 @@ const ROOMS = [
         H(8, 26, 30, 52, () => { if (N) return searchPlace('FRIDGE', 'THE FRIDGE IS EMPTY. THE LIGHT INSIDE STAYS OFF.'); say('THE FRIDGE HUMS. IT IS EMPTY, EXCEPT FOR THE HUM.'); }),
         H(50, 10, 46, 26, () => (N && F.cup) ? searchPlace('CUPBOARD', 'BARE SHELVES.') : F.cup ? say('BARE SHELVES.') : lockPanel('cup', "WALL CUPBOARD... IT'S LOCKED", [], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD.'); })),
         H(50, 58, 24, 12, it => {
-          if (N && F.drawer && !F.cM) { F.cM = 1; give('cardM'); sfx.take(); return say('IN THE DRAWER: A TRADING CARD. "THE MAILMAN".'); }
+          if (N && F.drawer && !F.cM) { F.cM = 1; give('cardM'); sfx.take(); return say('IN THE DRAWER: A TRADING CARD. IT SHOWS A RUBBER DUCK.'); }
           if (F.drawer) return say('AN EMPTY DRAWER.');
           if (it === 'coin') { F.drawer = 1; drop('coin'); give('opener'); sfx.take(); return say('THE COIN TURNS THE SCREW. INSIDE: A CAN OPENER.'); }
           say("DRAWER... IT'S SCREWED SHUT.");
@@ -962,7 +1004,7 @@ const ROOMS = [
     hot() {
       const N = isNight();
       return [
-        H(126, 83, 32, 22, () => (isNight() && F.toy && !F.cP) ? (F.cP = 1, give('cardP'), sfx.take(), say('IN THE TOY BOX: A TRADING CARD. "POOK". HE LOOKS YOUNGER ON IT.')) : F.toy ? say('EMPTY. TOOTH MARKS ON THE LID.') : arrowPanel(() => { F.toy = 1; give('ball'); say('THE TOY BOX OPENS. ONE BALL. IT IS DAMP.'); })),
+        H(126, 83, 32, 22, () => (isNight() && F.toy && !F.cP) ? (F.cP = 1, give('cardP'), sfx.take(), say('IN THE TOY BOX: A TRADING CARD. IT SHOWS A WINDOW.')) : F.toy ? say('EMPTY. TOOTH MARKS ON THE LID.') : arrowPanel(() => { F.toy = 1; give('ball'); say('THE TOY BOX OPENS. ONE BALL. IT IS DAMP.'); })),
         H(52, 12, 22, 22, () => N ? say('THE BOARD HANGS FACE DOWN.') : F.chess ? say('THE BOARD HANGS CROOKED. POOK IS A SORE LOSER.') : chessPanel()),
         H(88, 28, 36, 36, () => (N && S.done[5]) ? tvPanel() : say('THE TV IS OFF. IT IS UNPLUGGED. IT IS STILL WARM.')),
         H(4, 46, 72, 32, () => {
@@ -1018,7 +1060,7 @@ const ROOMS = [
           if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
           say('AN EMPTY CABINET.');
         }),
-        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. "THE VACUUM".'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })
+        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. IT SHOWS A JAR.'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })
       ];
     } },
   { name: 'BEDROOM',
@@ -1046,7 +1088,7 @@ const ROOMS = [
         }),
         H(4, 42, 78, 38, it => {
 
-          if (N && !F.cD) { F.cD = 1; give('cardD'); sfx.take(); return say('UNDER THE PILLOW: A TRADING CARD, ALMOST ALL BLACK. "THE DARK".'); }
+          if (N && !F.cD) { F.cD = 1; give('cardD'); sfx.take(); return say('UNDER THE PILLOW: A TRADING CARD. IT SHOWS A LIGHT SWITCH.'); }
           if (N) return say('THE BED IS STILL WARM.');
           if (it === 'blanket') { if (bedDark()) return say('IT IS TOO DARK TO MAKE THE BED.'); F.blanket = 1; drop('blanket'); sfx.tap(); return say('THE BED IS MADE.'); }
           if (!F.blanket) return say("IT'S TOO COLD.");
@@ -1249,7 +1291,7 @@ function menu() {
 5 THREE JUGS 10/7/3, BIG ONE FULL. POUR 10>7, 7>3, 3>10, 7>3, 3>10, 7>3, 10>7, 7>3. THE 7-JUG NOW HOLDS 5: USE IT ON THE BOWL. (BIG JUG ON TAP = START OVER. NOTHING CAN BE DUMPED.)
 6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
 7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN READ THE 5 CHANNELS. RIGHT NOW THE BEAR IS ${F.liar ? PLACES[F.liar.ans] : 'NOT PLACED UNTIL THE TV TUNES'} (MOVES AFTER A WRONG SEARCH). BEAR ON POOK.
-8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER, LEFT TO RIGHT: POOK, MAILMAN, VACUUM, DARK.`);
+8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER BY HOW MANY ARE IN THE HOUSE: DUCK (1), JARS (3), WINDOW PANES (4), LIGHT SWITCHES (6).`);
     });
 }
 function dbgSolve() {

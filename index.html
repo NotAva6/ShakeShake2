@@ -698,6 +698,7 @@ function warnPanel() {
   rant();
 }
 function tvPanel() {
+  setTimeout(tvNoise, 0);
   if (!F.tv) return hexPanel();
   if (!F.liar) { newLiar(); save(); }
   if (!F.warned) return warnPanel();
@@ -751,7 +752,7 @@ const FIX = [
   () => { F.cM = F.cP = F.cV = F.cD = 1; drop('cardM', 'cardP', 'cardV', 'cardD'); }
 ];
 const DONE_LINE = ['POOK EATS. POOK DOES NOT BLINK WHILE HE EATS.', 'POOK PLAYS. THE BALL WILL NEVER BE THE SAME.', 'POOK IS CLEAN. THE WATER IS NOT.', 'POOK SLEEPS.',
-  'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THE WRONGNESS FADES.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING. ALL HIS ATTENTION IS ON THE BEAR. THE HOUSE GOES BACK TO NORMAL.', 'THE SONG PLAYS. POOK SLEEPS.'];
+  'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THEN HE STARTS TO SHAKE. SOMEWHERE IN THE HOUSE, A TELEVISION TURNS ON.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING. ALL HIS ATTENTION IS ON THE BEAR. THE HOUSE GOES BACK TO NORMAL.', 'THE SONG PLAYS. POOK SLEEPS.'];
 function startNight() { (F.un || (F.un = []))[0] = 1; S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
 let flying = 0;
 function need(i) {
@@ -944,7 +945,7 @@ const ROOMS = [
       B(52, 12, 22, 22); if (F.chess) R(54, 14, 18, 18, 'k'); else for (let i = 0; i < 16; i++) if (((i >> 2) + i) & 1) R(53 + (i & 3) * 5, 13 + (i >> 2) * 5, 5, 5, 'o');   // chess board
       B(8, 46, 64, 14); B(4, 54, 8, 24); B(68, 54, 8, 24); B(11, 58, 58, 20); R(40, 59, 1, 12); R(12, 70, 56, 1); // sofa
       B(88, 36, 36, 28); B(91, 39, 24, 20, N ? 'k' : 'w'); R(118, 42, 3, 3); R(118, 48, 3, 3, 'o'); R(100, 28, 1, 8); R(106, 30, 1, 6); // tv
-      if (N) for (let i = 0; i < 90; i++) R(92 + rand(22), 40 + rand(18), 1, 1, rand(5) ? 'w' : 'o'); else R(94, 42, 5, 1);
+      if (N && S.done[5]) for (let i = 0; i < 90; i++) R(92 + rand(22), 40 + rand(18), 1, 1, rand(5) ? 'w' : 'o'); else R(94, 42, 5, 1);
       B(92, 64, 28, 14); R(93, 70, 26, 1);
       B(128, 85, 28, 18, 'o'); R(128, 90, 28, 1); if (F.toy) R(129, 86, 26, 4, 'k'); else B(139, 88, 6, 6, 'w');
     },
@@ -953,7 +954,7 @@ const ROOMS = [
       return [
         H(126, 83, 32, 22, () => (isNight() && F.toy && !F.cP) ? (F.cP = 1, give('cardP'), sfx.take(), say('IN THE TOY BOX: A TRADING CARD. "POOK". HE LOOKS YOUNGER ON IT. TAKEN.')) : F.toy ? say('EMPTY. TOOTH MARKS ON THE LID.') : arrowPanel(() => { F.toy = 1; give('ball'); say('THE TOY BOX OPENS. ONE BALL. IT IS DAMP. TAKEN.'); })),
         H(52, 12, 22, 22, () => N ? say('THE BOARD HANGS FACE DOWN.') : F.chess ? say('THE BOARD HANGS CROOKED. POOK IS A SORE LOSER.') : chessPanel()),
-        H(88, 28, 36, 36, () => N ? tvPanel() : say('THE TV IS OFF. IT IS UNPLUGGED. IT IS STILL WARM.')),
+        H(88, 28, 36, 36, () => (N && S.done[5]) ? tvPanel() : say('THE TV IS OFF. IT IS UNPLUGGED. IT IS STILL WARM.')),
         H(4, 46, 72, 32, () => {
           if (N) return searchPlace('SOFA', 'NOTHING UNDER THE CUSHIONS BUT CRUMBS.');
           if (!F.coin) { F.coin = 1; give('coin'); sfx.take(); return say('UNDER THE CUSHION: CRUMBS, AND ONE COIN. TAKEN.'); }
@@ -1114,7 +1115,22 @@ function blackout(done) {
   setTimeout(step, 2600);
 }
 let waterNode = null;
+let tvNode = null, tvGain = null;
+function tvNoise() {
+  const on = !muted && S.boot && pookShaking() && !F.tv && $('#splash').hidden;
+  if (on && !tvNode) {
+    try {
+      const a = ac(), n = a.sampleRate * 2, buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) ch[i] = Math.random() * 2 - 1;
+      const src = a.createBufferSource(), f = a.createBiquadFilter(); tvGain = a.createGain();
+      src.buffer = buf; src.loop = true; f.type = 'highpass'; f.frequency.value = 2500;
+      src.connect(f); f.connect(tvGain); tvGain.connect(a.destination); src.start(); tvNode = src;
+    } catch (e) {}
+  } else if (!on && tvNode) { try { tvNode.stop(); } catch (e) {} tvNode = null; tvGain = null; }
+  if (tvGain) tvGain.gain.value = S.room === 1 ? 0.03 : 0.012;      // louder in the den, where the TV is
+}
 function water() {
+  tvNoise();
   const on = !muted && S.boot && S.room === 2 && S.tape === 0 && !!F.tap && !F.end && $('#splash').hidden;
   if (on && !waterNode) {
     try {

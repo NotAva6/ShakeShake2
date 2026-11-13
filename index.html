@@ -333,17 +333,19 @@ function beep(f, d = 0.1, type = 'square', vol = 0.04, when = 0) {
     o.connect(g2); g2.connect(a.destination); o.start(t); o.stop(t + d + 0.02);
   } catch (e) {}
 }
-function hiss(d = 0.25) {
+function hiss(d = 0.25, v = 0.12) {
   if (muted) return;
   try {
     const a = ac(), n = Math.floor(a.sampleRate * d), buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * 0.12;
+    for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * v;
     const src = a.createBufferSource(); src.buffer = buf; src.connect(a.destination); src.start();
   } catch (e) {}
 }
 const sfx = {
   tap() { beep(440, .04); }, take() { beep(520, .06); beep(700, .08, 'square', .04, .07); },
-  look() { beep(300, .04, 'triangle', .06); }, solve() { [659, 880, 1319].forEach((f, i) => beep(f, .1, 'square', .04, i * .07)); },
+  look() { beep(300, .04, 'triangle', .06); },
+  sour() { beep(392, .3, 'triangle', .05); beep(415, .45, 'triangle', .045, .14); },
+  lull() { [659, 523, 587, 494, 523, 440, 494, 392].forEach((f, i) => beep(f, .34, 'triangle', .06, i * .22)); }, solve() { [659, 880, 1319].forEach((f, i) => beep(f, .1, 'square', .04, i * .07)); },
   flip() { hiss(.35); [420, 310, 230, 170].forEach((f, i) => beep(f, .06, 'square', .05, i * .06)); beep(85, .3, 'sawtooth', .07, .26); },
   bad() { beep(110, .2, 'sawtooth', .04); }, good() { [392, 523, 659, 784].forEach((f, i) => beep(f, .16, 'square', .04, i * .12)); },
   note(i) { beep([262, 330, 392, 523][i], .35, 'triangle', .1); }
@@ -428,7 +430,7 @@ Object.assign(ICON, {
   cardM() { B(3, 1, 10, 14, 'w'); B(5, 4, 6, 5, 'o'); R(6, 5, 1, 1); R(7, 6, 2, 1); R(9, 5, 1, 1); R(5, 12, 6, 1); }
 });
 const JARLAB = ['MEDICINE', 'NOT MEDICINE', 'MIXED'];
-const NAME = id => CARDS[id] ? `A TRADING CARD: "${CARDS[id][0]}". IT ${CARDS[id][1]}` : ({
+const NAME = id => CARDS[id] ? `A TRADING CARD. "${CARDS[id][0]} ${CARDS[id][1]}"` : ({
   coin: 'A COIN WITH A SURPRISING AMOUNT OF UTILITY', opener: 'A CAN OPENER', can: 'A SEALED CAN', canopen: 'AN OPEN CAN', ball: 'A BALL', plug: 'A BATH PLUG', soap: 'SOAP',
   key: 'A SMALL KEY', blanket: 'A BLANKET', jugA: `BIG JUG (${jamt('jugA')} OF 10)`, jugB: `MIDDLE JUG (${jamt('jugB')} OF 7)`, jugC: `SMALL JUG (${jamt('jugC')} OF 3)`,
   jar0: `JAR LABELLED "${JARLAB[0]}"`, jar1: `JAR LABELLED "${JARLAB[1]}"`, jar2: `JAR LABELLED "${JARLAB[2]}"`, teddy: 'HIS BEAR', crank: 'A SMALL CRANK'
@@ -676,21 +678,21 @@ function jarPanel() {
       drop('jar0', 'jar1', 'jar2'); give('jar' + i); sfx.take(); save(); renderInv(); jarPanel(); say(`YOU ARE HOLDING THE "${JARLAB[i]}" JAR.`);
     });
 }
-const CARDS = { cardD: ['THE DARK', 'FEARS NOTHING'], cardV: ['THE VACUUM', 'FEARS ONLY WHAT IT CANNOT SEE'], cardP: ['POOK', 'FEARS THE LOUD ONE'], cardM: ['THE MAILMAN', 'FEARS TEETH'] };
-const CARD_ANS = ['cardD', 'cardV', 'cardP', 'cardM'];
+const CARDS = { cardD: ['THE DARK', 'IS NEVER FIRST IN LINE'], cardV: ['THE VACUUM', 'STANDS SOMEWHERE AFTER THE MAILMAN'], cardP: ['POOK', 'STANDS SOMEWHERE BEFORE THE MAILMAN'], cardM: ['THE MAILMAN', 'REFUSES TO STAND NEXT TO THE DARK'] };
+const CARD_ANS = ['cardP', 'cardM', 'cardV', 'cardD'];
 let panelInv = null;
 function boxPanel() {
   const slots = F.cslots || (F.cslots = [null, null, null, null]);
   const draw = () => {
-    openPanel(`<div class="t">MUSIC BOX... IT'S LOCKED</div><div class="c">"FROM THE ONE THAT FEARS NOTHING<br>TO THE ONE THAT FEARS THE MOST."</div>
+    openPanel(`<div class="t">MUSIC BOX... IT'S LOCKED</div><div class="c">"FOUR IN A LINE, LEFT TO RIGHT.<br>EVERY CARD MUST BE HAPPY WHERE IT STANDS."</div>
       <div class="row" style="gap:4px;flex-wrap:nowrap">${slots.map((id, i) => `<button class="cslot" data-a="${i}">${id ? CARDS[id][0] : '—'}</button>`).join('')}</div><div class="c" style="font-size:10px">TAP A CARD BELOW TO SLOT IT. TAP A SLOT TO TAKE IT BACK.</div>
       <div class="sp"></div><div class="row"><button class="o" data-a="go">TURN THE HANDLE</button><button data-a="x">LEAVE</button></div>`,
       a => {
         if (a === 'x') return closePanel();
-        if (a === 'go') { if (slots.join() === CARD_ANS.join()) return need(7); sfx.bad(); return say(slots.includes(null) ? 'THE HANDLE WILL NOT TURN. A SLOT IS EMPTY.' : 'THE BOX PLAYS ONE SOUR NOTE AND STOPS.'); }
-        const i = +a; if (slots[i]) { give(slots[i]); slots[i] = null; sfx.tap(); save(); renderInv(); draw(); }
+        if (a === 'go') { if (slots.includes(null)) return say('THE HANDLE WILL NOT TURN. A SLOT IS EMPTY.'); if (slots.join() === CARD_ANS.join()) { if (F.boxBusy) return; F.boxBusy = 1; sfx.lull(); say('THE HANDLE TURNS. A SMALL, SLOW SONG.'); return setTimeout(() => { F.boxBusy = 0; need(7); }, 1900); } sfx.sour(); return say('SOMEBODY IN THE LINE IS UNHAPPY. THE BOX STAYS QUIET.'); }
+        const i = +a; if (slots[i]) { const id = slots[i]; give(id); slots[i] = null; sfx.tap(); save(); renderInv(); draw(); say(`${CARDS[id][0]} ${CARDS[id][1]}.`); }
       });
-    panelInv = id => { if (!CARDS[id]) return; const i = slots.indexOf(null); if (i < 0) return; slots[i] = id; drop(id); sfx.tap(); say(`${CARDS[id][0]}. IT ${CARDS[id][1]}.`); save(); renderInv(); draw(); };
+    panelInv = id => { if (!CARDS[id]) return; const i = slots.indexOf(null); if (i < 0) return; slots[i] = id; drop(id); sfx.tap(); say(`${CARDS[id][0]} ${CARDS[id][1]}.`); save(); renderInv(); draw(); };
   };
   draw();
 }
@@ -1080,7 +1082,7 @@ function water() {
     } catch (e) {}
   } else if (!on && waterNode) { try { waterNode.stop(); } catch (e) {} waterNode = null; }
 }
-function glitch(ms) { glitchT = Date.now() + ms; hiss(Math.min(ms / 1000, .4)); const t = setInterval(() => { draw(); if (Date.now() > glitchT) { clearInterval(t); draw(); } }, 50); }
+function glitch(ms) { glitchT = Date.now() + ms; hiss(Math.min(ms / 1000, .4), 0.035); const t = setInterval(() => { draw(); if (Date.now() > glitchT) { clearInterval(t); draw(); } }, 50); }
 function renderInv() {
   const el = $('#inv'); let h = '';
   for (let i = 0; i < 7; i++) { const id = S.inv[i]; h += `<button class="sl ${id && id === sel ? 'sel' : ''}" data-i="${id || ''}">${id ? '<canvas width="16" height="16"></canvas>' : ''}${CAPS[id] ? `<i>${jamt(id)}/${CAPS[id]}</i>` : ''}</button>`; }
@@ -1168,7 +1170,7 @@ function menu() {
 5 THREE JUGS 10/7/3, BIG ONE FULL. POUR 10>7, 7>3, 3>10, 7>3, 3>10, 7>3, 10>7, 7>3. THE 7-JUG NOW HOLDS 5: USE IT ON THE BOWL. (BIG JUG ON TAP = START OVER. NOTHING CAN BE DUMPED.)
 6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
 7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN READ THE 5 CHANNELS. RIGHT NOW THE BEAR IS ${F.liar ? PLACES[F.liar.ans] : 'NOT PLACED UNTIL THE TV TUNES'} (MOVES AFTER A WRONG SEARCH). BEAR ON POOK.
-8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER: DARK, VACUUM, POOK, MAILMAN.`);
+8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER, LEFT TO RIGHT: POOK, MAILMAN, VACUUM, DARK.`);
     });
 }
 function dbgSolve() {

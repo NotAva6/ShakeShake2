@@ -738,7 +738,7 @@ function boxPanel() {
   const slots = F.cslots || (F.cslots = [null, null, null, null]);
   const text = id => `A TRADING CARD: "${CARDS[id][0]}".`;
   const draw = () => {
-    openPanel(`<div class="t">MUSIC BOX... IT'S LOCKED</div><div class="c">"COUNT THEM IN THIS HOUSE.<br>FEWEST ON THE LEFT. MOST ON THE RIGHT."</div>
+    openPanel(`<div class="t">MUSIC BOX... IT'S LOCKED</div><div class="c" style="font-size:26px;line-height:1">&lt;</div>
       <div class="row" style="gap:4px;flex-wrap:nowrap">${slots.map((id, i) => `<button class="cslot" data-a="${i}" data-card="${id || ''}">${id ? '<canvas width="16" height="16"></canvas>' : '—'}</button>`).join('')}</div><div class="c" style="font-size:10px">DRAG A CARD INTO A SLOT. TAP A CARD TO READ IT.</div>
       <div class="sp"></div><div class="row"><button class="o" data-a="go">TURN THE HANDLE</button><button data-a="x">LEAVE</button></div>`,
       a => {

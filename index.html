@@ -952,9 +952,9 @@ function boot() {
   loadCfg(); F = S.f; $('#setup').hidden = true;
   if (/(^|#|&)setup\b/.test(location.hash)) return setup();
   closePanel(); render(); say('');
-  power(() => { if (S.boot) { $('#splash').hidden = true; return; } splash(() => pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n................ OK\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.`,
+  power(() => splash(() => { if (S.boot) return; pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n................ OK\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.`,
     'POOK HAS NEEDS.\nMEET THEM, AND POOK WILL GIVE BACK\nWHAT HE IS KEEPING FOR YOU.\n\nTAP THINGS. PICK THINGS UP.\nUSE THEM ON OTHER THINGS.', 'DO NOT LEAVE POOK ALONE\nFOR TOO LONG.'],
-    () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); })); });
+    () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); }); }));
 }
 window.addEventListener('hashchange', boot);
 boot();

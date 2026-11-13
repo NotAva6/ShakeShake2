@@ -154,6 +154,31 @@ button{font:inherit;cursor:pointer;border-radius:0}
 @keyframes wblink{50%{background:var(--w)}}
 .nl{display:inline-block;background:var(--o);color:var(--k);padding:0 2px;animation:nlin 1.3s .5s both}
 @keyframes nlin{0%{opacity:0;transform:scale(2.4)}55%{opacity:1}100%{opacity:1;transform:scale(1)}}
+#scr{position:fixed;inset:0;width:100vw;height:100vh;z-index:40;background:#000;object-fit:cover;image-rendering:pixelated;image-rendering:crisp-edges}
+.hexes{position:relative;width:216px;height:178px;margin:4px auto 0;flex:none}
+#panel .hx{width:48px;height:55px}
+#panel .hx span{font-size:9px}
+#panel .hx b{background:var(--bg);color:var(--fg);padding:0 1px;font-weight:700}
+#panel .hx.on span{inset:6px;background:var(--bg);color:var(--fg)}
+#panel .hx.dn0 span{background:var(--o)}
+#panel .hx.dn1 span{background:var(--fg)}
+#panel .hx.dn2 span{background:repeating-linear-gradient(45deg,var(--o) 0 4px,var(--bg) 4px 8px)}
+#panel .hx.dn3 span{background-color:var(--bg);background-image:linear-gradient(45deg,var(--fg) 25%,transparent 25%,transparent 75%,var(--fg) 75%),linear-gradient(45deg,var(--fg) 25%,transparent 25%,transparent 75%,var(--fg) 75%);background-size:6px 6px;background-position:0 0,3px 3px}
+#panel .hxx{position:absolute;right:4px;top:4px;padding:2px 8px;z-index:1}
+.vhs{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;overflow:hidden;border:2px solid var(--fg)}
+.vhs pre{text-shadow:2px 0 var(--o);animation:vj 2.6s steps(1) infinite;font-size:12px;padding:14px 0}
+.vhs i{position:absolute;font-style:normal;font-size:10px;color:var(--o);letter-spacing:1px}
+.vhs .vt{left:6px;top:4px}
+.vhs .vb{right:6px;bottom:4px}
+.vhs::before{content:"";position:absolute;left:0;right:0;height:18px;top:-18px;background:repeating-linear-gradient(var(--fg) 0 2px,transparent 2px 5px);animation:vbar 3.2s linear infinite}
+.vhs::after{content:"";position:absolute;left:0;right:0;bottom:0;height:7px;background:repeating-linear-gradient(90deg,var(--fg) 0 3px,transparent 3px 5px,var(--o) 5px 9px,transparent 9px 14px)}
+@keyframes vj{0%,84%{transform:none}86%{transform:translateX(4px) skewX(-8deg)}90%{transform:translateX(-3px) skewX(3deg)}94%{transform:none}}
+@keyframes vbar{to{top:100%}}
+.glx{animation:glx .09s steps(2) infinite}
+@keyframes glx{0%{transform:translate(-5px,1px) skewX(9deg);filter:invert(1)}50%{transform:translate(6px,-2px) skewX(-11deg)}}
+#controls{align-items:flex-end}
+.mid{flex-direction:row;gap:8px;align-items:flex-end}
+#bmenu,#bwords{padding:8px 10px}
 </style>
 </head>
 <body>
@@ -178,6 +203,7 @@ button{font:inherit;cursor:pointer;border-radius:0}
 </div>
 <div id="splash" hidden></div>
 <div id="setup" hidden></div>
+<canvas id="scr" width="160" height="108" hidden></canvas>
 
 <script>
 'use strict';
@@ -329,7 +355,7 @@ function pook(cx, fy, o = {}) {
 }
 
 /* item icons, 16x16 */
-const CAPS = { jug5: 5, jug3: 3 };
+const CAPS = { jugA: 10, jugB: 7, jugC: 3 }, JUGS = Object.keys(CAPS), jamt = id => (F.jug || {})[id] || 0;
 const ICON = {
   coin() { DO(8, 8, 5, 'o'); R(7, 5, 2, 7); },
   opener() { R(3, 8, 3, 7); DO(10, 5, 3, 'w'); R(6, 6, 2, 2); R(10, 5, 1, 1); },
@@ -340,8 +366,10 @@ const ICON = {
   soap() { B(3, 8, 11, 6, 'w'); R(5, 10, 7, 1, 'o'); DO(11, 4, 1, 'w'); DO(6, 3, 1, 'w'); },
   key() { DO(5, 6, 2, 'o'); R(7, 6, 7, 1); R(11, 7, 1, 2); R(13, 7, 1, 3); },
   blanket() { B(2, 4, 12, 9, 'o'); R(2, 7, 12, 1); R(2, 10, 12, 1); },
-  jug5() { B(3, 2, 9, 12, 'w'); R(12, 4, 2, 1); R(13, 4, 1, 6); R(12, 9, 2, 1); const h = Math.round(10 * (F.j5 || 0) / 5); R(4, 13 - h, 7, h, 'o'); },
-  jug3() { B(4, 6, 7, 8, 'w'); R(11, 7, 2, 1); R(12, 7, 1, 4); R(11, 10, 2, 1); const h = Math.round(6 * (F.j3 || 0) / 3); R(5, 13 - h, 5, h, 'o'); },
+  jugA() { B(3, 1, 9, 14, 'w'); R(12, 4, 2, 1); R(13, 4, 1, 6); R(12, 9, 2, 1); const h = Math.round(12 * jamt('jugA') / 10); R(4, 14 - h, 7, h, 'o'); },
+  jugB() { B(3, 4, 9, 11, 'w'); R(12, 6, 2, 1); R(13, 6, 1, 5); R(12, 10, 2, 1); const h = Math.round(9 * jamt('jugB') / 7); R(4, 14 - h, 7, h, 'o'); },
+  jugC() { B(4, 8, 7, 7, 'w'); R(11, 9, 2, 1); R(12, 9, 1, 4); R(11, 12, 2, 1); const h = Math.round(5 * jamt('jugC') / 3); R(5, 14 - h, 5, h, 'o'); },
+
   jar() { B(4, 4, 8, 10, 'w'); R(5, 2, 6, 2); R(5, 7, 6, 3, 'o'); },
   teddy() { DO(5, 3, 1, 'o'); DO(11, 3, 1, 'o'); DO(8, 6, 3, 'o'); DO(8, 12, 3, 'o'); R(7, 5, 1, 1); R(9, 5, 1, 1); R(8, 7, 1, 1); },
   crank() { R(3, 11, 7, 2); R(9, 4, 2, 8); R(9, 3, 5, 2); DO(13, 4, 1, 'o'); }
@@ -365,7 +393,7 @@ Object.assign(ICON, {
 const JARLAB = ['MEDICINE', 'NOT MEDICINE', 'MIXED'];
 const NAME = id => CARDS[id] ? `A TRADING CARD: "${CARDS[id][0]}". IT ${CARDS[id][1]}` : ({
   coin: 'A COIN WITH A SURPRISING AMOUNT OF UTILITY', opener: 'A CAN OPENER', can: 'A SEALED CAN', canopen: 'AN OPEN CAN', ball: 'A BALL', plug: 'A BATH PLUG', soap: 'SOAP',
-  key: 'A SMALL KEY', blanket: 'A BLANKET', jug5: `BIG JUG (${F.j5 || 0} OF 5)`, jug3: `SMALL JUG (${F.j3 || 0} OF 3)`,
+  key: 'A SMALL KEY', blanket: 'A BLANKET', jugA: `BIG JUG (${jamt('jugA')} OF 10)`, jugB: `MIDDLE JUG (${jamt('jugB')} OF 7)`, jugC: `SMALL JUG (${jamt('jugC')} OF 3)`,
   jar0: `JAR LABELLED "${JARLAB[0]}"`, jar1: `JAR LABELLED "${JARLAB[1]}"`, jar2: `JAR LABELLED "${JARLAB[2]}"`, teddy: 'HIS BEAR', crank: 'A SMALL CRANK'
 }[id]);
 
@@ -393,8 +421,9 @@ const MAZE_ANS = (() => {
   return out;
 })();
 const ARROW = { L: '←', U: '↑', D: '↓', R: '→' };
-const SW = [[0, 1], [1, 2], [1, 3], [0]];
-const lights = () => F.lights || (F.lights = [0, 0, 0, 0]);
+const SW = [[0, 1], [1, 3, 4], [3, 4, 5], [0, 2, 4], [1, 2, 3], [3, 5]];
+const SW_ANS = (() => { for (let x = 0; x < 64; x++) { const L = [0, 0, 0, 0, 0, 0]; SW.forEach((s2, i) => { if (x >> i & 1) s2.forEach(b => { L[b] ^= 1; }); }); if (L.every(Boolean)) return SW.map((s2, i) => i + 1).filter((n, i) => x >> i & 1).join(' '); } return '?'; })();
+const lights = () => (F.lights && F.lights.length === 6) ? F.lights : (F.lights = [0, 0, 0, 0, 0, 0]);
 const bedDark = () => S.tape === 0 && !F.end && !lights().every(v => v);
 const JARS = [['poi', 'mix', 'med'], ['mix', 'med', 'poi']];
 const SONG = ['BOWL', 'BALL', 'TUB', 'BED'];
@@ -419,6 +448,16 @@ function pages(list, done) {
   const show = () => {
     openPanel(`<div class="sp"></div><pre class="c">${list[i]}</pre><div class="sp"></div><div class="row"><button class="o" data-a="ok">OK</button></div>`,
       () => { sfx.tap(); if (++i < list.length) show(); else { closePanel(); if (done) done(); render(); } }, true);
+    const gl = $('#gl');
+    if (gl) {                                                  // a page that glitches into something friendlier
+      const b2 = elPanel.querySelector('button'); b2.disabled = true;
+      setTimeout(() => {
+        if ($('#gl') !== gl) return; elPanel.classList.add('glx'); hiss(.6); beep(90, .5, 'sawtooth', .06);
+        let n = 0; const junk = ['D0 N0T L3AVE P##K', 'PO0K L0V3S', '#### ##### ###', 'P O O K', 'L0VES Y0U'];
+        const t = setInterval(() => { gl.textContent = junk[n++ % junk.length]; }, 70);
+        setTimeout(() => { clearInterval(t); elPanel.classList.remove('glx'); if ($('#gl') === gl) { gl.textContent = 'POOK LOVES YOU!'; b2.disabled = false; } }, 700);
+      }, 1500);
+    }
     const ld = $('#ld'); if (!ld) return;                      // a page with a loading line: dots tick in, then OK
     const btn = elPanel.querySelector('button'); btn.disabled = true; let n = 0;
     const t = setInterval(() => {
@@ -512,8 +551,8 @@ function mazePanel() {
 }
 function switchPanel() {
   const L = lights();
-  const draw = () => openPanel(`<div class="t">LIGHT SWITCH</div><div class="sp"></div><div class="row" style="gap:16px">${L.map(v => `<span class="bulb ${v ? 'on' : ''}"></span>`).join('')}</div>
-    <div class="row">${[0, 1, 2, 3].map(i => `<button data-a="${i}">SW ${i + 1}</button>`).join('')}</div><div class="sp"></div><div class="row"><button data-a="x">LEAVE</button></div>`,
+  const draw = () => openPanel(`<div class="t">LIGHT SWITCH</div><div class="sp"></div><div class="row" style="gap:8px">${L.map(v => `<span class="bulb ${v ? 'on' : ''}"></span>`).join('')}</div>
+    <div class="row">${SW.map((x, i) => `<button data-a="${i}" style="min-width:34px">${i + 1}</button>`).join('')}</div><div class="sp"></div><div class="row"><button data-a="x">LEAVE</button></div>`,
     a => {
       if (a === 'x') return closePanel();
       SW[+a].forEach(b => { L[b] ^= 1; }); sfx.tap(); save(); render(); draw();
@@ -526,30 +565,39 @@ function switchPanel() {
 const HEX_W = ['BONE', 'CANINE', 'TIRED', 'STEAL', 'KITTEN', 'DOGMA', 'PLANT', 'SULTAN', 'WEIGHT', 'BEEF', 'FARMER', 'SUBLIME', 'SCOWL', 'HEART', 'CHIPS', 'CLIPS'];
 const HEX_G = [0, 0, 1, 1, 0, 2, 2, 1, 0, 2, 3, 1, 2, 3, 3, 3];
 const HEX_L = ['A NUMBER HIDES INSIDE EACH.', 'EACH ENDS IN A COLOUR.', 'AN ANIMAL HIDES INSIDE EACH.', 'A BODY PART HIDES INSIDE EACH.'];
+function hexAdj(a, b) {
+  const ra = a >> 2, ca = a & 3, rb = b >> 2, d = (b & 3) - ca;
+  if (ra === rb) return Math.abs(d) === 1; if (Math.abs(ra - rb) !== 1) return false;
+  return ra & 1 ? (d === 0 || d === 1) : (d === 0 || d === -1);
+}
 function hexPanel() {
   const done = F.hx || (F.hx = [0, 0, 0, 0]); let pick = [];
-  const draw = () => openPanel(`<div class="row" style="justify-content:space-between"><span style="font-size:10px;line-height:1.25">"YOU'VE HEARD OF READING BETWEEN THE LINES? I JUST READ WITHIN THE LETTERS."</span><button data-a="x">X</button></div><div class="hexes">${HEX_W.map((w, i) => { const r = i >> 2, c = i & 3; return `<button class="hx ${done[HEX_G[i]] ? 'dn' : pick.includes(i) ? 'on' : ''}" data-a="${i}" style="left:${c * 22 + (r & 1 ? 11 : 0)}%;top:${r * 33}px"><span>${w}</span></button>`; }).join('')}</div>`,
+  const draw = () => openPanel(`<div class="t">"YOU'VE HEARD OF READING BETWEEN THE LINES? I JUST READ WITHIN THE LETTERS."</div><button class="hxx" data-a="x">X</button><div class="hexes">${HEX_W.map((w, i) => { const r = i >> 2, c = i & 3; return `<button class="hx ${done[HEX_G[i]] ? 'dn dn' + HEX_G[i] : pick.includes(i) ? 'on' : ''}" data-a="${i}" style="left:${c * 48 + (r & 1 ? 24 : 0)}px;top:${r * 41}px"><span><b>${w}</b></span></button>`; }).join('')}</div>`,
     a => {
       if (a === 'x') return closePanel();
       const i = +a; if (done[HEX_G[i]]) return say(HEX_L[HEX_G[i]]);
-      pick = pick.includes(i) ? pick.filter(x => x !== i) : [...pick, i]; sfx.tap();
+      if (pick.includes(i)) pick = pick.filter(x => x !== i);
+      else if (pick.length && !pick.some(p => hexAdj(p, i))) { pick = []; sfx.bad(); say('NO. THOSE DO NOT TOUCH.'); return draw(); }
+      else pick.push(i);
+      sfx.tap();
       if (pick.length === 4) {
         if (new Set(pick.map(x => HEX_G[x])).size === 1) {
           const gi = HEX_G[pick[0]]; done[gi] = 1; pick = []; save(); sfx.solve(); say(HEX_L[gi]);
           if (done.every(Boolean)) { F.tv = 1; save(); tvPanel(); return say('THE STATIC CLEARS. THE TELEVISION HAS SOMETHING TO SAY.'); }
-        } else { sfx.bad(); say('THE STATIC SNARLS. THAT IS NOT A GROUP.'); pick = []; }
+        } else { sfx.bad(); say('NO. THAT IS NOT A GROUP.'); pick = []; }
       }
       draw();
     });
-  draw(); say('THE TELEVISION IS ALL STATIC. WORDS FLOAT IN IT.');
+  draw();
 }
 function tvPanel() {
   if (!F.tv) return hexPanel();
-  const CH = ['STAND BY.\n\nHIS BEAR IS IN THIS HOUSE.\nSOFA. TUB. WARDROBE. FRIDGE.\n\nFOUR CHANNELS KNOW WHERE.\nONLY ONE OF THEM TELLS THE TRUTH.',
-    'IT IS UNDER THE SOFA.', 'IT IS IN THE TUB.', 'IT IS NOT IN THE WARDROBE.', 'IT IS NOT UNDER THE SOFA.'];
-  let c = 0;
-  const draw = () => openPanel(`<div class="t">CH ${c} ${c ? '' : '— NO SIGNAL'}</div><div class="sp"></div><pre class="c">${CH[c]}</pre><div class="sp"></div><div class="row"><button data-a="-">CH −</button><button data-a="+">CH +</button><button data-a="x">LOOK AWAY</button></div>`,
-    a => { if (a === 'x') return closePanel(); c = (c + (a === '+' ? 1 : 4)) % 5; hiss(.12); draw(); });
+  if (!F.liar) { newLiar(); save(); }
+  const txt = x => x.t === 'in' ? `IT IS ${PLACES[x.v]}.` : x.t === 'not' ? `IT IS NOT ${PLACES[x.v]}.` : x.t === 'lie' ? `CHANNEL ${x.v + 1} IS LYING.` : `CHANNEL ${x.v + 1} TELLS THE TRUTH.`;
+  const CH = ['STAND BY.\n\nHIS BEAR IS IN THIS HOUSE.\nSOFA. TUB. WARDROBE.\nFRIDGE. CUPBOARD.\n\nFIVE CHANNELS KNOW WHERE.\nONLY ONE OF THEM TELLS THE TRUTH.', ...F.liar.st.map(txt)];
+  let c = F.tvc || 0;
+  const draw = () => openPanel(`<div class="vhs"><i class="vt">PLAY ▸ CH ${c}</i><i class="vb">SP 03:00:0${c}</i><pre class="c">${CH[c]}</pre></div><div class="row"><button data-a="-">CH −</button><button data-a="+">CH +</button><button data-a="x">LOOK AWAY</button></div>`,
+    a => { if (a === 'x') return closePanel(); c = (c + (a === '+' ? 1 : 5)) % 6; F.tvc = c; hiss(.12); draw(); });
   draw();
 }
 function jarPanel() {
@@ -590,8 +638,8 @@ const FIX = [
   () => { F.coin = F.drawer = F.cup = 1; drop('coin', 'opener', 'can', 'canopen'); },
   () => { F.toy = 1; drop('ball'); },
   () => { F.tap = F.fog = F.plug = F.soap = F.cab = F.chess = 1; drop('plug', 'soap'); },
-  () => { F.ward = F.blanket = 1; F.lights = [0, 0, 0, 0]; drop('key', 'blanket'); },
-  () => { F.jugs = 1; drop('jug5', 'jug3'); },
+  () => { F.ward = F.blanket = 1; F.lights = [0, 0, 0, 0, 0, 0]; drop('key', 'blanket'); },
+  () => { F.jugs = 1; drop('jugA', 'jugB', 'jugC'); },
   () => { drop('jar0', 'jar1', 'jar2'); },
   () => { F.teddy = F.tv = 1; drop('teddy'); },
   () => { F.cM = F.cP = F.cV = F.cD = 1; drop('cardM', 'cardP', 'cardV', 'cardD'); }
@@ -648,7 +696,7 @@ function flyLetters(i, letters) {
 }
 function tapeEnd(k) {
   keyReveal(k, () => {
-    if (k < nKeys() - 1) pages(['THE TAPE ENDS.', 'THE TAPE DOES NOT END.', 'TAPE 2\n03:00\n\nPOOK IS AWAKE.\nPOOK SHOULD NOT BE AWAKE.'], () => { startNight(); save(); render(); scare(); say('IT IS DARK. POOK IS LOOKING AT YOU.'); });
+    if (k < nKeys() - 1) pages(['THE TAPE ENDS.'], () => blackout(() => { startNight(); save(); render(); glitch(600); say('IT IS DARK. POOK IS LOOKING AT YOU.'); }));
     else pages(['POOK IS ASLEEP.\nPOOK IS SAFE.\n\nYOU DID EVERYTHING RIGHT,\nCARETAKER.', `HAPPY BIRTHDAY${CFG.name ? ',\n' + esc(CFG.name) : ''}.\n\n${CFG.message ? esc(CFG.message) : 'POOK LOVES YOU.'}`], () => { F.end = 1; S.room = 3; save(); say('POOK IS ASLEEP. HAPPY BIRTHDAY.'); });
   });
 }
@@ -695,14 +743,36 @@ function onPook(it) {
   if (it === 'teddy') return S.done[5] ? need(6) : say('POOK IS TOO UNWELL TO CARE ABOUT THE BEAR.');
   say('POOK DOES NOT WANT THAT.');
 }
-function searchWrong(line) { glitch(300); sfx.bad(); say(line + ' ONLY ONE CHANNEL TELLS THE TRUTH.'); }
-function pourJug(from, to) {
-  const kf = from === 'jug5' ? 'j5' : 'j3', kt = to === 'jug5' ? 'j5' : 'j3';
-  const amt = Math.min(F[kf] || 0, CAPS[to] - (F[kt] || 0));
-  if (!amt) return say((F[kf] || 0) ? 'THE OTHER JUG IS FULL.' : 'THAT JUG IS EMPTY.');
-  F[kf] -= amt; F[kt] = (F[kt] || 0) + amt; sfx.tap(); say(`POURED. BIG JUG ${F.j5 || 0} OF 5. SMALL JUG ${F.j3 || 0} OF 3.`);
+const PLACES = { SOFA: 'UNDER THE SOFA', TUB: 'IN THE TUB', WARDROBE: 'IN THE WARDROBE', FRIDGE: 'IN THE FRIDGE', CUPBOARD: 'IN THE CUPBOARD' }, PKEYS = Object.keys(PLACES);
+function liarTruth(st, loc) {
+  const base = st.map(x => x.t === 'in' ? x.v === loc : x.t === 'not' ? x.v !== loc : null);
+  return st.map((x, i) => x.t === 'lie' ? !base[x.v] : x.t === 'hon' ? base[x.v] : base[i]);
 }
-
+/* five channels, exactly one honest; the bear is in the only place that makes that work. Re-rolled after a wrong search. */
+function newLiar() {
+  F.tvc = 0;
+  for (let tries = 0; tries < 6000; tries++) {
+    const ans = PKEYS[rand(5)], meta = new Set(); while (meta.size < 2) meta.add(rand(5));
+    const baseIdx = [0, 1, 2, 3, 4].filter(i => !meta.has(i));
+    const st = [0, 1, 2, 3, 4].map(i => meta.has(i) ? { t: rand(2) ? 'lie' : 'hon', v: baseIdx[rand(3)] } : { t: rand(2) ? 'in' : 'not', v: PKEYS[rand(5)] });
+    const ok = PKEYS.every(loc => (liarTruth(st, loc).filter(Boolean).length === 1) === (loc === ans));
+    if (ok && st.some(x => x.t === 'in') && st.some(x => x.t === 'not') && new Set(st.map(x => x.t + x.v)).size === 5) { F.liar = { ans, st }; return; }
+  }
+  F.liar = { ans: 'WARDROBE', st: [{ t: 'in', v: 'SOFA' }, { t: 'in', v: 'TUB' }, { t: 'not', v: 'WARDROBE' }, { t: 'not', v: 'SOFA' }, { t: 'hon', v: 0 }] };
+}
+function searchPlace(id, line) {
+  if (F.teddy || !F.tv) return say(line);
+  if (!F.liar) newLiar();
+  if (F.liar.ans === id) { F.teddy = 1; give('teddy'); sfx.take(); return say('THERE: HIS BEAR. IT WAS FACING THE DOOR. TAKEN.'); }
+  newLiar(); save();
+  if (!F.sc3) { F.sc3 = 1; scare(); } else { glitch(400); sfx.bad(); }
+  say('NOT HERE. SOMETHING MOVED WHILE YOU LOOKED. THE TELEVISION HAS CHANGED ITS STORY.');
+}
+function pourJug(from, to) {
+  const J = F.jug || (F.jug = {}), amt = Math.min(J[from] || 0, CAPS[to] - (J[to] || 0));
+  if (!amt) return say((J[from] || 0) ? 'THAT JUG IS ALREADY FULL.' : 'THAT JUG IS EMPTY.');
+  J[from] -= amt; J[to] = (J[to] || 0) + amt; sfx.tap(); say(`POURED. ${JUGS.map(j => jamt(j) + ' OF ' + CAPS[j]).join(' · ')}.`);
+}
 /* ---------- rooms ---------- */
 const H = (x, y, w, h, a) => ({ x, y, w, h, a });
 const pookSpot = [[122, 103], [104, 104], [142, 104], [143, 104]];
@@ -718,9 +788,9 @@ const ROOMS = [
       B(44, 52, 74, 26); R(44, 56, 74, 1);                                                // counter
       B(50, 60, 24, 9); if (F.drawer) R(51, 61, 22, 7, 'k'); else { R(60, 64, 4, 1); R(52, 62, 1, 1); R(71, 62, 1, 1); }
       B(80, 60, 32, 16); R(96, 61, 1, 14);
-      R(90, 50, 22, 2); R(100, 41, 2, 9); R(100, 41, 7, 2); R(106, 43, 1, 2);             // sink + tap
+      B(86, 47, 28, 6, 'k'); R(100, 41, 2, 7); R(100, 41, 7, 2); R(106, 43, 1, 2);             // sink + tap
       DO(136, 20, 8); R(136, 14, 1, 7); R(136, 20, 5, 1);                                 // clock (3:00)
-      if (N && !F.jugs) { B(54, 39, 9, 13); R(63, 42, 2, 1); R(64, 42, 1, 5); B(66, 44, 7, 8); R(73, 46, 2, 1); }
+      if (N && !F.jugs) { B(51, 37, 9, 15); R(52, 41, 7, 10, 'o'); R(60, 40, 2, 1); R(61, 40, 1, 6); B(63, 41, 8, 11); B(73, 46, 6, 6); }
       B(140, 97, 18, 7, 'o'); if ((!N && S.done[0]) || (N && S.done[4])) R(142, 96, 14, 1, N ? 'w' : 'k');
     },
     hot() {
@@ -729,7 +799,7 @@ const ROOMS = [
         H(138, 92, 22, 14, it => {
           if (N) {
             if (S.done[4]) return say('WATER. EXACTLY ENOUGH.');
-            if (it === 'jug5' || it === 'jug3') { const a = F[it === 'jug5' ? 'j5' : 'j3'] || 0; return a === 4 ? need(4) : say(`${a} CUPS. POOK LOOKS AT THE WATER. THEN AT YOU. THE NOTE SAID 4.`); }
+            if (CAPS[it]) { const a = jamt(it); return a === 5 ? need(4) : say(`${a} CUPS. POOK LOOKS AT THE WATER. THEN AT YOU. THE NOTE SAID 5.`); }
             return say('THE BOWL IS DRY.');
           }
           if (S.done[0]) return say('LICKED CLEAN.');
@@ -738,19 +808,23 @@ const ROOMS = [
           say('AN EMPTY BOWL. IT SAYS "POOK" ON THE SIDE.');
         }),
         H(13, 30, 11, 11, () => N
-          ? note('A NOTE ON THE FRIDGE', 'NIGHT WATER.\n\nEXACTLY 4 CUPS.\nNOT 3. NOT 5.\n\nHE CAN TELL.')
+          ? note('A NOTE ON THE FRIDGE', 'NIGHT WATER.\n\nEXACTLY 5 CUPS.\nTHE TAP HAS ONE BIG JUGFUL LEFT.\nTEN CUPS. NO MORE.\n\nHE CAN TELL.')
           : clueNote()),
-        H(8, 26, 30, 52, () => { if (N && !F.teddy) return searchWrong('THE FRIDGE IS EMPTY. THE LIGHT INSIDE STAYS OFF.'); say('THE FRIDGE HUMS. IT IS EMPTY, EXCEPT FOR THE HUM.'); }),
-        H(50, 10, 46, 26, () => F.cup ? say('BARE SHELVES.') : lockPanel('cup', "WALL CUPBOARD... IT'S LOCKED", [], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
+        H(8, 26, 30, 52, () => { if (N) return searchPlace('FRIDGE', 'THE FRIDGE IS EMPTY. THE LIGHT INSIDE STAYS OFF.'); say('THE FRIDGE HUMS. IT IS EMPTY, EXCEPT FOR THE HUM.'); }),
+        H(50, 10, 46, 26, () => (N && F.cup) ? searchPlace('CUPBOARD', 'BARE SHELVES.') : F.cup ? say('BARE SHELVES.') : lockPanel('cup', "WALL CUPBOARD... IT'S LOCKED", [], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
         H(50, 58, 24, 12, it => {
           if (N && F.drawer && !F.cM) { F.cM = 1; give('cardM'); sfx.take(); return say('IN THE DRAWER: A TRADING CARD. "THE MAILMAN". TAKEN.'); }
           if (F.drawer) return say('AN EMPTY DRAWER.');
           if (it === 'coin') { F.drawer = 1; drop('coin'); give('opener'); sfx.take(); return say('THE COIN TURNS THE SCREW. INSIDE: A CAN OPENER. TAKEN.'); }
           say("DRAWER... IT'S SCREWED SHUT.");
         }),
-        ...(N && !F.jugs ? [H(52, 37, 24, 16, () => { F.jugs = 1; F.j5 = F.j3 = 0; give('jug5', 'jug3'); sfx.take(); say('TWO JUGS. ONE HOLDS 5 CUPS. ONE HOLDS 3. NO MARKINGS. TAKEN.'); })] : []),
-        H(97, 38, 12, 12, it => { if (it === 'jug5' || it === 'jug3') { F[it === 'jug5' ? 'j5' : 'j3'] = CAPS[it]; sfx.tap(); return say(`FILLED TO THE TOP. ${NAME(it)}.`); } say('THE TAP RUNS. COLD.'); }),
-        H(88, 49, 26, 6, it => { if (it === 'jug5' || it === 'jug3') { F[it === 'jug5' ? 'j5' : 'j3'] = 0; sfx.tap(); return say('EMPTIED INTO THE SINK.'); } say('A SINK.'); }),
+        ...(N && !F.jugs ? [H(49, 35, 32, 18, () => { F.jugs = 1; F.jug = { jugA: 10, jugB: 0, jugC: 0 }; give('jugA', 'jugB', 'jugC'); sfx.take(); say('THREE JUGS. THEY HOLD 10, 7 AND 3 CUPS. THE BIG ONE IS FULL. NO MARKINGS. TAKEN.'); })] : []),
+        H(98, 36, 10, 11, it => {
+          if (!N) return say('THE TAP RUNS. COLD.');
+          if (it === 'jugA') { F.jug = { jugA: 10, jugB: 0, jugC: 0 }; sfx.tap(); return say('YOU TIP EVERYTHING OUT AND START AGAIN. THE BIG JUG IS FULL: 10. THE OTHERS ARE EMPTY.'); }
+          say(CAPS[it] ? 'THE TAP ONLY FITS THE BIG JUG.' : 'THE TAP COUGHS. USE THE BIG JUG ON IT TO START OVER.');
+        }),
+        H(84, 46, 32, 9, it => { if (CAPS[it]) { (F.jug || (F.jug = {}))[it] = 0; sfx.tap(); return say(`EMPTIED INTO THE SINK. ${NAME(it)}.`); } say(N ? 'A SINK. A JUG COULD BE EMPTIED HERE.' : 'A SINK.'); }),
         H(126, 10, 20, 20, () => say(N ? 'IT IS 3:00. IT HAS BEEN 3:00 FOR SOME TIME.' : 'THE CLOCK SAYS 3:00. IT IS NOT 3:00.'))
       ];
     } },
@@ -774,7 +848,7 @@ const ROOMS = [
         H(52, 12, 22, 22, () => N ? say('THE BOARD HANGS FACE DOWN.') : F.chess ? say('THE BOARD HANGS CROOKED. POOK IS A SORE LOSER.') : chessPanel()),
         H(88, 28, 36, 36, () => N ? tvPanel() : say('THE TV IS OFF. IT IS UNPLUGGED. IT IS STILL WARM.')),
         H(4, 46, 72, 32, () => {
-          if (N) return F.teddy ? say('CRUMBS.') : searchWrong('NOTHING UNDER THE CUSHIONS.');
+          if (N) return searchPlace('SOFA', 'NOTHING UNDER THE CUSHIONS BUT CRUMBS.');
           if (!F.coin) { F.coin = 1; give('coin'); sfx.take(); return say('UNDER THE CUSHION: CRUMBS, AND ONE COIN. TAKEN.'); }
           say('CRUMBS.');
         }),
@@ -807,7 +881,7 @@ const ROOMS = [
         H(10, 42, 18, 18, () => { if (N) return say('THE TAP TURNS. NOTHING COMES OUT. THEN SOMETHING DOES. YOU TURN IT OFF.'); F.tap = F.tap ? 0 : 1; if (F.tap) F.fog = 1; sfx.tap(); say(F.tap ? 'HOT WATER. STEAM CRAWLS UP THE MIRROR.' : 'THE TAP DRIPS.'); }),
         H(58, 50, 12, 10, () => say(N ? 'THE DUCK FACES YOU NOW.' : 'A RUBBER DUCK. IT FACES THE WALL.')),
         H(8, 60, 78, 28, it => {
-          if (N) return F.teddy ? say('AN EMPTY TUB.') : searchWrong('THE TUB IS EMPTY. THE DRAIN GURGLES.');
+          if (N) return searchPlace('TUB', 'THE TUB IS EMPTY. THE DRAIN GURGLES.');
           if (S.done[2]) return say('GREY WATER. BEST NOT TO LOOK.');
           if (it === 'plug') { F.plug = 1; drop('plug'); sfx.tap(); say('THE PLUG FITS THE DRAIN.'); }
           else if (it === 'soap') { if (!(F.plug && F.tap)) return say('NOTHING TO LATHER.'); F.soap = 1; drop('soap'); sfx.tap(); say('BUBBLES.'); }
@@ -840,7 +914,7 @@ const ROOMS = [
       if (N) { B(84, 55, 10, 7, 'o'); R(94, 57, 3, 1); } else { R(88, 52, 2, 10); B(84, 45, 10, 8, 'o'); }
       B(100, 14, 36, 64); R(118, 15, 1, 62); R(115, 50, 2, 4); R(120, 50, 2, 4); if (!F.ward) B(113, 40, 11, 7, 'o');   // wardrobe
       if (F.ward) R(101, 15, 17, 62, 'k');
-      B(141, 30, 12, 18); lights().forEach((v, i) => R(143 + (i % 2) * 5, 33 + ((i / 2) | 0) * 7, 3, 4, v ? 'o' : 'k')); // switches
+      B(141, 30, 12, 18); lights().forEach((v, i) => R(143 + (i % 2) * 5, 32 + ((i / 2) | 0) * 5, 3, 3, v ? 'o' : 'k')); // switches
     },
     hot() {
       const N = isNight();
@@ -861,7 +935,7 @@ const ROOMS = [
         }),
         H(100, 14, 36, 64, it => {
           if (bedDark()) return say('TOO DARK. A TALL SHAPE. A LOCK YOU CANNOT MAKE OUT.');
-          if (N) { if (F.teddy) return say('COAT HANGERS. THEY SWAY.'); F.teddy = 1; give('teddy'); sfx.take(); return say('BEHIND THE COATS: HIS BEAR. IT WAS FACING THE DOOR. TAKEN.'); }
+          if (N) return searchPlace('WARDROBE', 'COAT HANGERS. THEY SWAY.');
           if (F.ward) return say('COAT HANGERS. THEY SWAY.');
           wordPanel();
         })
@@ -901,17 +975,28 @@ function pookTalk() {
 const SCARE = 'VQFVVVVVVVVVVVVVVVUBAAAAAAAAAAAAAFBVUVVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVVVVAQAAAAAAAAAAAABARERVVVUFAAAAAAAAAABVAVVVVVVVVVVVVVVVVQEAAAAAAAAAAAAAABVRVVVVEQEAAAAAAAAAVQBUVVVVVVVVVVVVVVVFAAAAAAAAAAAAAEBEQFVVVUUAAAAAAAAAAFUBVVVVVVVVVVVVVVVVZQAAAAAAAAAAAABUVlFVVVUVAQAAAAAAAABVAFRVVVVVVVVVVVVVVVkAAAAAAAAAAAAApEZEVVVVRQAAAAAAAAAAVQFVVVVVVVVVVVVVVaVqAAAAAEBRAQAAAKUaUVVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVZWpWgAAAABAVQEAAACUKkBVVVVEAAAAAAAAAABVAVVVVVVVVVVVVVWmqhYAAAAAUFUBAAAAVapRVVVVFQEAAAAAAAAAVQFUVVVVVVVVVVVVqZoFAAAAAFBVBQAAAECpRVVVVUUAAAAAAAAAAFUBVVVVVVVVVVVVVapqFQAAAABQagEAAABApVpVVVUVAQAAAAAAAABVAFRVVVVVVVVVVZWpVQUAAAAAQGkAAAAAQJVqVVVVBAAAAAAAAAAAVQFVVVVVVVVVVVVVqlYRAQEAAVBqAQABAABVqlVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVVVVAAAARARQaQBABAAAVJlVVVUFAAAAAAAAAABVAVVVVVVVVVVVVVVVVREQEFURUGoAURUAAFFVVVVVEQAAAAAAAAAAVQBUVFVVVVVVVVVVVVUAAERVBVRZQFRVAABUVVVVVQQAAAAAAAAAAFUBVVVVVVVVVVVVVVVVEQFVVRVVWlFVVRUBVVVVZVUFAQAAAAAAAABVAVRVVVVVVVVVVVVVVQAAVVUVlFpUVVVFAFRVVZVVBQAAAAAAAAAAVQFVVVVVVVVVVVZVVRUAQFVlVZVaVVVVFRFQVVWlVhUAAAAAAAAAAFUBVFVVVVVVVZVVVVUFAECVqlqVWpWqVUUAQFVVlVoEAAAAAAAAAABVAVVVVVVVVVWqVlVVAQBRpapqpVqpqloVAQFVVVVqFQEAAAAAAAAAVQFUVVVVVVVVqVVFRQAAVKmqqpVaqqpaBQAAVVVVaQUAAAAAAAAAAFUBVVVVVVVVZaZVFREAAFWqqqqlaqqqahUQEVVVVWoRAAAAAAAAAABVAFRUVVVVVZVVVQAAAECVqqqqlaqqqmpVAABURVWpBAAAAAAAAAAAVQFVVVVVVVVVVRUAAAAApaqqqqaqqqpqVRERVRVVpQEAAAAAAAAAAFUAVFVVVVVVVVUFAAAAQKmqqqqVqqqqqlUFAEQFQJUBAAAAAAAAAABVAVVVVVVVVVVVAAAAAFCpqqqqpqqqqqpaFRBRVQBVBgAAAAAAAAAAVQBUVFVVVVVVBQAAAABUqaqqqpWqqqqqalVARFQAVBUAAAAAAAAAAFUBVVVVVVVVVQEAAABAVaWqqqqVqqqqqqpWERVVAVAVAAAAAAAAAABVAFRVVVVVVUQAAAAAQFWVqqqqVaqqqqqaVQVERAAAVQAAAAAAAAAAVQFUVVVVVVUQAAAAAFBVVamqalWqqqqqVlUVUVEBAFQBAAAAAAAAAFUAVFVVVVVVAAAAAABUVVWkqmpVlamqVlVVVURABABQAAAAAAAAAABVAVVVVVVVFQAAAAAAVVZqpapqVVWlqlZVVVUVARUAUAEAAAAAAAAAVQBUVVVVVQUAAAAAAFWlalSpalVVlWpFqVVVRQAEAEAAAAAAAAAAAFUAUFVVVVUVAAAAAEBVqqpQVVVVVVVWgWpqVVUAUAEAAAAAAAAAAABVAFBVVVVVBQAAAABAVaqqQFVVVVVVVYCWKVRVAAAAAAAAAAAAAAAAVQBQVVVVVQEAAAAAUFqqqlFVVVVVVVWApiplVQEAEQAAAAAAAAAAAFUAVFVVVVUAAAAAAFAKqmpAVVVVVVVVgKoppFUAAAAAAAAAAAAAAABVAFBVVVVVAAAAAABQGqlqUVVVVVVVVYFqKqBWAQAQAAAAAAAAAAAAVQBQVVVVVQAAAAAAUFqkWlRVVVVVVVVAqRqoVgAAAAAAAAAAAAAAAFUAUVVVVRUAAAAAAFBqVVVVVVVVVVVVEaVWqlYBAAAAAAAAAAAAAABVAFRVVVUFAAAAAABUWkVVVVVVVVVVVVVUVapWAAAAAAAAAAAAAAAAVQBQVVVVFQAAAABQpWpVVVVVVVVVVVVVVVWqVgEAAAAAAAAAAAAAAFUAUFVVBQAAAAAAVKVaVVVVVVVVVVVVVVWVqloFAAAAAAAAAAAAAABVAFFVVQEAAAAAAFWqalZVVVZVVVVVVVVVqqpqVQEAAAAAAAEAAAAAVQBAVVUAAAAAAECVqlpaVZVVVVVVVVVVlaqqqlUFAAAAAAAAAAAAAFUAEFVVAAAAAABVlapqalVlVVVVVaVmVaWqqqpWFQAAAAAAAAAAAABVAABUBQAAAABQVZWqqlWVmVVVVVWVqZmpqqmqVVUFAAAAAAAAAAAAVQAAVRUAAAAAVVWmqmplpqpWZapWpaqqqqqqqmpWFQAAAAAAAAAAAFUAAFQFAAAAAFVVlaqqVamqVZmZWpWqqqqqqqpaVRUAAAAAAAAAAABVAABVAQAAAFBVVaWqqlaqqqqqqmqlqqqqqqqqalUVAAAAAAAAAAAAVQAAVAAAAABAVVWVqqpZqaqqqqqqqaqqqqqqqlpVFQAAAAAAAAAAAFUAAFUBAAAAUFVlpaqqaqqqqqqqqqqqqqqqqqpqVRUAAAAAAAAAAABVAABUAAAAAEBVVZmqqlqqqqqaqqqqqqqqqqmqalUVAAAAAAAAAAAAVQAAVQEAAABQVWWlqqpWqqqqpqqqqqqqqqqqqmpVFQAAAAAAAAAAAFQAAFQAAAAAQFVVlaqqlZmpmZmpqqqqqqqpqapaVRUAAAAAAAAAAABVAABVAQAAAABVZaWqalZWqqqmqqqqqqpqZqqqalUVAAAAAAAAAAAARAAARAAAAABAVVWVqlpVlaqamaqqqqqaalWpqlpVVQAAAAAAAAAAABEAABAAAAAAUFVlpapqVZWqamamqqqqlmpVqqpaVRUAAAAAAAAAAAAEAAAAAAAAAEBVVZWqalWVqlpVlamqqpVqVaqqVVVVAAAAAAAAAAAAEQAAAAAAAABQVVWmqmpVpapqZmaqqqpWalWqqlZVFQAAAAAAAAAAAAAAAAAAAAAAQFVVmapqVZWqWlVVmaqqVVpVqqpVVRUAAAAAAAAAAAAQAAAAAAAAAFBVVaaqalWlqmplZqaqqlZmVaqqVlUVAAAAAAAAAAAAAAAAAAAAAABAVVWVqqpVpapZVZWpqqpVVVWpqVlVBQAAAAAAAAAAAAAAAAAAAAAAAFVVpqpqVamqZmZmqqqqVlZVqqpaVRUAAAAAAAAAAAAAAAAAAAAAAABVVZWqWlWpqlpZWZmqqlZVVaqqVVUFAAAAAAAAAAAAAAAAAAAAAABAVVWlqmpVqqpqZWalqqpWVVWqalVVAQAAAAAAAAAAAAAAAAAAAAAAQFVVValZVamqapVVmaqqWlWVqVlVVQAAAAAAAAAAAAAAAAAAAAAAAEBVVVVmalWqqmpmZmqqqlZVlapWVVUBAAAAAAAAAAAAAAAAAAAAAABAVVVVVVVVqapamZmZqqpWVZVaVVVVAAAAAAAAAAAAAAAAAAAAAAAAUFVVVVVlVaqqamWmqqqqVlWlVlVVVQEAAAAAAAAAAAAAAAAAAAAAAEBVVVVVVVWpqlqVmamqqlZVlVVVVVUAAAAAAAAAAAAAAAAAAAAAAABAVVVVpVZWqqpqZaqqqqpWVWVVVVVVAQAAAAAAAAAAAAAAAAAAAAAAQFVVVVVVVamqWpWqmaqqVlVVVVVVVQAAAAAAAAAAAAAAAAAAAAAAAABVpWZVVVWlqmplqqqqqlZVVVVVVRUAAAAAAAAAAAAAAAAAAAAAAAAAVKWqVVVVpapalamZlapVVVVVVVUVAAAAAAAAAAAAAAAAAAAAAAAAAFWlqlZVVZWqVlWqapZWVVVVVVVqFQAAAAAAAAAAAAAAAAAAAAAAAABQlapaVVVVVVVVVVVVVVVVVVWVWgUAAAAAAAAAAAAAAAAAAAAAAAAAUFWqqlZVVVVVVVVVVVVVVVVVpmoVAAARAAAAAAAAAAAAAAAAAAAAAEBVqappVVVVVVVVVVVVVVVVlapZFQBABAAAAAAAAAAAAAAAAAAAAABRlZqqqlZVVVVVVVVVVVVVVapqVRUAUBUAAAAAAAAAAAAAAAAAAAAARJWZqqqqVVVVVVVVVVVVVamqalUVAFQFAAAAAAAAAAAAAAAAAAAAAFCVqqqqqlpVVWVVZVVVVZWqqmZWFQBVJQAAAAAAAAAAAAAAAAAAAABUVampqqpqlVWplalVWVWpqpqVWgUAVWkAAAAAAAAAAAAAAAAAAAAAVVWppqqqaqVaqqqqlmpqqmqmploBAFYqAAAAAAAAAAAAAAAEAAAAAFRVpUaZqqqpmqqaqpqqqqpaqWpVAABWaQAAAAAAAAAAAAAAAQAAAABQVVVqmaqqqqqqqqqqqqpqWqpqFZBqZioAAAAAAAAAAAAAQAAAAAAAUFVVlZmpqqmqqpqqqqqqWYmpaQWgqppZAAAAAAAAAAAAAFABAAAQAZVWVZVqZlqqqqqqqqqqqlaaqmoBqaqqalABAAAAAAAAAABAAAAAVEWlWlWVmqpZqqqqmqqqqppGmZlZAKmqqmpUBQAAAAAAAAAAUAEAAFBVpWpVVaaqZqqqqqqqqqqqWmpVFQCqqqpqlRYAAAAAAAAAAFQAAACQVaWqVVWZqpqlqqqqqqqqlZlZVQWAqqqqqpUFAAAAAAAAAABVAQAAkVqlqlZVVqpqlaqqqqpqZlWlalUBkKqqqqqmWgUAAQAAAAAAVAEAAJSqlapaVVWpWkClqqqqapVVlWoVAKSqqqqqqloFAAAAAAAAEFUBAABQqpaqalVVqWpRpaqqqmqpZZVqBQCoqqqqqqpqFQABAAAAAERVBQAAlKqVqqpVValalJWamaqqqaVVVQAAqaqqqqqqqhUAAAAAAABVVQUAAFWqqqqqalWlaqWqqmqqqqqmVhUAQKqqqqqqqqpWAQEAAABAVVUFAABVqpqqqqpVlVmVqqqqqqqqmlYVAICqqqqqqqqqVUUBAAAAQFVVBgAAVaqqqqqqVlVlpaaqqqqqqqZWFRCkqqqqqqqqqlZVAQAAAEBVlQUAAJSqmqqqqlpVqampqqqqqqmaWgWoqqqqqqqqqqpVVQAAAABAZaUWAQFVqqqqqqpqVaqqpqqqqqqqqlqVqqqqqqqqqqqqVlUBAAAAQJWVWUVFVKqqqqqqqlZZqaWaqqqpqVpVpaqqqqqqqqqqqlpVAAAAAFClplZVVVWpqqqqqqpWVWqlWqqqpalaVaWqqqqqqqqqqqpqVQEAAABQlZlZVVVVpaqqqqqqWlVZpZqaqlWpWlWpqqqqqqqqqqqqqlUAAAAAUKWqalVqVaWqqqqqqqpVVqVqpmpVplpVqqqqqqqqqqqqqqpWAQAAAFSZmlpVqlmVqqqqqqqqVVVVmpZaVZVVVaqqqqqqqqqqqqqqVQEAAABUpapqVapqpaqqqqqqqlZVVaVWalVVVaWqqqqqqqqqqqqqqlYBAAAAVKmqmZWqqpqqqqqqqqpqVVVVVVVVVVWlqqqqqqqqqqqqqqpVBQAA';
 const SCARE_PX = (() => { const b = atob(SCARE), out = new Uint8Array(160 * 108); for (let i = 0; i < out.length; i++) out[i] = (b.charCodeAt(i >> 2) >> ((i & 3) * 2)) & 3; return out; })();
 function drawScare() {
-  const img = mainG.createImageData(160, 108), cols = [[18, 16, 14], [245, 178, 107], [244, 236, 216]], dx = rand(7) - 3, dy = rand(5) - 2, inv = rand(10) === 0;
+  const cx = $('#scr').getContext('2d'), img = cx.createImageData(160, 108), cols = [[18, 16, 14], [245, 178, 107], [244, 236, 216]], dx = rand(7) - 3, dy = rand(5) - 2, inv = rand(10) === 0;
   for (let y = 0; y < 108; y++) for (let x = 0; x < 160; x++) {
     const sx = Math.min(159, Math.max(0, x + dx)), sy = Math.min(107, Math.max(0, y + dy)); let v = SCARE_PX[sy * 160 + sx]; if (inv) v = 2 - v;
     const c = cols[v], o = (y * 160 + x) * 4; img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 255;
   }
-  mainG.putImageData(img, 0, 0);
+  cx.putImageData(img, 0, 0);
 }
-function scare() {
-  if (panelModal) return; closePanel(); $('#bub').hidden = true; scareT = Date.now() + 1300;
+function scare(after) {
+  if (panelModal) return; closePanel(); $('#bub').hidden = true; scareT = Date.now() + 1300; $('#scr').hidden = false;
   [147, 185, 233, 415, 622].forEach(f => beep(f, 1.1, 'sawtooth', .07)); hiss(.9);
-  const t = setInterval(() => { if (Date.now() > scareT) { clearInterval(t); render(); } else drawScare(); }, 60); drawScare();
+  const t = setInterval(() => { if (Date.now() > scareT) { clearInterval(t); $('#scr').hidden = true; render(); if (after) after(); } else drawScare(); }, 60); drawScare();
+}
+/* the tape "ends": black screen, then the device starts itself again */
+function blackout(done) {
+  const el = $('#splash'), line = 'WAIT. THE GAME STARTED UP AGAIN ON ITS OWN??';
+  el.onclick = null; el.innerHTML = '<p id="sp0"></p>'; el.hidden = false; let ci = 0;
+  const step = () => {
+    $('#sp0').textContent = line.slice(0, ++ci); if (ci % 2) beep(170, .02, 'square', .02);
+    if (ci < line.length) return setTimeout(step, 70);
+    setTimeout(() => { done(); el.hidden = true; }, 2400);
+  };
+  setTimeout(step, 2600);
 }
 let waterNode = null;
 function water() {
@@ -929,7 +1014,7 @@ function water() {
 function glitch(ms) { glitchT = Date.now() + ms; hiss(Math.min(ms / 1000, .4)); const t = setInterval(() => { draw(); if (Date.now() > glitchT) { clearInterval(t); draw(); } }, 50); }
 function renderInv() {
   const el = $('#inv'); let h = '';
-  for (let i = 0; i < 7; i++) { const id = S.inv[i]; h += `<button class="sl ${id && id === sel ? 'sel' : ''}" data-i="${id || ''}">${id ? '<canvas width="16" height="16"></canvas>' : ''}${id === 'jug5' ? `<i>${F.j5 || 0}/5</i>` : id === 'jug3' ? `<i>${F.j3 || 0}/3</i>` : ''}</button>`; }
+  for (let i = 0; i < 7; i++) { const id = S.inv[i]; h += `<button class="sl ${id && id === sel ? 'sel' : ''}" data-i="${id || ''}">${id ? '<canvas width="16" height="16"></canvas>' : ''}${CAPS[id] ? `<i>${jamt(id)}/${CAPS[id]}</i>` : ''}</button>`; }
   el.innerHTML = h;
   el.querySelectorAll('.sl').forEach(b => { const c = b.querySelector('canvas'); if (!c) return; g = c.getContext('2d'); PAL = isNight() ? nightPal : dayPal; R(0, 0, 16, 16, 'w'); ICON[b.dataset.i](); });
   g = mainG;
@@ -974,7 +1059,7 @@ $('#inv').addEventListener('click', e => {
   else {
     const a = sel, pair = [a, id].sort().join('+'); sel = null;
     if (pair === 'can+opener') { drop('can', 'opener'); give('canopen'); sfx.take(); say('THE CAN IS OPEN, IT SMELLS BAD.'); }
-    else if (pair === 'jug3+jug5') pourJug(a, id);
+    else if (CAPS[a] && CAPS[id]) pourJug(a, id);
     else say('THOSE DO NOT GO TOGETHER.');
     save();
   }
@@ -988,7 +1073,12 @@ document.addEventListener('keydown', e => { if (e.key === 'F1') { e.preventDefau
 $('#codes').addEventListener('click', e => { const b = e.target.closest('.crow'); if (!b || !elPanel.hidden) return; const k = +b.dataset.k; if (S.done.slice(k * 4, k * 4 + 4).every(Boolean)) keyReveal(k, null); });
 let panelKind = null;
 $('#bmenu').addEventListener('click', () => { if (panelModal) return; sfx.tap(); if (panelKind === 'menu') return closePanel(); menu(); panelKind = 'menu'; });
-$('#bwords').addEventListener('click', () => { if (panelModal) return; sfx.tap(); if (panelKind === 'words') return closePanel(); wordsPanel(); panelKind = 'words'; });
+$('#bwords').addEventListener('click', () => {
+  if (panelModal || Date.now() < scareT) return; sfx.tap();
+  if (panelKind === 'words') return closePanel();
+  if (F.pendEnd === 0 && !F.sc0) { F.sc0 = 1; save(); return scare(() => { wordsPanel(); panelKind = 'words'; }); }   // first jumpscare: pressing WORD after Pook sleeps
+  wordsPanel(); panelKind = 'words';
+});
 function menu() {
   const dbg = isDebug(), st = stage();
   openPanel(`<div class="t">MENU</div><div class="row"><button data-a="snd">SOUND: ${muted ? 'OFF' : 'ON'}</button><button data-a="x">CLOSE</button></div>
@@ -1003,12 +1093,12 @@ function menu() {
       if (a === 'tape') { while (stage() >= 0 && stage() < 4) dbgSolve(); return menu(); }
       if (a === 'reset') { S = fresh(); F = S.f; sel = null; save(); closePanel(); nextTalk = Date.now() + 45000; return boot(); }
       if (a === 'ans') return note('ANSWERS', `1 CUPBOARD ${CUP_CODE}. COIN (SOFA) OPENS DRAWER. OPENER + CAN. CAN ON BOWL.
-2 BEDROOM STARTS DARK: SWITCHES 1 2 3 LIGHT IT. POSTER GIVES TOY BOX ${[...MAZE_ANS].map(c => ARROW[c]).join('')}. BALL ON POOK.
+2 BEDROOM STARTS DARK: SWITCHES ${SW_ANS} LIGHT IT. POSTER GIVES TOY BOX ${[...MAZE_ANS].map(c => ARROW[c]).join('')}. BALL ON POOK.
 3 DEN CHESS BOARD: KNIGHT G5 TO F7 (GIVES PLUG). HOT TAP, MIRROR, CABINET ${CAB_CODE} (GIVES SOAP). PLUG + SOAP ON TUB.
-4 WARDROBE TILES: HAT EGG DOG ANT EYE (MIDDLE LETTERS = AGONY). BLANKET ON BED, THEN SWITCHES 1 2 3 AGAIN FOR DARK.
-5 TAKE JUGS. FILL 5, POUR INTO 3, EMPTY 3, POUR 5 INTO 3, FILL 5, POUR INTO 3. BIG JUG (4) ON BOWL.
+4 WARDROBE TILES: HAT EGG DOG ANT EYE (MIDDLE LETTERS = AGONY). BLANKET ON BED, THEN SWITCHES ${SW_ANS} AGAIN FOR DARK.
+5 THREE JUGS 10/7/3, BIG ONE FULL. POUR 10>7, 7>3, 3>10, 7>3, 3>10, 7>3, 10>7, 7>3. THE 7-JUG NOW HOLDS 5: USE IT ON THE BOWL. (BIG JUG ON TAP = START OVER.)
 6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
-7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN BEAR IS IN THE WARDROBE. BEAR ON POOK.
+7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN READ THE 5 CHANNELS. RIGHT NOW THE BEAR IS ${F.liar ? PLACES[F.liar.ans] : 'NOT PLACED UNTIL THE TV TUNES'} (MOVES AFTER A WRONG SEARCH). BEAR ON POOK.
 8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER: DARK, VACUUM, POOK, MAILMAN.`);
     });
 }
@@ -1070,7 +1160,7 @@ function boot() {
   if (/(^|#|&)setup\b/.test(location.hash)) return setup();
   closePanel(); render(); say('');
   power(() => splash(() => { if (S.boot) return; pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n<span id="ld" style="display:inline-block;width:19ch;text-align:left"></span><span id="ld2" style="visibility:hidden">\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.</span>`,
-    'POOK HAS NEEDS.\nMEET THEM, AND POOK WILL GIVE BACK\nWHAT HE IS KEEPING FOR YOU.', 'DO NOT LEAVE POOK ALONE\nFOR TOO LONG.'],
+    'POOK HAS NEEDS.\nMEET THEM, AND POOK WILL GIVE BACK\nWHAT HE IS KEEPING FOR YOU.', '<span id="gl">DO NOT LEAVE POOK ALONE\nFOR TOO LONG.</span>'],
     () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); }); }));
 }
 window.addEventListener('hashchange', boot);

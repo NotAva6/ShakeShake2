@@ -191,6 +191,10 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .vhs pre{padding-top:16px}
 .vhs .warn{align-self:center;font-size:26px;letter-spacing:5px;padding:2px 14px;background:var(--o);color:var(--k);animation:wflash .5s steps(2) infinite}
 @keyframes wflash{50%{background:var(--k);color:var(--o)}}
+#dragw{position:relative;margin:2px auto;flex:none;touch-action:none}
+.dt{position:absolute;left:0;top:4px;border:2px solid var(--fg);background:var(--bg);color:var(--fg);text-align:center;font-size:16px;transition:transform .2s cubic-bezier(.3,1.5,.5,1);touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
+.dt.ok{background:var(--o);color:var(--k)}
+.dt.drag{transition:none;z-index:2;box-shadow:0 5px 0 var(--fg)}
 </style>
 </head>
 <body>
@@ -288,6 +292,38 @@ const showWord = k => { const f = found(); return [...CFG.keys[k]].map(c => /[A-
 const FAKE = { ENDACOPIA: 'PANICODEA', WEBFISHING: 'WHIFSBEING' };   // a believable wrong word for the default name
 const scramOrder = w => { if (FAKE[w]) { const used = new Set(); return [...FAKE[w]].map(ch => { const i = [...w].findIndex((c, j) => c === ch && !used.has(j)); used.add(i); return i; }); } const idx = [...w].map((c, i) => i); let seed = 7; for (const c of w) seed = (seed * 31 + c.charCodeAt(0)) % 9973; for (let i = idx.length - 1; i > 0; i--) { seed = (seed * 137 + 11) % 9973; const j = seed % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; } if (idx.every((v, i) => v === i)) idx.reverse(); return idx; };
 const wordsHtml = (fresh = new Set()) => { const f = found(); return CFG.keys.map((w, k) => { if (k > 0 && S.tape < k) return ''; const order = (!(F.un || [])[k] && !F.end) ? scramOrder(w) : [...w].map((c, i) => i); return `<div class="hw" id="hw${k}">${order.map(i => { const c = w[i]; return `<span class="lt ${fresh.has(c) && f.has(c) ? 'nl' : ''}">${!/[A-Z]/.test(c) ? esc(c) : f.has(c) ? c : '_'}</span>`; }).join('')}</div>`; }).join(''); };
+/* Pook is asleep for the second name, so the player drags the letters into order themselves */
+function dragWord(k) {
+  const w = CFG.keys[k], n = w.length, btn = elPanel.querySelector('button.o'); if (btn) btn.disabled = true;
+  const start = (F.dragw && F.dragw.length === n) ? F.dragw : scramOrder(w).map(i => w[i]).join('');
+  const hw = $('#hw' + k), cvs = $('#hm'); if (hw) hw.style.display = 'none'; if (cvs) cvs.style.width = '49px';
+  const box = document.createElement('div'); box.id = 'dragw'; elPanel.insertBefore(box, elPanel.querySelector('.sp'));
+  const TW = Math.floor(Math.min(27, (elPanel.clientWidth - 18) / n)); box.style.width = TW * n + 'px'; box.style.height = TW + 10 + 'px';
+  const order = [...start].map(ch => { const el = document.createElement('div'); el.className = 'dt'; el.textContent = ch; el.style.width = TW - 2 + 'px'; el.style.height = TW + 4 + 'px'; el.style.lineHeight = TW + 'px'; box.appendChild(el); return { ch, el }; });
+  const place = skip => order.forEach((t, i) => { if (t !== skip) t.el.style.transform = `translateX(${i * TW}px)`; t.el.classList.toggle('ok', t.ch === w[i]); });
+  place(); say('POOK IS ASLEEP. YOU WILL HAVE TO FIX THIS ONE YOURSELF. DRAG THE LETTERS.');
+  let drag = null;
+  box.addEventListener('pointerdown', e => {
+    const el = e.target.closest('.dt'); if (!el || (F.un || [])[k]) return;
+    const t = order.find(o => o.el === el); drag = { t, x0: e.clientX, base: order.indexOf(t) * TW };
+    el.classList.add('drag'); try { el.setPointerCapture(e.pointerId); } catch (err) {} sfx.tap(); e.preventDefault();
+  });
+  box.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const x = Math.max(0, Math.min((n - 1) * TW, drag.base + e.clientX - drag.x0));
+    drag.t.el.style.transform = `translateX(${x}px) translateY(-7px) scale(1.25)`;
+    const over = Math.round(x / TW), cur = order.indexOf(drag.t);
+    if (over !== cur) { [order[cur], order[over]] = [order[over], order[cur]]; beep(480 + over * 45, .03, 'square', .02); place(drag.t); }
+  });
+  const drop2 = () => {
+    if (!drag) return; const t = drag.t; drag = null; t.el.classList.remove('drag'); place(); beep(160, .05, 'square', .04);
+    F.dragw = order.map(o => o.ch).join(''); save();
+    if (F.dragw !== w) return;
+    (F.un || (F.un = []))[k] = 1; save(); sfx.solve(); if (btn) btn.disabled = false; say(`${w}. THAT IS THE WORD.`);
+    order.forEach((o, i) => { try { o.el.animate([{ transform: `translateX(${i * TW}px) translateY(-18px) scale(1.9)` }, { transform: `translateX(${i * TW}px) scale(1)` }], { duration: 320, delay: i * 55, fill: 'backwards', easing: 'cubic-bezier(.4,0,.2,1)' }); } catch (err) {} });
+  };
+  box.addEventListener('pointerup', drop2); box.addEventListener('pointercancel', drop2);
+}
 function unscramble(k) {
   const el = $('#hw' + k); if (!el) return;
   const btn = elPanel.querySelector('button.o'), w = CFG.keys[k], spans = [...el.querySelectorAll('.lt')]; if (btn) btn.disabled = true;
@@ -775,7 +811,7 @@ function wordsPanel() {
     a => { closePanel(); if (a === 'go') { F.pendEnd = null; save(); tapeEnd(end); } }, end != null);
   if (fresh.size) { F.newL = []; save(); sfx.solve(); }
   $('#bwords').classList.remove('blinkw');
-  if (end != null && !(F.un || [])[end] && [...CFG.keys[end]].every(ch => !/[A-Z]/.test(ch) || found().has(ch))) unscramble(end);
+  if (end != null && !(F.un || [])[end] && [...CFG.keys[end]].every(ch => !/[A-Z]/.test(ch) || found().has(ch))) (end > 0 ? dragWord : unscramble)(end);
   const old = g, n = S.done.filter(Boolean).length; g = $('#hm').getContext('2d'); PAL = isNight() ? nightPal : dayPal;
   R(0, 0, 28, 40, 'w'); R(2, 38, 24, 2); R(6, 2, 2, 36); R(6, 2, 14, 2); R(18, 4, 1, 5);
   if (n > 0) DO(18, 12, 3, 'w'); if (n > 1) R(18, 16, 1, 9); if (n > 2) R(14, 18, 4, 1); if (n > 3) R(19, 18, 4, 1);
@@ -1015,13 +1051,14 @@ const ROOMS = [
 /* ---------- render ---------- */
 const pookShaking = () => isNight() && !!S.done[5] && !S.done[6];   // scared: trembles until he has his bear
 setInterval(() => { if (S.boot && pookShaking() && elPanel.hidden && Date.now() > scareT && Date.now() > glitchT) draw(); }, 80);
+const asleep = () => !!F.end || (S.tape === 0 && !!S.done[3]) || !!S.done[7];
 function draw() {
   g = mainG;
   if (Date.now() < scareT) return;
   const dark = S.room === 3 && bedDark();
   PAL = (isNight() || dark) ? nightPal : dayPal;
   ROOMS[S.room].draw();
-  if (F.end) { if (S.room === 3) pook(52, 64, { sleep: true }); }
+  if (asleep()) { if (S.room === 3) pook(52, 64, { sleep: true }); }
   else pook(pookSpot[S.room][0] + (pookShaking() ? rand(3) - 1 : 0), pookSpot[S.room][1]);
   if (Date.now() < glitchT) {
     for (let i = 0; i < 6; i++) { const y = rand(104), h = 2 + rand(9), dx = rand(21) - 10; g.drawImage(elCv, 0, y, 160, h, dx, y, 160, h); }
@@ -1106,7 +1143,7 @@ setInterval(() => {
   frame++; if (elPanel.hidden) draw(); else if (!$('#pface').hidden) drawFace();
   const idle = elPanel.hidden && $('#splash').hidden && $('#setup').hidden && Date.now() > scareT;
   if (idle && isNight() && rand(140) === 0) glitch(180);
-  if (idle && S.boot && !F.end && Date.now() > nextTalk && Date.now() - lastSay > 6000) pookTalk();
+  if (idle && S.boot && !asleep() && Date.now() > nextTalk && Date.now() - lastSay > 6000) pookTalk();
 }, 260);
 
 /* ---------- input ---------- */
@@ -1117,7 +1154,7 @@ elCv.addEventListener('click', e => {
   if (F.end) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
   const it = sel; sel = null;
   const ps = pookSpot[S.room];
-  const spots = [H(ps[0] - 14, ps[1] - 40, 28, 42, onPook), ...ROOMS[S.room].hot()];
+  const spots = [...(asleep() ? (S.room === 3 ? [H(38, 24, 28, 42, () => say('POOK IS ASLEEP.'))] : []) : [H(ps[0] - 14, ps[1] - 40, 28, 42, onPook)]), ...ROOMS[S.room].hot()];
   const h = spots.find(s => x >= s.x && x < s.x + s.w && y >= s.y && y < s.y + s.h);
   if (h) { sfx.look(); h.a(it); } else say(it ? 'NOTHING HAPPENS.' : 'NOTHING THERE.');
   save(); if (elPanel.hidden) render(); else renderInv();

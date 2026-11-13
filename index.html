@@ -3,211 +3,104 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#ffe3ec">
+<meta name="theme-color" content="#12100e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Pook</title>
+<title>POOK</title>
 <style>
-:root{
-  --ink:#3b2a4a; --cream:#fff6ea; --pink:#ff8fb1; --pink-soft:#ffe3ec; --mint:#a8e6cf;
-  --sky:#bfe3ff; --sun:#ffd76a; --lilac:#cdb8ff; --white:#fff; --mud:#8a5a3b;
-}
+:root{--k:#12100e;--w:#f4ecd8;--o:#f5b26b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
-html,body{margin:0;height:100%;background:var(--pink-soft);color:var(--ink);
-  font-family:ui-rounded,"SF Pro Rounded","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+html,body{margin:0;min-height:100%;background:var(--k);color:var(--w);
+  font-family:"Courier New",ui-monospace,Menlo,Consolas,monospace;font-weight:700;
   overscroll-behavior:none;-webkit-user-select:none;user-select:none}
-button{font:inherit;color:inherit;cursor:pointer}
-#app{max-width:440px;margin:0 auto;min-height:100%;padding:12px 16px calc(16px + env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;gap:12px}
-header{display:flex;align-items:center;justify-content:space-between}
-.logo{font-weight:900;font-size:26px;letter-spacing:4px;text-shadow:2px 2px 0 var(--white)}
-.logo small{font-size:11px;letter-spacing:1px;font-weight:700;opacity:.6;margin-left:6px}
-#mute{border:3px solid var(--ink);background:var(--white);border-radius:12px;width:44px;height:40px;font-size:18px;box-shadow:3px 3px 0 var(--ink)}
+button{font:inherit;cursor:pointer;border-radius:0}
+#wrap{max-width:420px;margin:0 auto;padding:10px 12px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
 
-.panel{border:3px solid var(--ink);border-radius:16px;background:var(--white);box-shadow:4px 4px 0 var(--ink)}
-#keybars{display:flex;flex-direction:column;gap:10px}
-.keybar{padding:8px 10px;display:flex;align-items:center;gap:8px}
-.keybar .gift{font-size:20px}
-.keyslots{display:flex;gap:6px;flex:1;justify-content:space-between}
-#tabs{display:flex;gap:10px}
-.tab{flex:1;border:3px solid var(--ink);border-radius:12px;background:var(--white);padding:7px;font-weight:800;font-size:14px;box-shadow:3px 3px 0 var(--ink)}
-.tab.on{background:var(--pink)}
-.slot{flex:1;text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:800;font-size:15px;
-  padding:6px 2px;border-radius:8px;background:#f1ebf7;color:#b9aecb;letter-spacing:1px}
-.slot.got{background:var(--sun);color:var(--ink);animation:pop .5s}
-#demo{font-size:11px;opacity:.65;text-align:center;margin-top:-6px}
+/* codes gathered (above the device) */
+#codes{display:flex;flex-direction:column;gap:6px;min-height:34px}
+.crow{display:flex;gap:6px;align-items:center;border:0;background:none;padding:0;color:var(--w);width:100%}
+.crow .lab{font-size:11px;width:46px;text-align:left;color:var(--o);letter-spacing:1px}
+.cs{flex:1;border:2px solid var(--w);text-align:center;padding:5px 0;font-size:15px;letter-spacing:2px}
+.cs.got{background:var(--o);color:var(--k);border-color:var(--o)}
 
-#screen{position:relative;height:270px;overflow:hidden;border:3px solid var(--ink);border-radius:20px;box-shadow:4px 4px 0 var(--ink);
-  background:linear-gradient(#ffe9c9 0 68%,#e2b98a 68% 100%)}
-#screen.room1{background:linear-gradient(var(--sky) 0 62%,#9fdc8f 62% 100%)}
-#screen.room2{background:linear-gradient(#d7f1ff 0 66%,#9ad0ea 66% 100%)}
-#screen.room3{background:linear-gradient(#4a3b78 0 66%,#7a64b0 66% 100%)}
-#screen.room4{background:linear-gradient(#cfeaff 0 60%,#8fd47f 60% 100%)}
-#screen.room5{background:linear-gradient(#fff0c9 0 68%,#d9a878 68% 100%)}
-#screen.room6{background:linear-gradient(#e9deff 0 66%,#c3aef0 66% 100%)}
-#screen.room7{background:linear-gradient(#ffe1ec 0 66%,#ffc2d6 66% 100%)}
-#screen.party{background:linear-gradient(#ffd3e2 0 66%,#ffb3cc 66% 100%)}
-#screen::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(transparent 0 3px,rgba(59,42,74,.035) 3px 4px)}
-#pook{position:absolute;left:50%;bottom:14px;width:192px;height:192px;margin-left:-96px;image-rendering:pixelated;image-rendering:crisp-edges}
-#prop{position:absolute;right:18px;bottom:22px;font-size:40px}
-#deco{position:absolute;left:14px;top:12px;font-size:26px;opacity:.9}
-#bubble{position:absolute;left:12px;right:12px;top:10px;margin:0 auto;width:fit-content;max-width:calc(100% - 24px);
-  background:var(--white);border:3px solid var(--ink);border-radius:14px;padding:8px 12px;font-weight:700;font-size:14px;line-height:1.3;text-align:center;z-index:2}
-#bubble::after{content:"";position:absolute;left:50%;bottom:-9px;width:12px;height:12px;margin-left:-6px;background:var(--white);
-  border-right:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:rotate(45deg)}
-.heart{position:absolute;font-size:22px;animation:floatup .9s ease-out forwards;pointer-events:none;z-index:3}
+/* the device */
+#device{background:var(--w);color:var(--k);border-radius:22px 22px 44px 44px;padding:12px 14px 16px;border:3px solid var(--o);box-shadow:inset 0 0 0 3px var(--k)}
+#brand{display:flex;justify-content:space-between;align-items:baseline;font-size:18px;letter-spacing:6px;padding:2px 6px 8px}
+#brand span{font-size:9px;letter-spacing:2px}
+#bezel{background:var(--k);border-radius:12px 12px 28px 12px;padding:12px 12px 14px}
+#screen{--bg:var(--w);--fg:var(--k);background:var(--bg);color:var(--fg);position:relative;overflow:hidden;animation:flick 7s infinite}
+#screen.night{--bg:var(--k);--fg:var(--w);outline:1px solid var(--w)}
+#status{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 5px;border-bottom:2px solid var(--fg);letter-spacing:1px;height:24px}
+.nd{display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;border:1px solid var(--fg);margin-left:3px;font-size:10px}
+.nd.on{background:var(--o);color:var(--k)}
+#stage{position:relative;aspect-ratio:160/108;width:100%}
+#cv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+#panel{position:absolute;inset:0;background:var(--bg);color:var(--fg);padding:6px 8px;font-size:12px;line-height:1.35;overflow:auto;text-transform:uppercase;display:flex;flex-direction:column;gap:5px;z-index:2}
+#panel button{color:var(--fg);background:var(--bg);border:2px solid var(--fg);padding:5px 8px;text-transform:uppercase;font-size:12px}
+#panel button:active{background:var(--fg);color:var(--bg)}
+#panel button.o{background:var(--o);color:var(--k)}
+#panel button:disabled{opacity:.35}
+#panel .row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;align-items:center}
+#panel .t{border-bottom:2px solid var(--fg);padding-bottom:2px}
+#panel .big{font-size:20px;letter-spacing:3px;text-align:center;background:var(--o);color:var(--k);padding:6px 2px;-webkit-user-select:all;user-select:all;word-break:break-all}
+#panel .c{text-align:center}
+#panel .sp{flex:1}
+#panel pre{margin:0;font:inherit;white-space:pre-wrap}
+#panel canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;margin:0 auto}
+.dial{display:flex;flex-direction:column;align-items:center;gap:3px}
+.dial b{font-size:22px;border:2px solid var(--fg);width:38px;text-align:center}
+.dial button{width:38px}
+.seq{min-height:24px;border:2px solid var(--fg);text-align:center;font-size:16px;letter-spacing:2px;padding:1px}
+#msg{border-top:2px solid var(--fg);height:52px;padding:4px 6px;font-size:12px;line-height:1.25;text-transform:uppercase;overflow:hidden}
+#inv{display:flex;border-top:2px solid var(--fg)}
+.sl{flex:1;aspect-ratio:1;border:0;border-right:2px solid var(--fg);background:var(--bg);position:relative;padding:0;min-width:0}
+.sl:last-child{border-right:0}
+.sl canvas{width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.sl.sel{outline:3px solid var(--o);outline-offset:-3px}
+.sl i{position:absolute;right:1px;bottom:0;font-size:9px;font-style:normal;color:var(--fg);background:var(--bg);padding:0 1px}
+#fx{position:absolute;inset:0;pointer-events:none;z-index:5;background:repeating-linear-gradient(transparent 0 2px,rgba(18,16,14,.14) 2px 3px)}
+#controls{display:flex;justify-content:space-between;align-items:center;padding:14px 6px 2px}
+.pad{display:flex;gap:12px}
+.hb{width:58px;height:58px;border-radius:50%;border:3px solid var(--k);background:var(--k);color:var(--w);font-size:20px;box-shadow:0 4px 0 var(--o);display:flex;align-items:center;justify-content:center;padding:0}
+.hb:active{transform:translateY(3px);box-shadow:0 1px 0 var(--o)}
+.hb.a{background:var(--o);color:var(--k);box-shadow:0 4px 0 var(--k)}
+.tl{width:0;height:0;border-style:solid;border-width:10px 15px 10px 0;border-color:transparent var(--w) transparent transparent;margin-right:4px}
+.tr{width:0;height:0;border-style:solid;border-width:10px 0 10px 15px;border-color:transparent transparent transparent var(--w);margin-left:4px}
+#bmenu{font-size:10px;background:var(--k);color:var(--w);border:0;border-radius:10px;padding:6px 12px;letter-spacing:1px}
+.legend{text-align:center;font-size:9px;letter-spacing:1px;margin-top:10px}
+@keyframes flick{0%,91%,100%{opacity:1}92%{opacity:.84}93%{opacity:1}96%{opacity:.93}97%{opacity:1}}
 
-#meters{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:10px 12px}
-.meter{font-size:12px;font-weight:800}
-.meter .bar{height:10px;border:2px solid var(--ink);border-radius:6px;background:#f1ebf7;overflow:hidden;margin-top:3px}
-.meter .fill{height:100%;background:var(--pink);transition:width .6s}
-.meter.full .fill{background:#6fd3a5}
-
-#actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.act{position:relative;border:3px solid var(--ink);border-radius:16px;background:var(--white);box-shadow:4px 4px 0 var(--ink);
-  padding:12px 6px;font-weight:800;font-size:16px;display:flex;flex-direction:column;align-items:center;gap:2px}
-.act .ico{font-size:28px;line-height:1.1}
-.act:active,.btn:active,#mute:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
-.act.next{background:var(--sun);animation:nudge 1.6s infinite}
-.act.locked{background:#ece6f2;color:#9b8fb0}
-.act.locked .ico{filter:grayscale(1);opacity:.5}
-.act .badge{position:absolute;top:6px;right:8px;font-size:14px}
-.btn{border:3px solid var(--ink);border-radius:14px;background:var(--pink);color:var(--ink);box-shadow:3px 3px 0 var(--ink);
-  padding:11px 16px;font-weight:800;font-size:16px}
-.btn.ghost{background:var(--white)}
-.btn:disabled{opacity:.45;box-shadow:none;transform:none}
-#presents{display:flex;flex-direction:column;gap:12px}
-.present{width:100%;font-size:19px;padding:15px;background:var(--sun);animation:nudge 1.2s infinite}
-
-#modal{position:fixed;inset:0;z-index:10;background:var(--cream);overflow:auto;-webkit-overflow-scrolling:touch}
-.minner{max-width:440px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-inset-bottom))}
-.mhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.mhead h2{margin:0;font-size:21px}
-#mclose{border:3px solid var(--ink);background:var(--white);border-radius:12px;width:44px;height:40px;font-size:18px;font-weight:900;box-shadow:3px 3px 0 var(--ink)}
-.how{font-size:14px;line-height:1.45;margin:6px 0 12px;background:var(--white);border:2px dashed var(--ink);border-radius:12px;padding:9px 11px}
-.status{font-weight:800;text-align:center;min-height:22px;margin:8px 0}
-.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0}
-
-/* feed */
-.slots,.palette{display:flex;gap:8px;justify-content:center;margin:10px 0}
-.fslot{width:60px;height:60px;border:3px solid var(--ink);border-radius:50%;background:var(--white);font-size:30px;box-shadow:inset 0 -6px 0 #e9e1f2;padding:0}
-.fslot.fixed{background:#d8f5e6}
-.food{width:54px;height:54px;border:3px solid var(--ink);border-radius:14px;background:var(--sun);font-size:28px;box-shadow:3px 3px 0 var(--ink);padding:0}
-.food:disabled{opacity:.3;box-shadow:none}
-.hist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.hrow{display:flex;align-items:center;justify-content:space-between;background:var(--white);border:2px solid var(--ink);border-radius:12px;padding:6px 10px;font-size:22px}
-.hrow .fb{font-size:14px;font-weight:800;display:flex;gap:10px}
-.dot{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--ink);vertical-align:-1px;margin-right:3px}
-.dot.g{background:#58c98c}.dot.y{background:var(--sun)}
-
-/* park */
-.park{position:relative;width:100%;max-width:350px;aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);
-  border:4px solid #8a6a45;border-radius:10px;background:#a9e098;overflow:hidden;touch-action:none}
-.park .cell{display:flex;align-items:center;justify-content:center;font-size:clamp(20px,8vw,32px);line-height:1}
-.park .cell:nth-child(odd){background:rgba(255,255,255,.14)}
-#runner{position:absolute;width:14.2857%;height:14.2857%;display:flex;align-items:center;justify-content:center;font-size:clamp(20px,8vw,32px);
-  transition:left .18s linear,top .18s linear;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
-.dpad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,50px);gap:6px;justify-content:center;margin-top:12px}
-.dpad button{border:3px solid var(--ink);border-radius:12px;background:var(--white);font-size:20px;font-weight:900;box-shadow:3px 3px 0 var(--ink)}
-.dpad button:active{transform:translate(3px,3px);box-shadow:none}
-.dpad .u{grid-column:2}.dpad .l{grid-column:1;grid-row:2}.dpad .d{grid-column:2;grid-row:2}.dpad .r{grid-column:3;grid-row:2}
-
-/* bath */
-.coat{width:100%;max-width:320px;aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px;
-  border:3px solid var(--ink);border-radius:24px;background:#d7f1ff}
-.spot{border:3px solid var(--ink);border-radius:16px;font-size:26px;padding:0;background:var(--white);transition:background .15s}
-.spot.mud{background:var(--mud)}
-.spot.hint{animation:pulse .5s 4;outline:4px solid var(--pink)}
-
-/* sleep */
-.pads{width:100%;max-width:300px;aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.pad{border:4px solid var(--ink);border-radius:26px;font-size:40px;box-shadow:4px 4px 0 var(--ink);opacity:.55;transition:opacity .1s,transform .1s}
-.pad.on{opacity:1;transform:scale(1.06)}
-.pad.p0{background:var(--pink)}.pad.p1{background:var(--sun)}.pad.p2{background:var(--mint)}.pad.p3{background:var(--lilac)}
-
-/* walk */
-.walk{width:100%;max-width:330px;aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:8px;border:4px solid #8a6a45;border-radius:14px;background:#8fd47f}
-.wcell{border:0;border-radius:10px;background:#c5efb6;font-size:clamp(20px,7.5vw,30px);padding:0;line-height:1}
-.wcell.trail{background:#fff3c4}
-.wcell.head{background:var(--sun);outline:3px solid var(--ink)}
-.wcell.tree{background:transparent}
-.wcell.hint{animation:pulse .5s 4;outline:4px solid var(--pink)}
-
-/* cups */
-.cups{position:relative;height:150px;width:100%;max-width:330px;margin:24px auto 8px}
-.cupw{position:absolute;bottom:0;width:33.333%;height:140px;display:flex;justify-content:center;align-items:flex-end}
-.cupw .treat{position:absolute;bottom:4px;font-size:30px;visibility:hidden}
-.cupw.has .treat{visibility:visible}
-.cup{position:relative;width:76px;height:88px;background:var(--pink);border:3px solid var(--ink);border-radius:18px 18px 8px 8px;box-shadow:inset -10px 0 0 rgba(59,42,74,.1);transition:transform .3s}
-.cupw.lift .cup{transform:translateY(-46px)}
-
-/* talk */
-.wrow{display:flex;gap:6px;justify-content:center;margin:5px 0}
-.wt{width:46px;height:46px;border:3px solid var(--ink);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;background:var(--white)}
-.wt.g,.k.g{background:#58c98c}.wt.y,.k.y{background:var(--sun)}.wt.n,.k.n{background:#d9d2e3;color:#8b7fa0}
-.kb{margin-top:12px}
-.krow{display:flex;gap:4px;justify-content:center;margin:5px 0}
-.k{flex:1;max-width:34px;height:46px;border:2px solid var(--ink);border-radius:8px;background:var(--white);font-weight:800;font-size:15px;padding:0}
-.k.wide{max-width:54px;flex:1.6;font-size:18px}
-
-/* photo */
-.photo{width:100%;max-width:330px;aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:3px;border-radius:12px;background:var(--ink)}
-.ptile{border:0;padding:0;border-radius:4px;background-size:400% 400%;background-color:var(--white)}
-.ptile.sel{outline:4px solid var(--pink);transform:scale(.9);z-index:1}
-
-/* overlay */
-#overlay{position:fixed;inset:0;z-index:20;background:rgba(59,42,74,.55);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
-.card{position:relative;z-index:2;width:100%;max-width:380px;background:var(--white);border:3px solid var(--ink);border-radius:22px;box-shadow:6px 6px 0 var(--ink);
-  padding:20px 18px;text-align:center;animation:pop .35s}
-.card h3{margin:6px 0;font-size:22px}
-.card p{margin:8px 0;font-size:15px;line-height:1.45}
-.card .big{font-size:52px;line-height:1}
-.card .small{font-size:12px;opacity:.65}
-.tag{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:900;font-size:30px;letter-spacing:4px;
-  background:var(--sun);border:3px solid var(--ink);border-radius:12px;padding:8px 16px;margin:8px 0;transform:rotate(-3deg)}
-.fullkey{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:900;font-size:19px;letter-spacing:1px;word-break:break-all;
-  background:var(--sun);border:3px solid var(--ink);border-radius:12px;padding:12px 8px;margin:10px 0;-webkit-user-select:all;user-select:all}
-.card label{display:block;text-align:left;font-weight:800;font-size:13px;margin-top:10px}
-.card input,.card textarea{width:100%;font:inherit;font-size:16px;border:3px solid var(--ink);border-radius:10px;padding:8px;margin-top:4px;
-  -webkit-user-select:text;user-select:text;background:var(--cream);color:var(--ink)}
-.card textarea{resize:vertical;min-height:64px}
-.confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:1;animation:fall linear infinite;pointer-events:none}
-
-@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.08)}100%{transform:scale(1)}}
-@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-@keyframes floatup{to{transform:translateY(-70px) scale(1.4);opacity:0}}
-@keyframes pulse{50%{transform:scale(1.12)}}
-@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
-@media (max-height:700px){#screen{height:220px}#pook{width:168px;height:168px;margin-left:-84px}}
+/* gift-giver setup (not part of the game) */
+#setup{position:fixed;inset:0;z-index:20;background:var(--k);color:var(--w);overflow:auto;padding:16px}
+#setup .in{max-width:400px;margin:0 auto;display:flex;flex-direction:column;gap:10px;font-size:13px}
+#setup input,#setup textarea{width:100%;font:inherit;font-size:16px;background:var(--w);color:var(--k);border:2px solid var(--o);padding:8px;-webkit-user-select:text;user-select:text}
+#setup textarea{min-height:64px}
+#setup button{background:var(--o);color:var(--k);border:0;padding:10px;font-size:14px}
+#setup button.g{background:var(--k);color:var(--w);border:2px solid var(--w)}
 </style>
 </head>
 <body>
-<div id="app">
-  <header>
-    <div class="logo">POOK<small>pocket pup</small></div>
-    <button id="mute" aria-label="Sound">🔊</button>
-  </header>
-  <div id="keybars"></div>
-  <div id="demo" hidden>demo codes — add #setup to the address to set the real ones</div>
-  <div id="tabs" hidden></div>
-  <div id="screen">
-    <div id="bubble"></div>
-    <div id="deco"></div>
-    <canvas id="pook" width="48" height="48"></canvas>
-    <div id="prop"></div>
+<div id="wrap">
+  <div id="codes"></div>
+  <div id="device">
+    <div id="brand">POOK<span>POCKET COMPANION</span></div>
+    <div id="bezel"><div id="screen">
+      <div id="status"><span id="rname"></span><span id="needs"></span></div>
+      <div id="stage"><canvas id="cv" width="160" height="108"></canvas><div id="panel" hidden></div></div>
+      <div id="msg"></div>
+      <div id="inv"></div>
+      <div id="fx"></div>
+    </div></div>
+    <div id="controls">
+      <div class="pad"><button class="hb" id="bl" aria-label="Previous room"><span class="tl"></span></button><button class="hb" id="br" aria-label="Next room"><span class="tr"></span></button></div>
+      <button id="bmenu">MENU</button>
+      <div class="pad"><button class="hb" id="bb">B</button><button class="hb a" id="ba">A</button></div>
+    </div>
+    <div class="legend">&lt; &gt; ROOMS &nbsp;·&nbsp; A ASK POOK &nbsp;·&nbsp; B BACK</div>
   </div>
-  <div id="meters" class="panel"></div>
-  <div id="actions"></div>
-  <div id="presents"></div>
 </div>
-
-<div id="modal" hidden><div class="minner">
-  <div class="mhead"><button id="mclose" aria-label="Back">←</button><h2 id="mtitle"></h2></div>
-  <div id="mbody"></div>
-</div></div>
-<div id="overlay" hidden></div>
+<div id="setup" hidden></div>
 
 <script>
 'use strict';
@@ -216,9 +109,10 @@ header{display:flex;align-items:center;justify-content:space-between}
    key:     the first Steam key exactly as given (dashes are fine).
    key2:    the second Steam key (leave blank for a one-key game).
    name:    who it is for (optional).
-   message: shown with the key at the very end (optional).
-   You can also leave this blank and open the page with #setup on the
-   end of the address to make a personal link from your phone.
+   message: shown with the final key (optional).
+   Or leave blank and open the page with #setup on the end of the
+   address to make a personal link from your phone.
+   Add #debug to the address to get skip options in the MENU.
    ==================================================================== */
 const BAKED = { key: '', key2: '', name: '', message: '' };
 /* ==================================================================== */
@@ -226,7 +120,6 @@ const BAKED = { key: '', key2: '', name: '', message: '' };
 const DEMO_KEYS = ['DEMO-KEY1-GOES-HERE', 'DEMO-KEY2-ALSO-HERE'];
 const $ = s => document.querySelector(s);
 const rand = n => Math.floor(Math.random() * n);
-const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
@@ -264,566 +157,601 @@ function pieces(k) {
   for (let i = 0; i < 4; i++) { const len = Math.ceil((raw.length - p) / (4 - i)); out.push(raw.slice(p, p + len)); p += len; }
   return out;
 }
+const isDebug = () => /debug/i.test(location.hash);
 
 /* ---------- save state ---------- */
-const freshSave = () => ({ started: false, done: [false, false, false, false, false, false, false, false] });
-let S = store.get('pook-v1') || freshSave();
-while (S.done.length < 8) S.done.push(false);
-const save = () => store.set('pook-v1', S);
+const fresh = () => ({ boot: false, done: [0, 0, 0, 0, 0, 0, 0, 0], inv: [], room: 0, tape: 0, f: {}, hi: 0 });
+let S = store.get('pook-v2') || fresh(), F = S.f, sel = null;
+const save = () => store.set('pook-v2', S);
 const nKeys = () => CFG.keys.length;
-const stage = () => { for (let i = 0; i < 4 * nKeys(); i++) if (!S.done[i]) return i; return -1; }; // -1 = everything solved
-const dayDone = d => S.done.slice(d * 4, d * 4 + 4).every(Boolean);
-let day = 0; // which day's rooms are on screen
+const stage = () => { for (let i = 0; i < 4 * nKeys(); i++) if (!S.done[i]) return i; return -1; };
+const has = id => S.inv.includes(id);
+const give = (...ids) => ids.forEach(id => { if (!has(id)) S.inv.push(id); });
+const drop = (...ids) => { S.inv = S.inv.filter(x => !ids.includes(x)); if (ids.includes(sel)) sel = null; };
 
 /* ---------- sound ---------- */
 let AC = null, muted = !!store.get('pook-mute');
-function beep(f, d = 0.12, type = 'square', vol = 0.05, when = 0) {
+function ac() { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; }
+function beep(f, d = 0.1, type = 'square', vol = 0.04, when = 0) {
   if (muted) return;
   try {
-    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-    if (AC.state === 'suspended') AC.resume();
-    const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + when;
-    o.type = type; o.frequency.value = f;
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + 0.02);
+    const a = ac(), o = a.createOscillator(), g2 = a.createGain(), t = a.currentTime + when;
+    o.type = type; o.frequency.value = f; g2.gain.setValueAtTime(vol, t); g2.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g2); g2.connect(a.destination); o.start(t); o.stop(t + d + 0.02);
+  } catch (e) {}
+}
+function hiss(d = 0.25) {
+  if (muted) return;
+  try {
+    const a = ac(), n = Math.floor(a.sampleRate * d), buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * 0.12;
+    const src = a.createBufferSource(); src.buffer = buf; src.connect(a.destination); src.start();
   } catch (e) {}
 }
 const sfx = {
-  tap() { beep(660, .06); },
-  arf() { beep(520, .07); beep(780, .09, 'square', .05, .08); },
-  bump() { beep(150, .08, 'triangle', .08); },
-  good() { [523, 659, 784, 1047].forEach((f, i) => beep(f, .14, 'square', .05, i * .1)); },
-  bad() { beep(196, .22, 'sawtooth', .04); }
+  tap() { beep(440, .04); }, take() { beep(520, .06); beep(700, .08, 'square', .04, .07); },
+  bad() { beep(110, .2, 'sawtooth', .04); }, good() { [392, 523, 659, 784].forEach((f, i) => beep(f, .16, 'square', .04, i * .12)); },
+  note(i) { beep([262, 330, 392, 523][i], .35, 'triangle', .1); }
 };
 
-/* ---------- Pook, drawn pixel by pixel ---------- */
-const px = $('#pook').getContext('2d');
-let frame = 0, blink = false, hopUntil = 0;
-function disc(cx, cy, r, col) {
-  px.fillStyle = col;
-  for (let y = cy - r - 1; y <= cy + r + 1; y++) for (let x = cx - r - 1; x <= cx + r + 1; x++) {
-    const dx = x - cx, dy = y - cy; if (dx * dx + dy * dy <= r * r + r) px.fillRect(x, y, 1, 1);
-  }
+/* ---------- drawing: three colours only ---------- */
+const COL = { w: '#f4ecd8', k: '#12100e', o: '#f5b26b' };
+const elCv = $('#cv'), mainG = elCv.getContext('2d');
+let g = mainG, PAL = COL, frame = 0, glitchT = 0;
+const isNight = () => S.tape === 1 && !F.end;
+const dayPal = { w: COL.w, k: COL.k, o: COL.o }, nightPal = { w: COL.k, k: COL.w, o: COL.o };
+const R = (x, y, w, h, c = 'k') => { g.fillStyle = PAL[c] || c; g.fillRect(x, y, w, h); };
+const B = (x, y, w, h, f = 'w', l = 'k') => { R(x, y, w, h, l); R(x + 1, y + 1, w - 2, h - 2, f); };
+const D = (cx, cy, r, c = 'k') => {
+  g.fillStyle = PAL[c] || c;
+  for (let y = cy - r - 1; y <= cy + r + 1; y++) for (let x = cx - r - 1; x <= cx + r + 1; x++) { const dx = x - cx, dy = y - cy; if (dx * dx + dy * dy <= r * r + r) g.fillRect(x, y, 1, 1); }
+};
+const DO = (cx, cy, r, f = 'w') => { D(cx, cy, r + 1, 'k'); D(cx, cy, r, f); };
+const dith = (x, y, w, h, c) => { g.fillStyle = PAL[c] || c; for (let yy = y; yy < y + h; yy++) for (let xx = x + ((yy + x) & 1); xx < x + w; xx += 2) g.fillRect(xx, yy, 1, 1); };
+function base() {
+  R(0, 0, 160, 108, 'w');
+  if (PAL.w === COL.k) dith(0, 79, 160, 29, 'o'); else R(0, 79, 160, 29, 'o');
+  R(0, 78, 160, 1, 'k');
 }
-function drawPook() {
-  px.clearRect(0, 0, 48, 48);
-  const st = stage(), happy = Date.now() < hopUntil || dayDone(day);
-  const oy = happy ? [0, -2, -3, -1][frame % 4] : 0;
-  const hb = happy ? 0 : frame % 2;
-  const wag = happy ? (frame % 2 ? 2 : -1) : (frame % 4 === 0 ? 1 : 0);
-  const parts = [
-    [36 + wag, 32 + oy, 3], [24, 36 + oy, 9], [17, 40 + oy, 4], [31, 40 + oy, 4], [18, 44 + oy, 2], [30, 44 + oy, 2],
-    [24, 19 + oy + hb, 11], [20, 9 + oy + hb, 3], [28, 9 + oy + hb, 3],
-    [15, 25 + oy + hb, 4], [33, 25 + oy + hb, 4]
-  ];
-  const ears = [[11, 16 + oy + hb, 4], [10, 22 + oy + hb, 3], [37, 16 + oy + hb, 4], [38, 22 + oy + hb, 3]];
-  parts.forEach(p => disc(p[0], p[1], p[2] + 1, '#3b2a4a'));
-  parts.forEach(p => disc(p[0], p[1], p[2], '#ddd4ec'));
-  parts.forEach(p => disc(p[0] - 1, p[1] - 1, p[2] - 1, '#ffffff'));
-  ears.forEach(p => disc(p[0], p[1], p[2] + 1, '#3b2a4a'));
-  ears.forEach(p => disc(p[0], p[1], p[2], '#e6dcf2'));
-  if (S.done[1] && !S.done[2]) [[17, 35, 2], [30, 39, 1], [13, 22, 1], [32, 12, 2], [26, 41, 1], [35, 24, 1]].forEach(m => disc(m[0], m[1] + oy, m[2], '#8a5a3b'));
-  const hy = 19 + oy + hb, ink = '#3b2a4a';
-  px.fillStyle = ink;
-  if (blink) { px.fillRect(18, hy, 3, 1); px.fillRect(28, hy, 3, 1); }
-  else if (st === 3 && !happy) { px.fillRect(19, hy - 1, 2, 2); px.fillRect(28, hy - 1, 2, 2); px.fillRect(18, hy - 2, 4, 1); px.fillRect(27, hy - 2, 4, 1); }
-  else { px.fillRect(19, hy - 2, 2, 3); px.fillRect(28, hy - 2, 2, 3); px.fillStyle = '#fff'; px.fillRect(19, hy - 2, 1, 1); px.fillRect(28, hy - 2, 1, 1); }
-  px.fillStyle = ink; px.fillRect(23, hy + 2, 3, 2);
-  px.fillRect(22, hy + 4, 1, 1); px.fillRect(24, hy + 4, 1, 1); px.fillRect(26, hy + 4, 1, 1); px.fillRect(23, hy + 5, 1, 1); px.fillRect(25, hy + 5, 1, 1);
-  if (happy) { px.fillStyle = '#ff6f94'; px.fillRect(23, hy + 6, 3, 2); }
-  px.fillStyle = '#ffb3c7'; px.fillRect(15, hy + 2, 2, 2); px.fillRect(32, hy + 2, 2, 2);
-}
-setInterval(() => { frame++; blink = !blink && Math.random() < 0.12; drawPook(); }, 320);
 
-/* ---------- main screen ---------- */
-const ROOMS = [
-  { icon: '🍖', name: 'Feed', meter: 'Tummy', title: "Pook's Picky Dinner", open: openFeed },
-  { icon: '🎾', name: 'Play', meter: 'Fun', title: 'Zoomies!', open: openPlay },
-  { icon: '🛁', name: 'Bath', meter: 'Clean', title: 'Bath Time', open: openBath },
-  { icon: '🌙', name: 'Sleep', meter: 'Rest', title: 'Lullaby', open: openSleep },
-  { icon: '🦮', name: 'Walk', meter: 'Walkies', title: 'Sniff Patrol', open: openWalk },
-  { icon: '🍪', name: 'Treat', meter: 'Treats', title: 'Which Cup?', open: openCups },
-  { icon: '💬', name: 'Talk', meter: 'Chats', title: 'Pook Speak', open: openTalk },
-  { icon: '📸', name: 'Photo', meter: 'Memories', title: 'Birthday Photo', open: openPhoto }
+/* Pook: a small white bichon. Always white with black features. */
+function pook(cx, fy, o = {}) {
+  const K = COL.k, W = COL.w, O = COL.o, bob = o.sleep ? 0 : (frame % 4 < 2 ? 0 : 1);
+  const blob = list => { list.forEach(p => D(p[0], p[1], p[2] + 1, K)); list.forEach(p => D(p[0], p[1], p[2], W)); };
+  blob([[cx + 11 + (o.sleep ? 0 : frame % 2), fy - 11, 2]]);
+  blob([[cx, fy - 9, 8], [cx - 7, fy - 4, 4], [cx + 7, fy - 4, 4]]);
+  blob([[cx - 3, fy - 2, 2], [cx + 3, fy - 2, 2]]);
+  const hy = fy - 25 + bob;
+  blob([[cx, hy, 9], [cx - 6, hy - 6, 4], [cx + 6, hy - 6, 4], [cx, hy - 8, 4], [cx - 9, hy + 1, 4], [cx + 9, hy + 1, 4], [cx - 7, hy + 6, 4], [cx + 7, hy + 6, 4]]);
+  // curls
+  [[-6, -8], [4, -10], [-10, 2], [9, 3], [7, -5]].forEach(c => { R(cx + c[0], hy + c[1], 2, 1, K); R(cx + c[0] - 1, hy + c[1] + 1, 1, 1, K); });
+  [[-5, 12], [4, 15], [-8, 20]].forEach(c => { R(cx + c[0], hy + c[1], 2, 1, K); });
+  const blink = o.sleep || frame % 23 === 0, stare = isNight() && frame % 41 === 0;
+  if (blink) { R(cx - 5, hy, 2, 1, K); R(cx + 4, hy, 2, 1, K); }
+  else { R(cx - 5, hy - 1, 2, 2, K); R(cx + 4, hy - 1, 2, 2, K); if (stare) { R(cx - 6, hy - 2, 4, 4, K); R(cx + 3, hy - 2, 4, 4, K); R(cx - 5, hy - 1, 2, 2, O); R(cx + 4, hy - 1, 2, 2, O); } }
+  R(cx - 1, hy + 2, 3, 2, K);
+  R(cx - 3, hy + 5, 1, 1, K); R(cx + 3, hy + 5, 1, 1, K); R(cx - 2, hy + 6, 5, 1, K);
+  if (!o.sleep) { R(cx - 1, hy + 6, 3, 3, O); R(cx, hy + 6, 1, 2, K); }
+  if (o.sleep) { const zx = cx + 14, zy = hy - 12 - (frame % 4); R(zx, zy, 4, 1, 'k'); R(zx + 2, zy + 1, 1, 1, 'k'); R(zx + 1, zy + 2, 1, 1, 'k'); R(zx, zy + 3, 4, 1, 'k'); }
+}
+
+/* item icons, 16x16 */
+const CAPS = { jug5: 5, jug3: 3 };
+const ICON = {
+  coin() { DO(8, 8, 5, 'o'); R(7, 5, 2, 7); },
+  opener() { R(3, 8, 3, 7); DO(10, 5, 3, 'w'); R(6, 6, 2, 2); R(10, 5, 1, 1); },
+  can() { B(4, 3, 9, 11, 'w'); R(5, 6, 7, 4, 'o'); },
+  canopen() { B(4, 4, 9, 10, 'w'); R(5, 7, 7, 4, 'o'); R(4, 1, 8, 1); R(11, 1, 1, 3); },
+  ball() { DO(8, 8, 5, 'w'); R(3, 7, 11, 2, 'o'); R(8, 3, 1, 11); },
+  plug() { R(4, 9, 8, 2); R(5, 11, 6, 3); R(7, 4, 2, 5); R(9, 3, 4, 1); R(13, 2, 1, 1, 'o'); },
+  soap() { B(3, 8, 11, 6, 'w'); R(5, 10, 7, 1, 'o'); DO(11, 4, 1, 'w'); DO(6, 3, 1, 'w'); },
+  key() { DO(5, 6, 2, 'o'); R(7, 6, 7, 1); R(11, 7, 1, 2); R(13, 7, 1, 3); },
+  blanket() { B(2, 4, 12, 9, 'o'); R(2, 7, 12, 1); R(2, 10, 12, 1); },
+  jug5() { B(3, 2, 9, 12, 'w'); R(12, 4, 2, 1); R(13, 4, 1, 6); R(12, 9, 2, 1); const h = Math.round(10 * (F.j5 || 0) / 5); R(4, 13 - h, 7, h, 'o'); },
+  jug3() { B(4, 6, 7, 8, 'w'); R(11, 7, 2, 1); R(12, 7, 1, 4); R(11, 10, 2, 1); const h = Math.round(6 * (F.j3 || 0) / 3); R(5, 13 - h, 5, h, 'o'); },
+  jar() { B(4, 4, 8, 10, 'w'); R(5, 2, 6, 2); R(5, 7, 6, 3, 'o'); },
+  teddy() { DO(5, 3, 1, 'o'); DO(11, 3, 1, 'o'); DO(8, 6, 3, 'o'); DO(8, 12, 3, 'o'); R(7, 5, 1, 1); R(9, 5, 1, 1); R(8, 7, 1, 1); },
+  crank() { R(3, 11, 7, 2); R(9, 4, 2, 8); R(9, 3, 5, 2); DO(13, 4, 1, 'o'); }
+};
+ICON.jar0 = ICON.jar1 = ICON.jar2 = ICON.jar;
+const JARLAB = ['MEDICINE', 'NOT MEDICINE', 'MIXED'];
+const NAME = id => ({
+  coin: 'A COIN', opener: 'A CAN OPENER', can: 'A SEALED CAN', canopen: 'AN OPEN CAN', ball: 'A BALL', plug: 'A BATH PLUG', soap: 'SOAP',
+  key: 'A SMALL KEY', blanket: 'A BLANKET', jug5: `BIG JUG (${F.j5 || 0} OF 5)`, jug3: `SMALL JUG (${F.j3 || 0} OF 3)`,
+  jar0: `JAR LABELLED "${JARLAB[0]}"`, jar1: `JAR LABELLED "${JARLAB[1]}"`, jar2: `JAR LABELLED "${JARLAB[2]}"`, teddy: 'HIS BEAR', crank: 'A SMALL CRANK'
+}[id]);
+
+/* ---------- puzzles' fixed data ---------- */
+const CUP_CODE = '327', CAB_CODE = '724';
+const MAZE = [
+  '#############',
+  '#D..#.......#',
+  '#.#.#.#####.#',
+  '#.#...#...#.#',
+  '#.#####.#.#.#',
+  '#.....#.#...#',
+  '#####.#.#####',
+  '#.....#....B#',
+  '#############'];
+const MAZE_ANS = (() => {
+  const find = ch => { for (let y = 0; y < MAZE.length; y++) { const x = MAZE[y].indexOf(ch); if (x >= 0) return [x, y]; } };
+  const s = find('D'), e = find('B'), key = p => p[0] + ',' + p[1], prev = new Map([[key(s), null]]), q = [s];
+  const dirs = { R: [1, 0], D: [0, 1], L: [-1, 0], U: [0, -1] };
+  while (q.length) {
+    const p = q.shift(); if (p[0] === e[0] && p[1] === e[1]) break;
+    for (const d in dirs) { const n = [p[0] + dirs[d][0], p[1] + dirs[d][1]]; if (MAZE[n[1]][n[0]] !== '#' && !prev.has(key(n))) { prev.set(key(n), [p, d]); q.push(n); } }
+  }
+  let out = '', c = e; while (prev.get(key(c))) { const [p, d] = prev.get(key(c)); if (out[0] !== d) out = d + out; c = p; }
+  return out;
+})();
+const ARROW = { L: '←', U: '↑', D: '↓', R: '→' };
+const SW = [[0, 1], [1, 2], [1, 3], [0]];
+const lights = () => F.lights || (F.lights = [1, 1, 1, 1]);
+const JARS = [['poi', 'mix', 'med'], ['mix', 'med', 'poi']];
+const SONG = ['BOWL', 'BALL', 'TUB', 'BED'];
+
+/* ---------- messages / panels ---------- */
+const elMsg = $('#msg'), elPanel = $('#panel');
+let panelModal = false;
+function say(t) { elMsg.textContent = t || ''; }
+function openPanel(html, handler, modal) {
+  elPanel.innerHTML = html; elPanel.hidden = false; panelModal = !!modal; elPanel.scrollTop = 0;
+  elPanel.onclick = e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled && handler) handler(b.dataset.a, b); };
+}
+function closePanel() { elPanel.hidden = true; elPanel.innerHTML = ''; elPanel.onclick = null; panelModal = false; }
+function pages(list, done) {
+  let i = 0;
+  const show = () => openPanel(`<div class="sp"></div><pre class="c">${list[i]}</pre><div class="sp"></div><div class="row"><button class="o" data-a="ok">OK</button></div>`,
+    () => { sfx.tap(); if (++i < list.length) show(); else { closePanel(); if (done) done(); render(); } }, true);
+  show();
+}
+function note(title, body) { openPanel(`<div class="t">${title}</div><pre>${body}</pre><div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => { closePanel(); }); }
+function lockPanel(title, labels, answer, onOpen) {
+  const d = [0, 0, 0];
+  const draw = () => openPanel(`<div class="t">${title}</div><div class="sp"></div><div class="row">${d.map((v, i) => `<div class="dial"><span>${labels[i]}</span><button data-a="u${i}">+</button><b>${v}</b><button data-a="d${i}">−</button></div>`).join('')}</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
+    a => {
+      if (a === 'x') return closePanel();
+      if (a === 'go') { if (d.join('') === answer) { closePanel(); sfx.take(); onOpen(); save(); render(); } else { sfx.bad(); say('THE LOCK DOES NOT MOVE.'); } return; }
+      const i = +a[1]; d[i] = (d[i] + (a[0] === 'u' ? 1 : 9)) % 10; sfx.tap(); draw();
+    });
+  draw();
+}
+function arrowPanel(onOpen) {
+  let seq = '';
+  const draw = () => openPanel(`<div class="t">TOY BOX. A LOCK WITH FOUR ARROWS.</div><div class="seq">${[...seq].map(c => ARROW[c]).join(' ') || '&nbsp;'}</div>
+    <div class="row"><button data-a="L">←</button><button data-a="U">↑</button><button data-a="D">↓</button><button data-a="R">→</button></div>
+    <div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="clr">CLEAR</button><button data-a="x">LEAVE</button></div>`,
+    a => {
+      if (a === 'x') return closePanel();
+      if (a === 'clr') seq = '';
+      else if (a === 'go') { if (seq === MAZE_ANS) { closePanel(); sfx.take(); onOpen(); save(); render(); return; } sfx.bad(); say('THE LOCK DOES NOT MOVE.'); seq = ''; }
+      else if (seq.length < 16) { seq += a; sfx.tap(); }
+      draw();
+    });
+  draw();
+}
+function mazePanel() {
+  const cw = MAZE[0].length * 8, ch = MAZE.length * 8;
+  openPanel(`<div class="t">A POSTER: "POOK'S WAY HOME"</div><canvas id="mz" width="${cw}" height="${ch}" style="width:${cw * 1.75}px;max-width:100%"></canvas><div class="c">ONE ARROW FOR EACH STRAIGHT RUN.</div><div class="row"><button data-a="x">STEP BACK</button></div>`, () => closePanel());
+  const old = g; g = $('#mz').getContext('2d');
+  R(0, 0, cw, ch, 'w');
+  MAZE.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c === '#') R(x * 8, y * 8, 8, 8, 'k');
+    if (c === 'D') { R(x * 8 + 1, y * 8 + 1, 6, 6, 'o'); R(x * 8 + 2, y * 8 + 3, 1, 1); R(x * 8 + 5, y * 8 + 3, 1, 1); R(x * 8 + 3, y * 8 + 5, 2, 1); }
+    if (c === 'B') { R(x * 8 + 1, y * 8 + 3, 6, 2, 'o'); R(x * 8, y * 8 + 2, 2, 4, 'o'); R(x * 8 + 6, y * 8 + 2, 2, 4, 'o'); }
+  }));
+  g = old;
+}
+function switchPanel() {
+  const L = lights();
+  const draw = () => openPanel(`<div class="t">FOUR BULBS. FOUR SWITCHES. BAD WIRING.</div><div class="sp"></div><div class="row" style="font-size:26px;letter-spacing:10px">${L.map(v => v ? '●' : '○').join('')}</div>
+    <div class="row">${[0, 1, 2, 3].map(i => `<button data-a="${i}">SW ${i + 1}</button>`).join('')}</div><div class="sp"></div><div class="row"><button data-a="x">LEAVE</button></div>`,
+    a => {
+      if (a === 'x') return closePanel();
+      SW[+a].forEach(b => { L[b] ^= 1; }); sfx.tap(); save(); render(); draw();
+      if (L.every(v => !v)) {
+        if (F.blanket && S.done[2]) return need(3);
+        say(F.blanket ? 'DARK. BUT POOK IS TOO DIRTY FOR THE BED.' : 'DARK. POOK SHIVERS. THE BED IS BARE.');
+      }
+    });
+  draw();
+}
+function tvPanel() {
+  const CH = ['STAND BY.\n\nHIS BEAR IS IN THIS HOUSE.\nSOFA. TUB. WARDROBE. FRIDGE.\n\nFOUR CHANNELS KNOW WHERE.\nONLY ONE OF THEM TELLS THE TRUTH.',
+    'IT IS UNDER THE SOFA.', 'IT IS IN THE TUB.', 'IT IS NOT IN THE WARDROBE.', 'IT IS NOT UNDER THE SOFA.'];
+  let c = 0;
+  const draw = () => openPanel(`<div class="t">CH ${c} ${c ? '' : '— NO SIGNAL'}</div><div class="sp"></div><pre class="c">${CH[c]}</pre><div class="sp"></div><div class="row"><button data-a="-">CH −</button><button data-a="+">CH +</button><button data-a="x">LOOK AWAY</button></div>`,
+    a => { if (a === 'x') return closePanel(); c = (c + (a === '+' ? 1 : 4)) % 5; hiss(.12); draw(); });
+  draw();
+}
+function jarPanel() {
+  const held = [0, 1, 2].find(i => has('jar' + i));
+  const s = F.jsample;
+  openPanel(`<div class="t">THREE JARS. A NOTE:</div><div>"SOMEONE SWAPPED EVERY LABEL. NOT ONE IS TRUE. ONE JAR IS ALL MEDICINE (WHITE). ONE IS ALL NOT (ORANGE). ONE IS BOTH. LOOK AT ONE PILL ONLY."</div>
+    ${[0, 1, 2].map(i => `<div class="row" style="justify-content:space-between"><span>"${JARLAB[i]}"${s && s.i === i ? ' — ' + s.col : ''}</span><span><button data-a="s${i}" ${s ? 'disabled' : ''}>PILL</button> <button data-a="t${i}">TAKE</button></span></div>`).join('')}
+    <div class="row"><button data-a="x">CLOSE</button></div>`,
+    a => {
+      if (a === 'x') return closePanel();
+      const i = +a[1];
+      if (a[0] === 's') { const c = JARS[F.jperm][i]; F.jsample = { i, col: c === 'med' ? 'WHITE' : c === 'poi' ? 'ORANGE' : (rand(2) ? 'WHITE' : 'ORANGE') }; sfx.tap(); save(); return jarPanel(); }
+      drop('jar0', 'jar1', 'jar2'); give('jar' + i); sfx.take(); closePanel(); say(`TAKEN: ${NAME('jar' + i)}.`); save(); render();
+    });
+  if (held !== undefined) say(`YOU ARE HOLDING THE "${JARLAB[held]}" JAR.`);
+}
+function boxPanel() {
+  let seq = [];
+  const draw = () => openPanel(`<div class="t">A MUSIC BOX. ENGRAVED:</div><div class="c">"PLAY HIS DAY BACK TO HIM."</div><div class="seq">${seq.join(' · ') || '&nbsp;'}</div>
+    <div class="row">${['TUB', 'BOWL', 'BED', 'BALL'].map(k => `<button data-a="${k}">${k}</button>`).join('')}</div><div class="sp"></div><div class="row"><button data-a="x">LEAVE</button></div>`,
+    a => {
+      if (a === 'x') return closePanel();
+      if (seq.length >= 4) return;
+      seq.push(a); sfx.note(seq.length - 1); draw();
+      if (seq.length === 4) { if (seq.join() === SONG.join()) return setTimeout(() => need(7), 500); sfx.bad(); say('THE BOX CLICKS SHUT. WRONG ORDER.'); setTimeout(() => { seq = []; if (!elPanel.hidden && !panelModal) draw(); }, 500); }
+    });
+  draw();
+}
+
+/* ---------- needs (one code piece each) ---------- */
+const FIX = [
+  () => { F.coin = F.drawer = F.cup = 1; drop('coin', 'opener', 'can', 'canopen'); },
+  () => { F.toy = 1; drop('ball'); if (!F.plug) give('plug'); },
+  () => { F.tap = F.fog = F.plug = F.soap = F.cab = 1; drop('plug', 'soap'); if (!F.ward) give('key'); },
+  () => { F.ward = F.blanket = 1; F.lights = [0, 0, 0, 0]; drop('key', 'blanket'); },
+  () => { F.jugs = 1; drop('jug5', 'jug3'); },
+  () => { drop('jar0', 'jar1', 'jar2'); },
+  () => { F.teddy = 1; drop('teddy'); if (!F.crank) give('crank'); },
+  () => { F.crank = 1; drop('crank'); }
 ];
-const LINES = [
-  "My tummy is rumbling… is it dinner time?",
-  "Yum! Now I've got the ZOOMIES. Park? Park!!",
-  "Uh oh. I may have found a mud puddle…",
-  "*yaaawn* …will you sing me to sleep?",
-  "Good morning!! Walkies? WALKIES!",
-  "All that sniffing made me peckish. I smell a treat…",
-  "I've been thinking of a word ALL day. Guess it!",
-  "Birthday photo time! …oops. I dropped it."
-];
-const PROPS = ['🥣', '🎾', '🫧', '🧸', '🌷', '🍪', '💭', '📸'], DECOS = ['🪟', '☀️', '🚿', '🌙 ✨', '🌤️', '🪟', '✨', '🎈'];
-const PETS = ['Arf!', '*happy wiggle*', 'Again! Again!', '*tail goes thwap thwap*', 'I love scritches!', 'Boop my nose!'];
-let bubbleTimer = 0;
-function say(t, ms) {
-  $('#bubble').textContent = t; clearTimeout(bubbleTimer);
-  if (ms) bubbleTimer = setTimeout(() => { $('#bubble').textContent = defaultLine(); }, ms);
+const DONE_LINE = ['POOK EATS. POOK DOES NOT BLINK WHILE HE EATS.', 'POOK PLAYS. THE BALL WILL NEVER BE THE SAME.', 'POOK IS CLEAN. THE WATER IS NOT.', 'POOK SLEEPS.',
+  'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THE WRONGNESS FADES.', 'POOK HOLDS HIS BEAR. SOMETHING FELL OUT OF IT: A CRANK.', 'THE SONG PLAYS. POOK SLEEPS.'];
+function startNight() { S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
+function need(i) {
+  if (S.done[i]) return;
+  S.done[i] = 1; FIX[i](); S.hi = 0; closePanel(); save(); sfx.good(); render(); say(DONE_LINE[i]);
+  const k = (i / 4) | 0, n = i % 4;
+  openPanel(`<div class="sp"></div><pre class="c">${DONE_LINE[i]}\n\nPOOK DROPS A TAG. IT READS:</pre><div class="big">${esc(pieces(k)[n])}</div><div class="c">PIECE ${n + 1} OF 4</div><div class="sp"></div><div class="row"><button class="o" data-a="ok">KEEP IT</button></div>`,
+    () => {
+      closePanel(); sfx.tap();
+      if (n !== 3) return render();
+      keyReveal(k, () => {
+        if (k < nKeys() - 1) pages(['THE TAPE ENDS.', 'THE TAPE DOES NOT END.', 'TAPE 2\n03:00\n\nPOOK IS AWAKE.\nPOOK SHOULD NOT BE AWAKE.'], () => { startNight(); save(); glitch(500); say('IT IS DARK. POOK IS LOOKING AT YOU.'); });
+        else pages(['POOK IS ASLEEP.\nPOOK IS SAFE.\n\nYOU DID EVERYTHING RIGHT,\nCARETAKER.', `HAPPY BIRTHDAY${CFG.name ? ',\n' + esc(CFG.name) : ''}.\n\n${CFG.message ? esc(CFG.message) : 'POOK LOVES YOU.'}`], () => { F.end = 1; S.room = 3; save(); say('POOK IS ASLEEP. HAPPY BIRTHDAY.'); });
+      });
+    }, true);
 }
-function defaultLine() {
-  if (!dayDone(day)) return LINES[stage()];
-  return day < nKeys() - 1 ? 'A present is ready! …and I just remembered ANOTHER hiding spot. Tap Day 2!' : 'Best. Day. EVER. Your present is ready!';
-}
-function render() {
-  const st = stage(), party = dayDone(day), two = nKeys() > 1;
-  $('#keybars').innerHTML = CFG.keys.map((key, k) => (k > 0 && !dayDone(k - 1)) ? '' :
-    `<div class="keybar panel"><span class="gift">🎁</span><div class="keyslots">${pieces(k).map((p, n) => `<div class="slot ${S.done[k * 4 + n] ? 'got' : ''}">${S.done[k * 4 + n] ? esc(p) : '?'.repeat(p.length || 1)}</div>`).join('')}</div></div>`).join('');
-  $('#demo').hidden = !isDemo;
-  $('#tabs').hidden = !(two && dayDone(0));
-  $('#tabs').innerHTML = CFG.keys.map((key, k) => `<button class="tab ${k === day ? 'on' : ''}" data-d="${k}">Day ${k + 1}</button>`).join('');
-  $('#screen').className = party ? 'party' : 'room' + st;
-  $('#prop').textContent = party ? '🎂' : PROPS[st];
-  $('#deco').textContent = party ? '🎈🎈' : DECOS[st];
-  const ids = [0, 1, 2, 3].map(n => day * 4 + n);
-  $('#meters').innerHTML = ids.map(i => {
-    const v = S.done[i] ? 100 : (i === st ? 12 : 45);
-    return `<div class="meter ${S.done[i] ? 'full' : ''}">${ROOMS[i].meter}<div class="bar"><div class="fill" style="width:${v}%"></div></div></div>`;
-  }).join('');
-  $('#actions').innerHTML = ids.map(i => {
-    const r = ROOMS[i], cls = S.done[i] ? 'done' : (i === st ? 'next' : 'locked');
-    return `<button class="act ${cls}" data-i="${i}"><span class="ico">${r.icon}</span>${r.name}<span class="badge">${S.done[i] ? '✅' : (i === st ? '' : '🔒')}</span></button>`;
-  }).join('');
-  $('#presents').innerHTML = CFG.keys.map((key, k) => dayDone(k) ? `<button class="btn present" data-k="${k}">🎁 Open ${two ? (k ? 'present two' : 'present one') : 'your present'}</button>` : '').join('');
-  say(defaultLine());
-  drawPook();
-}
-$('#actions').addEventListener('click', e => {
-  const b = e.target.closest('.act'); if (!b) return;
-  const i = +b.dataset.i, st = stage();
-  if (!S.done[i] && i !== st) { sfx.bad(); say(`Not yet! First: ${ROOMS[st].name.toLowerCase()}.`, 2200); return; }
-  sfx.tap(); ROOMS[i].open();
-});
-$('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (!b) return; day = +b.dataset.d; sfx.tap(); render(); });
-$('#presents').addEventListener('click', e => { const b = e.target.closest('.present'); if (b) finale(+b.dataset.k); });
-$('#pook').addEventListener('click', e => {
-  sfx.arf(); hopUntil = Date.now() + 1300; say(PETS[rand(PETS.length)], 1800);
-  const h = document.createElement('div'); h.className = 'heart'; h.textContent = '💗';
-  const r = $('#screen').getBoundingClientRect();
-  h.style.left = (e.clientX - r.left - 10) + 'px'; h.style.top = (e.clientY - r.top - 20) + 'px';
-  $('#screen').appendChild(h); setTimeout(() => h.remove(), 900);
-});
-$('#mute').addEventListener('click', () => { muted = !muted; store.set('pook-mute', muted); $('#mute').textContent = muted ? '🔇' : '🔊'; sfx.tap(); });
-$('#mute').textContent = muted ? '🔇' : '🔊';
-
-/* ---------- modal + cards ---------- */
-let cleanup = null;
-function openModal(i, html) {
-  $('#mtitle').textContent = ROOMS[i].icon + ' ' + ROOMS[i].title;
-  $('#mbody').innerHTML = html; $('#modal').hidden = false; $('#modal').scrollTop = 0;
-}
-function closeModal() { if (cleanup) { cleanup(); cleanup = null; } $('#modal').hidden = true; $('#mbody').innerHTML = ''; render(); }
-$('#mclose').addEventListener('click', () => { sfx.tap(); closeModal(); });
-function card(html, btn, cb) {
-  const o = $('#overlay');
-  o.innerHTML = `<div class="card">${html}${btn ? `<div class="row"><button class="btn" id="cardok">${btn}</button></div>` : ''}</div>`;
-  o.hidden = false;
-  if (btn) $('#cardok').addEventListener('click', () => { sfx.tap(); o.hidden = true; o.innerHTML = ''; if (cb) cb(); });
-}
-function win(i) {
-  const first = !S.done[i], k = (i / 4) | 0, n = i % 4; S.done[i] = true; save(); sfx.good(); hopUntil = Date.now() + 3000;
-  const html = first
-    ? `<div class="big">🏷️</div><h3>Pook dug something up!</h3><p>There's a little tag tucked in his fur. It reads:</p><div class="tag">${esc(pieces(k)[n])}</div><p class="small">Piece ${n + 1} of 4 — it's been added to the top of the screen.</p>`
-    : `<div class="big">🐶</div><h3>Pook loved that!</h3><p>He'd happily do it all over again.</p>`;
-  card(html, 'Good boy!', closeModal);
-}
-
-/* ---------- 1. Feed: deduce the dinner order ---------- */
-function openFeed() {
-  const foods = ['🦴', '🥕', '🧀', '🍗', '🍎'];
-  const secret = shuffle([0, 1, 2, 3, 4]).slice(0, 4);
-  let cur = [], hist = [], hints = 0;
-  openModal(0, `<p class="how">Pook is a fussy eater. He wants <b>4 different treats</b>, in <b>exactly the right bowls</b>. Fill the bowls, serve, and read his reaction.<br>
-    <span class="dot g"></span>right treat, right bowl &nbsp; <span class="dot y"></span>right treat, wrong bowl</p>
-    <div class="slots" id="fslots"></div><div class="palette" id="fpal"></div>
-    <div class="status" id="fstat">Tap treats to fill the bowls.</div>
-    <div class="row"><button class="btn" id="fserve">Serve dinner</button><button class="btn ghost" id="fhint" hidden>Sniff hint</button></div>
-    <div class="hist" id="fhist"></div>`);
-  function draw() {
-    $('#fslots').innerHTML = [0, 1, 2, 3].map(k => `<button class="fslot" data-k="${k}">${cur[k] === undefined ? '' : foods[cur[k]]}</button>`).join('');
-    $('#fpal').innerHTML = foods.map((f, n) => `<button class="food" data-n="${n}" ${cur.includes(n) || cur.length >= 4 ? 'disabled' : ''}>${f}</button>`).join('');
-    $('#fserve').disabled = cur.length < 4;
-    $('#fhint').hidden = hist.length < 5 || hints >= 2;
-    $('#fhist').innerHTML = hist.map(h => `<div class="hrow"><span>${h.g.map(n => foods[n]).join(' ')}</span><span class="fb"><span><span class="dot g"></span>${h.a}</span><span><span class="dot y"></span>${h.b}</span></span></div>`).join('');
-  }
-  $('#fslots').addEventListener('click', e => { const b = e.target.closest('.fslot'); if (!b) return; const k = +b.dataset.k; if (k < cur.length) { cur.splice(k, 1); sfx.tap(); draw(); } });
-  $('#fpal').addEventListener('click', e => { const b = e.target.closest('.food'); if (!b || b.disabled) return; cur.push(+b.dataset.n); sfx.tap(); draw(); });
-  $('#fserve').addEventListener('click', () => {
-    if (cur.length < 4) return;
-    const a = cur.filter((n, k) => secret[k] === n).length, b = cur.filter(n => secret.includes(n)).length - a;
-    hist.unshift({ g: cur.slice(), a, b });
-    if (a === 4) { draw(); win(0); return; }
-    sfx.bad();
-    $('#fstat').textContent = a + b <= 2 ? 'Pook wrinkles his nose.' : a >= 2 ? 'Pook sniffs… so close!' : 'Pook tilts his head. Hmm.';
-    cur = []; draw();
-  });
-  $('#fhint').addEventListener('click', () => {
-    const k = hints++; sfx.arf();
-    $('#fstat').textContent = `Pook noses bowl ${k + 1}: it should be ${foods[secret[k]]}`; draw();
-  });
-  draw();
-}
-
-/* ---------- 2. Play: zoomies sliding puzzle ---------- */
-function openPlay() {
-  const N = 7, MINS = [3, 5, 6], DIRS = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
-  let lvl = 0, L, pos, moves = 0, busy = false, alive = true;
-  const slide = (rocks, p, d) => {
-    let x = p % N, y = (p / N) | 0;
-    for (;;) { const nx = x + d[0], ny = y + d[1]; if (nx < 0 || ny < 0 || nx >= N || ny >= N || rocks.has(ny * N + nx)) break; x = nx; y = ny; }
-    return y * N + x;
-  };
-  function solve(rocks, s, g) {
-    const dist = new Map([[s, 0]]), q = [s];
-    while (q.length) { const p = q.shift(); if (p === g) return dist.get(p);
-      for (const k in DIRS) { const n = slide(rocks, p, DIRS[k]); if (!dist.has(n)) { dist.set(n, dist.get(p) + 1); q.push(n); } } }
-    return -1;
-  }
-  function gen(min) {
-    let best = null;
-    for (let a = 0; a < 5000; a++) {
-      const rocks = new Set(), nr = 6 + rand(5); while (rocks.size < nr) rocks.add(rand(N * N));
-      let s, g; do { s = rand(N * N); } while (rocks.has(s)); do { g = rand(N * N); } while (rocks.has(g) || g === s);
-      const d = solve(rocks, s, g);
-      if (d > 0 && (!best || Math.abs(d - min) < Math.abs(best.d - min))) { best = { rocks, s, g, d }; if (d === min) break; }
-    }
-    return best;
-  }
-  openModal(1, `<p class="how">Pook has the zoomies! Once he starts running he <b>can't stop</b> until he bumps into a tree or the fence. Get him to <b>stop exactly on the ball</b>. Swipe the park or use the arrows.</p>
-    <div class="status" id="pstat"></div><div class="park" id="park"></div>
-    <div class="dpad"><button class="u" data-d="u">▲</button><button class="l" data-d="l">◀</button><button class="d" data-d="d">▼</button><button class="r" data-d="r">▶</button></div>
-    <div class="row"><button class="btn ghost" id="preset">↺ Back to start</button><button class="btn ghost" id="pnew">New park</button></div>`);
-  const park = $('#park');
-  function place() { $('#runner').style.left = (pos % N) * 100 / N + '%'; $('#runner').style.top = ((pos / N) | 0) * 100 / N + '%'; }
-  function stat() { $('#pstat').textContent = `Park ${lvl + 1} of 3 · moves ${moves} · possible in ${L.d}`; }
-  function newLevel() {
-    L = gen(MINS[lvl]); pos = L.s; moves = 0;
-    let h = ''; for (let i = 0; i < N * N; i++) h += `<div class="cell">${L.rocks.has(i) ? '🌳' : i === L.g ? '🎾' : ''}</div>`;
-    park.innerHTML = h + '<div id="runner">🐶</div>'; place(); stat();
-  }
-  function move(k) {
-    if (busy || !alive || !DIRS[k]) return;
-    const np = slide(L.rocks, pos, DIRS[k]);
-    if (np === pos) { sfx.bump(); return; }
-    pos = np; moves++; busy = true; sfx.tap(); place(); stat();
-    setTimeout(() => {
-      if (!alive) return; busy = false; sfx.bump();
-      if (pos === L.g) { lvl++; if (lvl >= 3) { win(1); } else { sfx.good(); $('#pstat').textContent = 'Got it! Next park…'; busy = true; setTimeout(() => { if (alive) { busy = false; newLevel(); } }, 900); } }
-    }, 200);
-  }
-  $('.dpad').addEventListener('click', e => { const b = e.target.closest('button'); if (b) move(b.dataset.d); });
-  $('#preset').addEventListener('click', () => { if (busy) return; pos = L.s; moves = 0; sfx.tap(); place(); stat(); });
-  $('#pnew').addEventListener('click', () => { if (busy) return; sfx.tap(); newLevel(); });
-  let t0 = null;
-  park.addEventListener('touchstart', e => { t0 = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
-  park.addEventListener('touchend', e => {
-    if (!t0) return; const dx = e.changedTouches[0].clientX - t0[0], dy = e.changedTouches[0].clientY - t0[1]; t0 = null;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
-    move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u'));
-  });
-  const onKey = e => { const k = { ArrowUp: 'u', ArrowDown: 'd', ArrowLeft: 'l', ArrowRight: 'r' }[e.key]; if (k) { e.preventDefault(); move(k); } };
-  document.addEventListener('keydown', onKey);
-  cleanup = () => { alive = false; document.removeEventListener('keydown', onKey); };
-  newLevel();
-}
-
-/* ---------- 3. Bath: scrub puzzle ---------- */
-function openBath() {
-  const N = 4; let grid, sol, taps = 0;
-  function tog(i) {
-    const x = i % N, y = (i / N) | 0;
-    [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < N && ny < N) grid[ny * N + nx] ^= 1; });
-    if (sol.has(i)) sol.delete(i); else sol.add(i);
-  }
-  function scramble() { grid = new Array(N * N).fill(0); sol = new Set(); taps = 0; do { shuffle([...Array(N * N).keys()]).slice(0, 5).forEach(tog); } while (!grid.some(v => v)); }
-  openModal(2, `<p class="how">Somebody rolled in the mud. Scrub a patch to flip it — but the soap <b>splashes the patches next to it</b> too: muddy turns clean, clean turns muddy. Get his <b>whole coat clean</b>.</p>
-    <div class="status" id="bstat"></div><div class="coat" id="coat"></div>
-    <div class="row"><button class="btn ghost" id="bnew">New mud</button><button class="btn ghost" id="bhint" hidden>Where next?</button></div>`);
-  function draw(hint) {
-    $('#coat').innerHTML = grid.map((v, i) => `<button class="spot ${v ? 'mud' : ''} ${hint === i ? 'hint' : ''}" data-i="${i}">${v ? '🐾' : '✨'}</button>`).join('');
-    $('#bstat').textContent = `${grid.filter(v => v).length} muddy patches · ${taps} scrubs`;
-    $('#bhint').hidden = taps < 10;
-  }
-  $('#coat').addEventListener('click', e => {
-    const b = e.target.closest('.spot'); if (!b) return;
-    tog(+b.dataset.i); taps++; sfx.tap(); draw();
-    if (!grid.some(v => v)) win(2);
-  });
-  $('#bnew').addEventListener('click', () => { sfx.tap(); scramble(); draw(); });
-  $('#bhint').addEventListener('click', () => { sfx.arf(); draw([...sol][0]); });
-  scramble(); draw();
-}
-
-/* ---------- 4. Sleep: lullaby memory ---------- */
-function openSleep() {
-  const notes = [262, 330, 392, 523], icons = ['🎵', '⭐', '🌙', '☁️'], ROUNDS = 4;
-  const seq = []; while (seq.length < 2 + ROUNDS) { const n = rand(4); if (n !== seq[seq.length - 1]) seq.push(n); }
-  let round = 0, idx = 0, playing = false, started = false, alive = true;
-  openModal(3, `<p class="how">Pook can only drift off to his favourite lullaby. <b>Listen and watch</b>, then tap the same notes back in the same order. It gets a little longer each verse.</p>
-    <div class="status" id="sstat">Tap “Sing” when you're ready.</div>
-    <div class="pads" id="pads">${icons.map((c, i) => `<button class="pad p${i}" data-p="${i}">${c}</button>`).join('')}</div>
-    <div class="row"><button class="btn" id="ssing">▶ Sing</button></div>`);
-  const stat = t => { $('#sstat').textContent = t; };
-  function flash(p, len = 320) {
-    const el = document.querySelector(`.pad.p${p}`); if (!el) return;
-    el.classList.add('on'); beep(notes[p], len / 1000 + .1, 'triangle', .12);
-    setTimeout(() => el.classList.remove('on'), len);
-  }
-  function play() {
-    playing = true; idx = 0; started = true; const len = 3 + round;
-    stat(`Verse ${round + 1} of ${ROUNDS} — listen…`); $('#ssing').disabled = true;
-    for (let k = 0; k < len; k++) setTimeout(() => { if (alive) flash(seq[k]); }, 500 + k * 560);
-    setTimeout(() => { if (!alive) return; playing = false; stat(`Verse ${round + 1} of ${ROUNDS} — your turn!`); $('#ssing').disabled = false; $('#ssing').textContent = '↻ Hear it again'; }, 500 + len * 560);
-  }
-  $('#ssing').addEventListener('click', () => { if (!playing) play(); });
-  $('#pads').addEventListener('click', e => {
-    const b = e.target.closest('.pad'); if (!b || playing) return;
-    const p = +b.dataset.p; flash(p, 200);
-    if (!started) return;
-    if (p !== seq[idx]) { playing = true; setTimeout(() => sfx.bad(), 220); stat("Pook's ear twitches. Not quite — listen again…"); setTimeout(() => { if (alive) play(); }, 1500); return; }
-    idx++;
-    if (idx === 3 + round) {
-      round++;
-      if (round >= ROUNDS) { playing = true; stat('Zzz…'); setTimeout(() => { if (alive) win(3); }, 500); }
-      else { playing = true; stat('His eyes are getting heavy… one more verse.'); setTimeout(() => { if (alive) play(); }, 1300); }
-    }
-  });
-  cleanup = () => { alive = false; };
-}
-
-/* ---------- 5. Walk: sniff every patch once ---------- */
-function openWalk() {
-  const W = 5, T = W * W; let blocked, path, sol, need, taps = 0;
-  const nbrs = p => { const x = p % W, y = (p / W) | 0, o = []; if (x > 0) o.push(p - 1); if (x < W - 1) o.push(p + 1); if (y > 0) o.push(p - W); if (y < W - 1) o.push(p + W); return o; };
-  function gen() {
-    for (;;) {
-      blocked = new Set(); const nb = 2 + rand(2); while (blocked.size < nb) blocked.add(rand(T));
-      let s; do { s = rand(T); } while (blocked.has(s));
-      need = T - blocked.size; const seen = new Set([s]); let budget = 3000;
-      const dfs = p => {
-        if (seen.size === need) return true; if (--budget < 0) return false;
-        for (const n of shuffle(nbrs(p))) { if (blocked.has(n) || seen.has(n)) continue; seen.add(n); if (dfs(n)) return true; seen.delete(n); }
-        return false;
-      };
-      if (dfs(s)) { sol = [...seen]; path = [s]; taps = 0; return; }
-    }
-  }
-  openModal(4, `<p class="how">Pook wants to sniff <b>every patch of grass exactly once</b> — he refuses to walk over his own pawprints. Tap a patch next to him to walk there. Tap an earlier pawprint to rewind.</p>
-    <div class="status" id="wstat"></div><div class="walk" id="walk"></div>
-    <div class="row"><button class="btn ghost" id="wreset">↺ Start over</button><button class="btn ghost" id="wnew">New walk</button><button class="btn ghost" id="whint" hidden>Which way?</button></div>`);
-  function draw(hint) {
-    let h = '';
-    for (let i = 0; i < T; i++) {
-      const at = path.indexOf(i), head = at === path.length - 1 && at >= 0;
-      h += `<button class="wcell ${blocked.has(i) ? 'tree' : head ? 'head' : at >= 0 ? 'trail' : ''} ${hint === i ? 'hint' : ''}" data-i="${i}">${blocked.has(i) ? '🌳' : head ? '🐶' : at >= 0 ? '🐾' : ''}</button>`;
-    }
-    $('#walk').innerHTML = h;
-    $('#wstat').textContent = `${path.length} of ${need} patches sniffed`;
-    $('#whint').hidden = taps < 30;
-  }
-  $('#walk').addEventListener('click', e => {
-    const b = e.target.closest('.wcell'); if (!b) return; const i = +b.dataset.i; if (blocked.has(i)) return;
-    const at = path.indexOf(i);
-    if (at >= 0) { if (at === path.length - 1) return; path.length = at + 1; }
-    else if (nbrs(path[path.length - 1]).includes(i)) path.push(i);
-    else { sfx.bump(); return; }
-    taps++; sfx.tap(); draw();
-    if (path.length === need) win(4);
-  });
-  $('#wreset').addEventListener('click', () => { path.length = 1; sfx.tap(); draw(); });
-  $('#wnew').addEventListener('click', () => { sfx.tap(); gen(); draw(); });
-  $('#whint').addEventListener('click', () => {
-    let n = 0; while (n < path.length && path[n] === sol[n]) n++;
-    path.length = n; sfx.arf(); draw(sol[n]);
-  });
-  gen(); draw();
-}
-
-/* ---------- 6. Treat: follow the cup ---------- */
-function openCups() {
-  const SW = [5, 7, 9], SP = [430, 330, 250]; let round = 0, pos, t, phase = 'idle', alive = true;
-  openModal(5, `<p class="how">There is a treat under one of these cups. <b>Keep your eye on it</b> while the cups shuffle, then tap the cup it's under. Three rounds — and they get faster.</p>
-    <div class="status" id="cstat">Tap “Hide it” when you're ready.</div>
-    <div class="cups" id="cups">${[0, 1, 2].map(c => `<div class="cupw" data-c="${c}" style="left:${c * 33.333}%"><span class="treat">🍪</span><div class="cup"></div></div>`).join('')}</div>
-    <div class="row"><button class="btn" id="cgo">▶ Hide it</button></div>`);
-  const cw = c => document.querySelector(`.cupw[data-c="${c}"]`);
-  const wait = ms => new Promise(r => setTimeout(r, ms));
-  const stat = x => { if (alive) $('#cstat').textContent = x; };
-  const place = () => { for (let c = 0; c < 3; c++) cw(c).style.left = pos[c] * 33.333 + '%'; };
-  async function go() {
-    phase = 'busy'; $('#cgo').hidden = true; pos = [0, 1, 2]; t = rand(3);
-    for (let c = 0; c < 3; c++) { cw(c).classList.remove('lift'); cw(c).classList.toggle('has', c === t); cw(c).style.transition = 'none'; }
-    place(); void cw(0).offsetWidth;
-    for (let c = 0; c < 3; c++) cw(c).style.transition = `left ${SP[round]}ms ease-in-out`;
-    stat(`Round ${round + 1} of 3 — watch the treat…`);
-    await wait(300); if (!alive) return; cw(t).classList.add('lift');
-    await wait(1200); if (!alive) return; cw(t).classList.remove('lift');
-    await wait(450);
-    for (let n = 0; n < SW[round]; n++) {
-      if (!alive) return;
-      const a = rand(3); let b = rand(2); if (b >= a) b++;
-      [pos[a], pos[b]] = [pos[b], pos[a]]; place(); sfx.tap(); await wait(SP[round] + 50);
-    }
-    if (!alive) return; phase = 'pick'; stat('Where is the treat?');
-  }
-  $('#cgo').addEventListener('click', () => { if (phase === 'idle') go(); });
-  $('#cups').addEventListener('click', async e => {
-    const b = e.target.closest('.cupw'); if (!b || phase !== 'pick') return;
-    const c = +b.dataset.c; phase = 'busy'; b.classList.add('lift');
-    if (c === t) {
-      sfx.arf(); round++; stat('Pook found it! *crunch*');
-      await wait(1100); if (!alive) return;
-      if (round >= 3) win(5); else go();
-    } else {
-      sfx.bad(); stat('Empty! Pook looks betrayed.');
-      await wait(600); if (!alive) return; cw(t).classList.add('lift');
-      await wait(1500); if (!alive) return; go();
-    }
-  });
-  cleanup = () => { alive = false; };
-}
-
-/* ---------- 7. Talk: guess Pook's word ---------- */
-function openTalk() {
-  const WORDS = ['TREAT', 'FETCH', 'PUPPY', 'BONES', 'WALKS', 'BELLY', 'FLUFF', 'SNACK', 'SNIFF', 'HAPPY', 'BARKS', 'LEASH'];
-  const word = WORDS[rand(WORDS.length)]; let cur = '', rows = [], keys = {}, hints = 0, over = false;
-  const score = g => {
-    const r = Array(5).fill('n'), left = {};
-    for (let i = 0; i < 5; i++) { if (g[i] === word[i]) r[i] = 'g'; else left[word[i]] = (left[word[i]] || 0) + 1; }
-    for (let i = 0; i < 5; i++) if (r[i] !== 'g' && left[g[i]]) { r[i] = 'y'; left[g[i]]--; }
-    return r;
-  };
-  openModal(6, `<p class="how">Pook is thinking of a <b>5-letter word</b> — something a dog would care about. Type a guess and press ⏎.<br>
-    <span class="dot g"></span>right letter, right place &nbsp; <span class="dot y"></span>in the word, wrong place</p>
-    <div id="tboard"></div><div class="status" id="tstat"></div>
-    <div class="row"><button class="btn ghost" id="thint" hidden>Pook hint</button></div>
-    <div class="kb" id="kb"></div>`);
-  function draw() {
-    const shown = rows.slice(-5);
-    $('#tboard').innerHTML = shown.map(r => `<div class="wrow">${[...r.w].map((ch, i) => `<div class="wt ${r.sc[i]}">${ch}</div>`).join('')}</div>`).join('')
-      + (over ? '' : `<div class="wrow">${[0, 1, 2, 3, 4].map(i => `<div class="wt">${cur[i] || ''}</div>`).join('')}</div>`);
-    $('#kb').innerHTML = ['QWERTYUIOP', 'ASDFGHJKL', '⏎ZXCVBNM⌫'].map(row => `<div class="krow">${[...row].map(ch => `<button class="k ${keys[ch] || ''} ${ch === '⏎' || ch === '⌫' ? 'wide' : ''}" data-k="${ch}">${ch}</button>`).join('')}</div>`).join('');
-    $('#thint').hidden = rows.length < 5 || hints >= 2 || over;
-  }
-  function press(k) {
-    if (over) return;
-    if (k === '⌫') cur = cur.slice(0, -1);
-    else if (k === '⏎') {
-      if (cur.length < 5) { $('#tstat').textContent = 'Five letters, please!'; return; }
-      const sc = score(cur); rows.push({ w: cur, sc });
-      [...cur].forEach((ch, i) => { if (sc[i] === 'g' || (sc[i] === 'y' && keys[ch] !== 'g') || !keys[ch]) keys[ch] = sc[i]; });
-      if (cur === word) { over = true; draw(); win(6); return; }
-      cur = ''; sfx.bad();
-      $('#tstat').textContent = ['Pook tilts his head.', 'Not that one! Guess again.', '*confused boof*', 'Closer? Maybe? He is not telling.'][rand(4)];
-    } else if (cur.length < 5) { cur += k; sfx.tap(); }
-    draw();
-  }
-  $('#kb').addEventListener('click', e => { const b = e.target.closest('.k'); if (b) press(b.dataset.k); });
-  $('#thint').addEventListener('click', () => { sfx.arf(); $('#tstat').textContent = hints++ === 0 ? `It starts with ${word[0]}.` : `It ends with ${word[4]}.`; draw(); });
-  const onKey = e => {
-    if (e.key === 'Enter') press('⏎'); else if (e.key === 'Backspace') press('⌫');
-    else if (/^[a-zA-Z]$/.test(e.key)) press(e.key.toUpperCase());
-  };
-  document.addEventListener('keydown', onKey);
-  cleanup = () => document.removeEventListener('keydown', onKey);
-  draw();
-}
-
-/* ---------- 8. Photo: put the picture back together ---------- */
-function openPhoto() {
-  const N = 4, SZ = 320, cv = document.createElement('canvas'); cv.width = cv.height = SZ;
-  const c = cv.getContext('2d'), bands = ['#ffd3e2', '#ffe9c9', '#d7f1ff', '#e4d8ff'], dots = ['#ff8fb1', '#ffd76a', '#7fd6ae', '#b79cff', '#8cc9ff'];
-  for (let i = 0; i < 8; i++) { c.fillStyle = bands[i % 4]; c.fillRect(0, i * 40, SZ, 40); }
-  for (let i = 0; i < 80; i++) { c.fillStyle = dots[i % 5]; c.beginPath(); c.arc(rand(SZ), rand(SZ), 3 + rand(5), 0, 7); c.fill(); }
-  c.fillStyle = '#ff9fbe'; c.fillRect(0, 262, SZ, 58);
-  c.textAlign = 'center'; c.font = '900 30px "Trebuchet MS",sans-serif'; c.lineWidth = 6; c.strokeStyle = '#fff'; c.fillStyle = '#3b2a4a';
-  c.strokeText('HAPPY BIRTHDAY', SZ / 2, 42); c.fillText('HAPPY BIRTHDAY', SZ / 2, 42);
-  c.font = '46px serif'; c.fillText('🎈', 38, 130); c.fillText('🎈', 282, 118); c.fillText('🎂', 272, 300); c.fillText('🎁', 44, 300);
-  hopUntil = Date.now() + 400; drawPook(); c.imageSmoothingEnabled = false; c.drawImage($('#pook'), 56, 62, 208, 208);
-  let order, sel = null, swaps = 0;
-  do { order = shuffle([...Array(N * N).keys()]); } while (order.filter((v, i) => v === i).length > 2);
-  openModal(7, `<style>.ptile{background-image:url(${cv.toDataURL()})}</style>
-    <p class="how">Pook dropped the birthday photo and it's all jumbled. <b>Tap two pieces to swap them</b> until the picture is whole again.</p>
-    <div class="status" id="phstat"></div><div class="photo" id="photo"></div>`);
-  function draw() {
-    $('#photo').innerHTML = order.map((id, slot) => `<button class="ptile ${sel === slot ? 'sel' : ''}" data-s="${slot}" style="background-position:${(id % N) / (N - 1) * 100}% ${((id / N) | 0) / (N - 1) * 100}%"></button>`).join('');
-    $('#phstat').textContent = `${order.filter((v, i) => v === i).length} of ${N * N} pieces in place · ${swaps} swaps`;
-  }
-  $('#photo').addEventListener('click', e => {
-    const b = e.target.closest('.ptile'); if (!b) return; const s = +b.dataset.s; sfx.tap();
-    if (sel === null) sel = s;
-    else { if (sel !== s) { [order[sel], order[s]] = [order[s], order[sel]]; swaps++; } sel = null; }
-    draw();
-    if (order.every((v, i) => v === i)) win(7);
-  });
-  draw();
-}
-
-/* ---------- finale ---------- */
-function finale(k) {
-  sfx.good(); hopUntil = Date.now() + 5000;
-  const who = CFG.name ? ', ' + esc(CFG.name) : '', last = k === nKeys() - 1;
-  const msg = !last ? 'Present number one! Pook looks suspiciously pleased with himself… almost like he is hiding something else.'
-    : (CFG.message ? esc(CFG.message).replace(/\n/g, '<br>') : 'Pook was guarding your present all along.');
-  card(`<div class="big">🎉</div><h3>Happy Birthday${who}!</h3>
-    <p>${msg}</p>
-    <p class="small">Your Steam key${nKeys() > 1 ? (k ? ' (two of two)' : ' (one of two)') : ''}</p><div class="fullkey" id="fullkey">${esc(CFG.keys[k])}</div>
-    <div class="row"><button class="btn" id="copykey">Copy key</button><button class="btn ghost" id="closefin">Back to Pook</button></div>
-    <p class="small">In Steam: Games → Activate a Product on Steam, then paste.</p>`);
-  const o = $('#overlay'), cols = ['#ff8fb1', '#ffd76a', '#a8e6cf', '#cdb8ff', '#bfe3ff'];
-  for (let i = 0; i < 44; i++) {
-    const c = document.createElement('div'); c.className = 'confetti';
-    c.style.left = rand(100) + 'vw'; c.style.background = cols[i % 5];
-    c.style.animationDuration = (2.5 + Math.random() * 3) + 's'; c.style.animationDelay = (-Math.random() * 5) + 's';
-    o.appendChild(c);
-  }
-  $('#copykey').addEventListener('click', () => copyText(CFG.keys[k], $('#copykey')));
-  $('#closefin').addEventListener('click', () => { o.hidden = true; o.innerHTML = ''; });
+function keyReveal(k, next) {
+  openPanel(`<div class="t">TAPE ${k + 1} COMPLETE — STEAM KEY${nKeys() > 1 ? ' ' + (k + 1) + ' OF ' + nKeys() : ''}</div><div class="sp"></div><div class="big" style="font-size:16px;letter-spacing:1px">${esc(CFG.keys[k])}</div>
+    <div class="c">STEAM &gt; GAMES &gt; ACTIVATE A PRODUCT</div><div class="sp"></div><div class="row"><button class="o" data-a="ok">${next ? 'CONTINUE' : 'CLOSE'}</button><button data-a="copy">COPY KEY</button></div>`,
+    (a, b) => { if (a === 'copy') return copyText(CFG.keys[k], b); closePanel(); sfx.tap(); if (next) next(); else render(); }, true);
 }
 function copyText(t, btn) {
-  const ok = () => { const old = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = old; }, 1500); };
+  const ok = () => { const old = btn.textContent; btn.textContent = 'COPIED'; setTimeout(() => { btn.textContent = old; }, 1500); };
   const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, fallback); else fallback();
 }
-
-/* ---------- intro + gift-giver setup ---------- */
-function intro() {
-  const who = CFG.name ? ', ' + esc(CFG.name) : '';
-  card(`<div class="big">🐶</div><h3>Happy Birthday${who}!</h3>
-    <p>This is <b>Pook</b>. He's small, fluffy, and he has been trusted with your birthday present.</p>
-    <p>Unfortunately he <i>hid</i> it. In pieces. Take good care of him and he might remember where each one went.</p>`,
-    'Hi, Pook!', () => { S.started = true; save(); sfx.arf(); hopUntil = Date.now() + 2000; });
+const HINTS = [
+  ['POOK STARES AT THE EMPTY BOWL.', 'THE CUPBOARD IS LOCKED. THE NOTE ON THE FRIDGE IS A LOGIC PUZZLE: FIVE WRONG GUESSES, ONE RIGHT CODE.', 'A CAN NEEDS AN OPENER. THE DRAWER NEEDS SOMETHING FLAT. SOFAS EAT COINS.'],
+  ['POOK IS FED. POOK WANTS A TOY. POOK HAS NO TOY.', 'THE TOY BOX WANTS ARROWS. THE BEDROOM POSTER IS A MAP.', 'ONE ARROW FOR EACH STRAIGHT RUN OF THE ROUTE. NOT ONE PER STEP.'],
+  ['POOK IS FILTHY. KEEP HIM OFF THE BED.', 'A BATH NEEDS A PLUG, HOT WATER AND SOAP.', 'RUN THE HOT TAP. READ THE MIRROR. THREE SHAPES ARE THREE NUMBERS.'],
+  ['POOK IS TIRED. THE BED IS BARE. THE LIGHTS ARE LOUD.', 'THE WARDROBE NEEDS A KEY. THE BED NEEDS A BLANKET.', 'EVERY BULB MUST BE OFF. ONE SWITCH ONLY MAKES THINGS WORSE.'],
+  ['POOK IS THIRSTY. EXACTLY THIRSTY.', 'TWO JUGS ON THE COUNTER: 5 AND 3. THE BOWL WANTS 4. READ THE FRIDGE.', 'FILL AT THE TAP. EMPTY INTO THE SINK. POUR ONE JUG INTO THE OTHER.'],
+  ['POOK ATE SOMETHING IN THE DARK. POOK FEELS WRONG.', 'THE BATHROOM CABINET. EVERY LABEL IS FALSE.', 'WHICH JAR CANNOT BE WHAT IT SAYS, AND SO MUST BE PURE? LOOK AT A PILL FROM THAT ONE.'],
+  ['POOK WANTS HIS BEAR. THE TELEVISION KNOWS WHERE IT IS.', 'FOUR CHANNELS. ONLY ONE IS TRUE.', 'TRY EACH HIDING PLACE IN YOUR HEAD AND COUNT THE TRUE CHANNELS. ONLY ONE PLACE GIVES EXACTLY ONE.'],
+  ['POOK WANTS HIS SONG.', 'THE MUSIC BOX NEEDS A CRANK.', 'PLAY HIS DAY BACK TO HIM. WHAT DID HE NEED FIRST?']
+];
+function hint() {
+  const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
+  const list = HINTS[st]; say(list[S.hi % list.length]); S.hi = (S.hi + 1) % list.length; save();
 }
+function onPook(it) {
+  if (!it) return hint();
+  if (it === 'ball') return S.done[0] ? need(1) : say('POOK IGNORES THE BALL. POOK IS HUNGRY.');
+  if (it === 'can' || it === 'canopen') return say('NOT ON THE FLOOR. POOK HAS A BOWL. POOK HAS STANDARDS.');
+  if (it.startsWith('jar')) {
+    if (!S.done[4]) return say('POOK CANNOT SWALLOW IT DRY.');
+    if (JARS[F.jperm][+it[3]] === 'med') return need(5);
+    drop(it); F.jperm = rand(2); F.jsample = null; glitch(500); sfx.bad();
+    return say('POOK SNIFFS IT. POOK BACKS AWAY. THE JAR IS BACK IN THE CABINET. THE LABELS HAVE MOVED.');
+  }
+  if (it === 'teddy') return S.done[5] ? need(6) : say('POOK IS TOO UNWELL TO CARE ABOUT THE BEAR.');
+  say('POOK DOES NOT WANT THAT.');
+}
+function searchWrong(line) { glitch(300); sfx.bad(); say(line + ' ONLY ONE CHANNEL TELLS THE TRUTH.'); }
+function pourJug(from, to) {
+  const kf = from === 'jug5' ? 'j5' : 'j3', kt = to === 'jug5' ? 'j5' : 'j3';
+  const amt = Math.min(F[kf] || 0, CAPS[to] - (F[kt] || 0));
+  if (!amt) return say((F[kf] || 0) ? 'THE OTHER JUG IS FULL.' : 'THAT JUG IS EMPTY.');
+  F[kf] -= amt; F[kt] = (F[kt] || 0) + amt; sfx.tap(); say(`POURED. BIG JUG ${F.j5 || 0} OF 5. SMALL JUG ${F.j3 || 0} OF 3.`);
+}
+
+/* ---------- rooms ---------- */
+const H = (x, y, w, h, a) => ({ x, y, w, h, a });
+const pookSpot = [[122, 103], [104, 104], [142, 104], [143, 104]];
+const ROOMS = [
+  { name: 'KITCHEN',
+    draw() {
+      const N = isNight();
+      base();
+      B(8, 26, 30, 52); R(9, 44, 28, 1); R(33, 32, 2, 8); R(33, 49, 2, 12);            // fridge
+      B(14, 31, 9, 9, 'o'); R(16, 34, 5, 1); R(16, 36, 4, 1);                             // note
+      B(50, 10, 46, 26); R(73, 11, 1, 24);                                                // cupboard
+      if (F.cup) { R(51, 11, 22, 24, 'k'); } else { B(70, 21, 7, 8, 'o'); R(72, 19, 3, 2); }
+      B(44, 52, 74, 26); R(44, 56, 74, 1);                                                // counter
+      B(50, 60, 24, 9); if (F.drawer) R(51, 61, 22, 7, 'k'); else { R(60, 64, 4, 1); R(52, 62, 1, 1); R(71, 62, 1, 1); }
+      B(80, 60, 32, 16); R(96, 61, 1, 14);
+      R(90, 50, 22, 2); R(100, 41, 2, 9); R(100, 41, 7, 2); R(106, 43, 1, 2);             // sink + tap
+      DO(136, 20, 8); R(136, 14, 1, 7); R(136, 20, 5, 1);                                 // clock (3:00)
+      if (N && !F.jugs) { B(54, 39, 9, 13); R(63, 42, 2, 1); R(64, 42, 1, 5); B(66, 44, 7, 8); R(73, 46, 2, 1); }
+      B(140, 97, 18, 7, 'o'); if ((!N && S.done[0]) || (N && S.done[4])) R(142, 96, 14, 1, N ? 'w' : 'k');
+    },
+    hot() {
+      const N = isNight();
+      return [
+        H(138, 92, 22, 14, it => {
+          if (N) {
+            if (S.done[4]) return say('WATER. EXACTLY ENOUGH.');
+            if (it === 'jug5' || it === 'jug3') { const a = F[it === 'jug5' ? 'j5' : 'j3'] || 0; return a === 4 ? need(4) : say(`${a} CUPS. POOK LOOKS AT THE WATER. THEN AT YOU. THE NOTE SAID 4.`); }
+            return say('THE BOWL IS DRY.');
+          }
+          if (S.done[0]) return say('LICKED CLEAN.');
+          if (it === 'canopen') return need(0);
+          if (it === 'can') return say('THE CAN IS SEALED. POOK CANNOT OPEN CANS. NEITHER CAN YOU. YET.');
+          say('AN EMPTY BOWL. IT SAYS "POOK" ON THE SIDE.');
+        }),
+        H(13, 30, 11, 11, () => N
+          ? note('A NOTE ON THE FRIDGE', 'NIGHT WATER.\n\nEXACTLY 4 CUPS.\nNOT 3. NOT 5.\n\nHE CAN TELL.')
+          : note('NOTE TO SELF: CUPBOARD LOCK', '3 9 1  ONE DIGIT RIGHT, RIGHT PLACE\n2 9 4  ONE DIGIT RIGHT, WRONG PLACE\n6 7 3  TWO DIGITS RIGHT, WRONG PLACES\n6 0 9  NOTHING IS RIGHT\n6 4 3  ONE DIGIT RIGHT, WRONG PLACE')),
+        H(8, 26, 30, 52, () => { if (N && !F.teddy) return searchWrong('THE FRIDGE IS EMPTY. THE LIGHT INSIDE STAYS OFF.'); say('THE FRIDGE HUMS. IT IS EMPTY, EXCEPT FOR THE HUM.'); }),
+        H(50, 10, 46, 26, () => F.cup ? say('BARE SHELVES.') : lockPanel('A WALL CUPBOARD. THREE-DIGIT PADLOCK.', ['', '', ''], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
+        H(50, 58, 24, 12, it => {
+          if (F.drawer) return say('AN EMPTY DRAWER.');
+          if (it === 'coin') { F.drawer = 1; drop('coin'); give('opener'); sfx.take(); return say('THE COIN TURNS THE SCREW. INSIDE: A CAN OPENER. TAKEN.'); }
+          say('THE DRAWER IS HELD SHUT BY ONE FLAT-HEADED SCREW.');
+        }),
+        ...(N && !F.jugs ? [H(52, 37, 24, 16, () => { F.jugs = 1; F.j5 = F.j3 = 0; give('jug5', 'jug3'); sfx.take(); say('TWO JUGS. ONE HOLDS 5 CUPS. ONE HOLDS 3. NO MARKINGS. TAKEN.'); })] : []),
+        H(97, 38, 12, 12, it => { if (it === 'jug5' || it === 'jug3') { F[it === 'jug5' ? 'j5' : 'j3'] = CAPS[it]; sfx.tap(); return say(`FILLED TO THE TOP. ${NAME(it)}.`); } say('THE TAP RUNS. COLD.'); }),
+        H(88, 49, 26, 6, it => { if (it === 'jug5' || it === 'jug3') { F[it === 'jug5' ? 'j5' : 'j3'] = 0; sfx.tap(); return say('EMPTIED INTO THE SINK.'); } say('A SINK.'); }),
+        H(126, 10, 20, 20, () => say(N ? 'IT IS 3:00. IT HAS BEEN 3:00 FOR SOME TIME.' : 'THE CLOCK SAYS 3:00. IT IS NOT 3:00.'))
+      ];
+    } },
+  { name: 'DEN',
+    draw() {
+      const N = isNight();
+      base();
+      B(14, 10, 30, 24); R(28, 11, 1, 22); R(15, 22, 28, 1);                              // window
+      if (N && !F.eyes) { R(19, 16, 2, 2, 'o'); R(23, 16, 2, 2, 'o'); } else if (!N) D(36, 16, 3, 'o');
+      B(8, 46, 64, 14); B(4, 54, 8, 24); B(68, 54, 8, 24); B(11, 58, 58, 20); R(40, 59, 1, 12); R(12, 70, 56, 1); // sofa
+      B(88, 36, 36, 28); B(91, 39, 24, 20, N ? 'k' : 'w'); R(118, 42, 3, 3); R(118, 48, 3, 3, 'o'); R(100, 28, 1, 8); R(106, 30, 1, 6); // tv
+      if (N) for (let i = 0; i < 90; i++) R(92 + rand(22), 40 + rand(18), 1, 1, rand(5) ? 'w' : 'o'); else R(94, 42, 5, 1);
+      B(92, 64, 28, 14); R(93, 70, 26, 1);
+      B(128, 85, 28, 18, 'o'); R(128, 90, 28, 1); if (F.toy) R(129, 86, 26, 4, 'k'); else B(139, 88, 6, 6, 'w');
+    },
+    hot() {
+      const N = isNight();
+      return [
+        H(126, 83, 32, 22, () => F.toy ? say('EMPTY. TOOTH MARKS ON THE LID.') : arrowPanel(() => { F.toy = 1; give('ball', 'plug'); say('THE TOY BOX OPENS. A BALL. AND A BATH PLUG. POOK HIDES THINGS.'); })),
+        H(88, 28, 36, 36, () => N ? tvPanel() : say('THE TV IS OFF. IT IS UNPLUGGED. IT IS STILL WARM.')),
+        H(4, 46, 72, 32, () => {
+          if (N) return F.teddy ? say('CRUMBS.') : searchWrong('NOTHING UNDER THE CUSHIONS.');
+          if (!F.coin) { F.coin = 1; give('coin'); sfx.take(); return say('UNDER THE CUSHION: CRUMBS, AND ONE COIN. TAKEN.'); }
+          say('CRUMBS.');
+        }),
+        H(14, 10, 30, 24, () => {
+          if (N && !F.eyes) { F.eyes = 1; glitch(400); return say('TWO SMALL LIGHTS IN THE GARDEN. THEY BLINK. THEN THERE IS NO GARDEN.'); }
+          say(N ? 'NOTHING OUT THERE. DO NOT CHECK AGAIN.' : 'A NICE DAY. PROBABLY.');
+        })
+      ];
+    } },
+  { name: 'BATHROOM',
+    draw() {
+      const N = isNight();
+      base();
+      B(8, 60, 78, 24); R(8, 63, 78, 1); R(14, 84, 4, 4); R(76, 84, 4, 4);                 // tub
+      if (F.plug && F.tap && !N) { R(10, 64, 74, 4, 'o'); if (F.soap) for (let i = 0; i < 9; i++) DO(14 + i * 8, 62 - (i % 2) * 2, 2, 'w'); }
+      R(14, 46, 2, 14); R(14, 46, 9, 2); R(22, 48, 1, 3);                                  // tap
+      if (F.tap && !N) { R(22, 51, 1, 9, 'o'); for (let i = 0; i < 4; i++) R(28 + i * 6, 44 - ((frame + i) % 4) * 3, 2, 1); }
+      D(62, 56, 3, 'o'); D(65, 53, 2, 'o'); R(67, 53, 2, 1); R(65, 52, 1, 1);              // duck
+      R(70, 80, 4, 1);                                                                     // drain
+      B(104, 10, 36, 34); B(107, 13, 30, 20, N ? 'k' : 'w'); if (F.fog) dith(108, 14, 28, 18, 'k');
+      if (!F.cab) B(119, 36, 6, 6, 'o'); else R(108, 36, 28, 6, 'k');
+      B(108, 54, 28, 8); R(120, 62, 4, 16); R(121, 50, 2, 4);                              // sink
+      R(90, 44, 12, 1); B(92, 45, 8, 16, 'o'); R(93, 50, 6, 1);                            // towel
+    },
+    hot() {
+      const N = isNight();
+      return [
+        H(10, 42, 18, 18, () => { if (N) return say('THE TAP TURNS. NOTHING COMES OUT. THEN SOMETHING DOES. YOU TURN IT OFF.'); F.tap = F.tap ? 0 : 1; if (F.tap) F.fog = 1; sfx.tap(); say(F.tap ? 'HOT WATER. STEAM CRAWLS UP THE MIRROR.' : 'THE TAP DRIPS.'); }),
+        H(58, 50, 12, 10, () => say(N ? 'THE DUCK FACES YOU NOW.' : 'A RUBBER DUCK. IT FACES THE WALL.')),
+        H(8, 60, 78, 28, it => {
+          if (N) return F.teddy ? say('AN EMPTY TUB.') : searchWrong('THE TUB IS EMPTY. THE DRAIN GURGLES.');
+          if (S.done[2]) return say('GREY WATER. BEST NOT TO LOOK.');
+          if (it === 'plug') { F.plug = 1; drop('plug'); sfx.tap(); say('THE PLUG FITS THE DRAIN.'); }
+          else if (it === 'soap') { if (!(F.plug && F.tap)) return say('NOTHING TO LATHER.'); F.soap = 1; drop('soap'); sfx.tap(); say('BUBBLES.'); }
+          if (F.plug && F.tap && F.soap) return S.done[1] ? need(2) : say('A PERFECT BATH. POOK IS NOT DIRTY ENOUGH TO NEED IT. GIVE HIM TIME.');
+          if (it === 'plug' || it === 'soap') return;
+          say(!F.plug ? 'THE TUB WILL NOT HOLD WATER. THE PLUG IS MISSING.' : !F.tap ? 'PLUGGED. DRY.' : 'WARM WATER. NO BUBBLES. POOK REQUIRES BUBBLES.');
+        }),
+        H(107, 13, 30, 20, () => {
+          if (N) { glitch(250); return say('A MIRROR. YOUR REFLECTION ARRIVES A LITTLE LATE.'); }
+          if (!F.fog) return say('A MIRROR. YOU LOOK FINE.');
+          note('WRITTEN IN THE STEAM, BY A FINGER', '▲ + ▲ + ● = 15\n▲ + ● + ● = 18\n■ × ▲ = 8\n\nTHE CABINET:  ● ■ ▲');
+        }),
+        H(104, 33, 36, 12, () => {
+          if (!F.cab) return lockPanel('A MIRROR CABINET. THREE DIALS.', ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap', 'key'); say('THE CABINET OPENS. SOAP. AND A SMALL KEY. TAKEN.'); });
+          if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
+          say('AN EMPTY CABINET.');
+        }),
+        H(90, 44, 12, 18, () => say('A TOWEL. DAMP. NOBODY HAS USED IT.'))
+      ];
+    } },
+  { name: 'BEDROOM',
+    draw() {
+      const N = isNight();
+      base();
+      B(26, 8, 30, 26); B(28, 10, 26, 22, 'o'); R(31, 13, 8, 1); R(38, 13, 1, 8); R(38, 20, 10, 1); R(47, 20, 1, 8); R(31, 27, 3, 2); // poster
+      B(4, 42, 6, 38); B(8, 62, 72, 12); R(10, 74, 3, 6); R(75, 74, 3, 6); B(12, 56, 18, 8);  // bed
+      if (F.blanket) { B(34, 60, 46, 16, 'o'); R(34, 65, 46, 1); R(34, 70, 46, 1); }
+      B(82, 62, 14, 16); R(84, 69, 10, 1); R(88, 71, 2, 1);                                 // nightstand
+      if (N) { B(84, 55, 10, 7, 'o'); R(94, 57, 3, 1); } else { R(88, 52, 2, 10); B(84, 45, 10, 8, 'o'); }
+      B(100, 14, 36, 64); R(118, 15, 1, 62); R(115, 44, 2, 4); R(120, 44, 2, 4);            // wardrobe
+      if (F.ward) R(101, 15, 17, 62, 'k');
+      B(141, 30, 12, 18); lights().forEach((v, i) => R(143 + (i % 2) * 5, 33 + ((i / 2) | 0) * 7, 3, 4, v ? 'o' : 'k')); // switches
+    },
+    hot() {
+      const N = isNight();
+      return [
+        H(139, 28, 16, 22, () => N ? say('THE SWITCHES DO NOTHING NOW.') : S.done[3] ? say('LEAVE THE LIGHTS.') : switchPanel()),
+        H(26, 8, 30, 26, () => mazePanel()),
+        H(82, 44, 16, 34, it => {
+          if (!N) return say('A LAMP. A DRAWER WITH NOTHING IN IT.');
+          if (!F.crank) { if (it === 'crank') { F.crank = 1; drop('crank'); sfx.take(); return say('THE CRANK FITS THE MUSIC BOX.'); } return say('A MUSIC BOX. THE CRANK IS MISSING. IT WAS NOT HERE YESTERDAY.'); }
+          S.done[7] ? say('THE BOX IS STILL TURNING.') : boxPanel();
+        }),
+        H(4, 42, 78, 38, it => {
+          if (N) return say('THE BED IS STILL WARM.');
+          if (it === 'blanket') { F.blanket = 1; drop('blanket'); sfx.tap(); if (lights().every(v => !v) && S.done[2]) return need(3); return say('THE BED IS MADE. THE LIGHTS ARE STILL ON.'); }
+          say(F.blanket ? 'MADE. WAITING.' : 'A BARE MATTRESS.');
+        }),
+        H(100, 14, 36, 64, it => {
+          if (N) { if (F.teddy) return say('COAT HANGERS. THEY SWAY.'); F.teddy = 1; give('teddy'); sfx.take(); return say('BEHIND THE COATS: HIS BEAR. IT WAS FACING THE DOOR. TAKEN.'); }
+          if (F.ward) return say('COAT HANGERS. THEY SWAY.');
+          if (it === 'key') { F.ward = 1; drop('key'); give('blanket'); sfx.take(); return say('THE KEY TURNS. INSIDE: ONE BLANKET. TAKEN.'); }
+          say('A WARDROBE. LOCKED. A SMALL KEYHOLE.');
+        })
+      ];
+    } }
+];
+
+/* ---------- render ---------- */
+function draw() {
+  g = mainG;
+  const dark = S.room === 3 && S.tape === 0 && !F.end && lights().every(v => !v);
+  PAL = (isNight() || dark) ? nightPal : dayPal;
+  ROOMS[S.room].draw();
+  if (F.end) { if (S.room === 3) pook(52, 64, { sleep: true }); }
+  else pook(pookSpot[S.room][0], pookSpot[S.room][1]);
+  if (Date.now() < glitchT) {
+    for (let i = 0; i < 6; i++) { const y = rand(104), h = 2 + rand(9), dx = rand(21) - 10; g.drawImage(elCv, 0, y, 160, h, dx, y, 160, h); }
+    R(0, rand(108), 160, 1, 'o');
+  }
+}
+function glitch(ms) { glitchT = Date.now() + ms; hiss(Math.min(ms / 1000, .4)); const t = setInterval(() => { draw(); if (Date.now() > glitchT) { clearInterval(t); draw(); } }, 50); }
+function renderInv() {
+  const el = $('#inv'); let h = '';
+  for (let i = 0; i < 7; i++) { const id = S.inv[i]; h += `<button class="sl ${id && id === sel ? 'sel' : ''}" data-i="${id || ''}">${id ? '<canvas width="16" height="16"></canvas>' : ''}${id === 'jug5' ? `<i>${F.j5 || 0}/5</i>` : id === 'jug3' ? `<i>${F.j3 || 0}/3</i>` : ''}</button>`; }
+  el.innerHTML = h;
+  el.querySelectorAll('.sl').forEach(b => { const c = b.querySelector('canvas'); if (!c) return; g = c.getContext('2d'); PAL = isNight() ? nightPal : dayPal; R(0, 0, 16, 16, 'w'); ICON[b.dataset.i](); });
+  g = mainG;
+}
+function render() {
+  $('#screen').classList.toggle('night', isNight());
+  const t = S.tape, L = t ? ['D', 'M', 'B', 'S'] : ['F', 'P', 'W', 'S'];
+  $('#rname').textContent = (F.end ? 'END ' : 'TAPE ' + (t + 1) + ' ') + ROOMS[S.room].name;
+  $('#needs').innerHTML = L.map((c, i) => `<span class="nd ${S.done[t * 4 + i] ? 'on' : ''}">${c}</span>`).join('');
+  $('#codes').innerHTML = CFG.keys.map((key, k) => (k > 0 && S.tape < k) ? '' :
+    `<button class="crow" data-k="${k}"><span class="lab">KEY ${k + 1}</span>${pieces(k).map((p, n) => `<span class="cs ${S.done[k * 4 + n] ? 'got' : ''}">${S.done[k * 4 + n] ? esc(p) : '?'.repeat(p.length || 1)}</span>`).join('')}</button>`).join('')
+    + (isDemo ? '<div style="font-size:9px;text-align:center;color:var(--o)">DEMO KEYS — ADD #SETUP TO THE ADDRESS</div>' : '');
+  renderInv(); draw();
+}
+setInterval(() => { frame++; if (elPanel.hidden) draw(); if (elPanel.hidden && isNight() && rand(140) === 0) glitch(180); }, 260);
+
+/* ---------- input ---------- */
+elCv.addEventListener('click', e => {
+  if (!elPanel.hidden) return;
+  const r = elCv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 160, y = (e.clientY - r.top) / r.height * 108;
+  if (F.end) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
+  const it = sel; sel = null;
+  const ps = pookSpot[S.room];
+  const spots = [H(ps[0] - 14, ps[1] - 40, 28, 42, onPook), ...ROOMS[S.room].hot()];
+  const h = spots.find(s => x >= s.x && x < s.x + s.w && y >= s.y && y < s.y + s.h);
+  if (h) h.a(it); else say(it ? 'NOTHING HAPPENS.' : 'NOTHING THERE.');
+  save(); if (elPanel.hidden) render(); else renderInv();
+});
+$('#inv').addEventListener('click', e => {
+  const b = e.target.closest('.sl'); if (!b || !b.dataset.i || !elPanel.hidden) return; const id = b.dataset.i;
+  if (!sel) { sel = id; sfx.tap(); say(`${NAME(id)}. NOW TAP WHERE TO USE IT.`); }
+  else if (sel === id) { sel = null; say(''); }
+  else {
+    const a = sel, pair = [a, id].sort().join('+'); sel = null;
+    if (pair === 'can+opener') { drop('can', 'opener'); give('canopen'); sfx.take(); say('THE OPENER BITES THE CAN. IT IS OPEN. IT SMELLS LIKE A DECISION.'); }
+    else if (pair === 'jug3+jug5') pourJug(a, id);
+    else say('THOSE DO NOT GO TOGETHER.');
+    save();
+  }
+  renderInv();
+});
+function go(d) { if (panelModal) return; closePanel(); sel = null; S.room = (S.room + d + 4) % 4; sfx.tap(); say(''); save(); render(); }
+$('#bl').addEventListener('click', () => go(-1));
+$('#br').addEventListener('click', () => go(1));
+$('#bb').addEventListener('click', () => { if (panelModal) return; sfx.tap(); if (!elPanel.hidden) closePanel(); else if (sel) { sel = null; say(''); renderInv(); } });
+$('#ba').addEventListener('click', () => {
+  if (!elPanel.hidden) { const b = elPanel.querySelector('button.o'); if (b) b.click(); return; }
+  sfx.tap(); hint();
+});
+$('#codes').addEventListener('click', e => { const b = e.target.closest('.crow'); if (!b || !elPanel.hidden) return; const k = +b.dataset.k; if (S.done.slice(k * 4, k * 4 + 4).every(Boolean)) keyReveal(k, null); });
+$('#bmenu').addEventListener('click', () => { if (!panelModal) menu(); });
+function menu() {
+  const dbg = isDebug(), st = stage();
+  openPanel(`<div class="t">MENU</div><div class="row"><button data-a="snd">SOUND: ${muted ? 'OFF' : 'ON'}</button><button data-a="x">CLOSE</button></div>
+    ${dbg ? `<div class="t">DEBUG — NEXT PUZZLE: ${st < 0 ? 'NONE' : (st + 1) + ' OF ' + 4 * nKeys()}</div>
+    <div class="row"><button class="o" data-a="skip">SOLVE NEXT PUZZLE</button><button data-a="tape">JUMP TO TAPE 2</button><button data-a="ans">SHOW ANSWERS</button><button data-a="reset">RESET EVERYTHING</button></div>` : ''}`,
+    a => {
+      if (a === 'x') return closePanel();
+      if (a === 'snd') { muted = !muted; store.set('pook-mute', muted); sfx.tap(); return menu(); }
+      if (a === 'skip') { dbgSolve(); return menu(); }
+      if (a === 'tape') { while (stage() >= 0 && stage() < 4) dbgSolve(); return menu(); }
+      if (a === 'reset') { S = fresh(); S.boot = true; F = S.f; sel = null; save(); closePanel(); say('RESET.'); return render(); }
+      if (a === 'ans') return note('ANSWERS', `1 CUPBOARD ${CUP_CODE}. COIN (SOFA) OPENS DRAWER. OPENER + CAN. CAN ON BOWL.
+2 TOY BOX ${[...MAZE_ANS].map(c => ARROW[c]).join('')}. BALL ON POOK.
+3 HOT TAP, MIRROR, CABINET ${CAB_CODE}. PLUG + SOAP ON TUB.
+4 KEY ON WARDROBE, BLANKET ON BED, SWITCHES 1 2 3.
+5 TAKE JUGS. FILL 5, POUR INTO 3, EMPTY 3, POUR 5 INTO 3, FILL 5, POUR INTO 3. BIG JUG (4) ON BOWL.
+6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
+7 TV. BEAR IS IN THE WARDROBE. BEAR ON POOK.
+8 CRANK ON MUSIC BOX. ${SONG.join(' ')}.`);
+    });
+}
+function dbgSolve() {
+  const i = stage(); if (i < 0) return;
+  S.done[i] = 1; FIX[i](); S.hi = 0;
+  if (i === 3 && nKeys() > 1) startNight();
+  if (i === 4 * nKeys() - 1) { F.end = 1; S.room = 3; }
+  save(); render();
+}
+
+/* ---------- gift-giver setup ---------- */
 function setup() {
-  const c = store.get('pook-cfg') || BAKED;
-  card(`<h3>Gift setup</h3><p class="small">Only for the gift-giver. Fill this in, make the link, and send that link on the day.</p>
-    <label>Steam key 1 (day one)<input id="skey" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX" value="${esc(c.key || '')}"></label>
-    <label>Steam key 2 (day two — blank for a one-key game)<input id="skey2" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX" value="${esc(c.key2 || '')}"></label>
+  const c = store.get('pook-cfg') || BAKED, el = $('#setup');
+  el.innerHTML = `<div class="in"><div style="font-size:18px;color:var(--o)">GIFT SETUP</div><div>Only for the gift-giver. Fill this in, make the link, and send that link on the day.</div>
+    <label>Steam key 1 (tape one)<input id="skey" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX" value="${esc(c.key || '')}"></label>
+    <label>Steam key 2 (tape two — blank for a one-key game)<input id="skey2" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX" value="${esc(c.key2 || '')}"></label>
     <label>Their name (optional)<input id="sname" autocomplete="off" value="${esc(c.name || '')}"></label>
-    <label>Message shown with the final key (optional)<textarea id="smsg">${esc(c.message || '')}</textarea></label>
-    <div class="row"><button class="btn" id="smake">Make link</button></div>
-    <div id="sout" hidden><label>Personal link<textarea id="slink" readonly></textarea></label>
-      <div class="row"><button class="btn" id="scopy">Copy link</button><button class="btn ghost" id="sopen">Try it</button></div></div>
-    <div class="row"><button class="btn ghost" id="sreset">Reset progress on this phone</button></div>`);
-  $('#smake').addEventListener('click', () => {
+    <label>Message shown at the very end (optional)<textarea id="smsg">${esc(c.message || '')}</textarea></label>
+    <button id="smake">MAKE LINK</button>
+    <div id="sout" hidden><label>Personal link<textarea id="slink" readonly></textarea></label><button id="scopy">COPY LINK</button> <button id="sopen" class="g">TRY IT</button></div>
+    <button id="sreset" class="g">RESET PROGRESS ON THIS PHONE</button><button id="sclose" class="g">CLOSE</button></div>`;
+  el.hidden = false;
+  $('#smake').onclick = () => {
     const o = { key: $('#skey').value.trim(), key2: $('#skey2').value.trim(), name: $('#sname').value.trim(), message: $('#smsg').value.trim() };
     if (!o.key) { $('#skey').focus(); return; }
     $('#slink').value = location.href.split('#')[0] + '#g=' + encCfg(o); $('#sout').hidden = false;
-  });
-  $('#scopy').addEventListener('click', () => copyText($('#slink').value, $('#scopy')));
-  $('#sopen').addEventListener('click', () => { location.href = $('#slink').value; location.reload(); });
-  $('#sreset').addEventListener('click', () => { store.del('pook-v1'); S = freshSave(); day = 0; $('#sreset').textContent = 'Progress reset ✓'; render(); });
+  };
+  $('#scopy').onclick = () => copyText($('#slink').value, $('#scopy'));
+  $('#sopen').onclick = () => { location.href = $('#slink').value; location.reload(); };
+  $('#sreset').onclick = () => { store.del('pook-v2'); S = fresh(); F = S.f; sel = null; $('#sreset').textContent = 'PROGRESS RESET'; };
+  $('#sclose').onclick = () => { el.hidden = true; history.replaceState(null, '', location.href.split('#')[0]); boot(); };
 }
 
 /* ---------- boot ---------- */
 function boot() {
-  loadCfg(); day = stage() === -1 ? nKeys() - 1 : (stage() / 4) | 0; render();
-  if (/(^|#|&)setup\b/.test(location.hash)) setup();
-  else if (!S.started) intro();
+  loadCfg(); F = S.f; $('#setup').hidden = true;
+  if (/(^|#|&)setup\b/.test(location.hash)) return setup();
+  closePanel(); render(); say('');
+  if (!S.boot) pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n................ OK\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.`,
+    'POOK HAS NEEDS.\nMEET THEM, AND POOK WILL GIVE BACK\nWHAT HE IS KEEPING FOR YOU.\n\nTAP THINGS. PICK THINGS UP.\nUSE THEM ON OTHER THINGS.', 'DO NOT LEAVE POOK ALONE\nFOR TOO LONG.'],
+    () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); });
 }
-window.addEventListener('hashchange', () => { $('#overlay').hidden = true; boot(); });
+window.addEventListener('hashchange', boot);
 boot();
 </script>
 </body>

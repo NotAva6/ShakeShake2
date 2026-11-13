@@ -605,7 +605,7 @@ function switchPanel() {
       if (a === 'x') return closePanel();
       SW[+a].forEach(b => { L[b] ^= 1; }); sfx.tap(); save(); render(); draw();
       if (L.every(v => v)) return say('THE ROOM IS LIT.');
-      if (L.every(v => !v)) { if (F.blanket && S.done[2]) return need(3); return say(F.blanket ? 'DARK. BUT POOK IS TOO DIRTY FOR THE BED.' : 'DARK AGAIN.'); }
+      if (L.every(v => !v)) return say('DARK.');
       say('THE LIGHT STUTTERS. NOT ENOUGH TO SEE BY.');
     });
   draw();
@@ -771,8 +771,7 @@ function copyText(t, btn) {
   const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, fallback); else fallback();
 }
-const NEEDS = ['POOK STARES AT THE EMPTY BOWL.', 'POOK IS FED. POOK WANTS A TOY. POOK HAS NO TOY.', 'POOK IS FILTHY. KEEP HIM OFF THE BED.', 'POOK IS TIRED. THE BED IS BARE. THE LIGHTS ARE LOUD.',
-  'POOK IS THIRSTY. EXACTLY THIRSTY.', 'POOK ATE SOMETHING IN THE DARK. POOK FEELS WRONG.', 'POOK WANTS HIS BEAR. THE TELEVISION IS ON.', 'POOK WANTS HIS SONG.'];
+const NEEDS = ['POOK IS HUNGRY.', 'POOK IS BORED.', 'POOK IS DIRTY.', 'POOK IS TIRED FROM THE LONG DAY.', 'POOK IS THIRSTY.', 'POOK FEELS SICK.', 'POOK WANTS HIS BEAR.', 'POOK WANTS HIS SONG.'];
 function hint() {
   if (F.pendEnd != null) return say('POOK IS ASLEEP.');
   const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
@@ -976,11 +975,15 @@ const ROOMS = [
           S.done[7] ? say('THE BOX IS STILL TURNING.') : S.done[6] ? boxPanel() : say('A MUSIC BOX. IT WAS NOT HERE YESTERDAY. POOK GROWLS WHEN YOU REACH FOR IT.');
         }),
         H(4, 42, 78, 38, it => {
-          if (bedDark()) return say('TOO DARK. THE SHAPE OF A BED.');
+
           if (N && !F.cD) { F.cD = 1; give('cardD'); sfx.take(); return say('UNDER THE PILLOW: A TRADING CARD, ALMOST ALL BLACK. "THE DARK". TAKEN.'); }
           if (N) return say('THE BED IS STILL WARM.');
-          if (it === 'blanket') { F.blanket = 1; drop('blanket'); sfx.tap(); if (lights().every(v => !v) && S.done[2]) return need(3); return say('THE BED IS MADE. THE LIGHTS ARE STILL ON.'); }
-          say(F.blanket ? 'MADE. WAITING.' : 'A BARE MATTRESS.');
+          if (it === 'blanket') { if (bedDark()) return say('IT IS TOO DARK TO MAKE THE BED.'); F.blanket = 1; drop('blanket'); sfx.tap(); return say('THE BED IS MADE.'); }
+          if (!F.blanket) return say("IT'S TOO COLD.");
+          if (!lights().every(v => !v)) return say("IT'S TOO BRIGHT TO SLEEP.");
+          if (!S.done[2]) return say('POOK IS TOO DIRTY FOR THE BED.');
+          return need(3);
+
         }),
         H(100, 14, 36, 64, it => {
           if (bedDark()) return say('TOO DARK. A TALL SHAPE. A LOCK YOU CANNOT MAKE OUT.');
@@ -1144,7 +1147,7 @@ function menu() {
       if (a === 'ans') return note('ANSWERS', `1 CUPBOARD ${CUP_CODE}. COIN (SOFA) OPENS DRAWER. OPENER + CAN. CAN ON BOWL.
 2 BEDROOM STARTS DARK: SWITCHES ${SW_ANS} LIGHT IT. POSTER GIVES TOY BOX ${[...MAZE_ANS].map(c => ARROW[c]).join('')}. BALL ON POOK.
 3 DEN CHESS BOARD: QUEEN C4 TO G8 (A SACRIFICE), POOK TAKES WITH THE ROOK, THEN KNIGHT H6 TO F7 IS MATE (GIVES PLUG). HOT TAP, MIRROR, CABINET ${CAB_CODE} (GIVES SOAP). PLUG + SOAP ON TUB.
-4 NIGHTSTAND NOTE = MIDDLE LETTERS OF 3-LETTER WORDS. WARDROBE TILES: HAT EGG DOG ANT EYE (AGONY). BLANKET ON BED, THEN SWITCHES ${SW_ANS} AGAIN FOR DARK.
+4 NIGHTSTAND NOTE = MIDDLE LETTERS OF 3-LETTER WORDS. WARDROBE TILES: HAT EGG DOG ANT EYE (AGONY). BLANKET ON BED, THEN SWITCHES ${SW_ANS} AGAIN FOR DARK, THEN TAP THE BED.
 5 THREE JUGS 10/7/3, BIG ONE FULL. POUR 10>7, 7>3, 3>10, 7>3, 3>10, 7>3, 10>7, 7>3. THE 7-JUG NOW HOLDS 5: USE IT ON THE BOWL. (BIG JUG ON TAP = START OVER.)
 6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
 7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN READ THE 5 CHANNELS. RIGHT NOW THE BEAR IS ${F.liar ? PLACES[F.liar.ans] : 'NOT PLACED UNTIL THE TV TUNES'} (MOVES AFTER A WRONG SEARCH). BEAR ON POOK.
@@ -1210,7 +1213,7 @@ function boot() {
   closePanel(); render(); say('');
   power(() => splash(() => { if (S.boot) return; pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n<span id="ld" style="display:inline-block;width:19ch;text-align:left"></span><span id="ld2" style="visibility:hidden">\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.</span>`,
     'POOK HAS NEEDS.\nMEET THEM, AND POOK WILL GIVE BACK\nWHAT HE IS KEEPING FOR YOU.', '<span id="gl">DO NOT LEAVE POOK ALONE\nFOR TOO LONG.</span>'],
-    () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); }); }));
+    () => { S.boot = true; save(); say('POOK IS HUNGRY.'); }); }));
 }
 window.addEventListener('hashchange', boot);
 boot();

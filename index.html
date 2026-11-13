@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#ffe3ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Pook</title>
+<style>
+:root{
+  --ink:#3b2a4a; --cream:#fff6ea; --pink:#ff8fb1; --pink-soft:#ffe3ec; --mint:#a8e6cf;
+  --sky:#bfe3ff; --sun:#ffd76a; --lilac:#cdb8ff; --white:#fff; --mud:#8a5a3b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--pink-soft);color:var(--ink);
+  font-family:ui-rounded,"SF Pro Rounded","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;cursor:pointer}
+#app{max-width:440px;margin:0 auto;min-height:100%;padding:12px 16px calc(16px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:900;font-size:26px;letter-spacing:4px;text-shadow:2px 2px 0 var(--white)}
+.logo small{font-size:11px;letter-spacing:1px;font-weight:700;opacity:.6;margin-left:6px}
+#mute{border:3px solid var(--ink);background:var(--white);border-radius:12px;width:44px;height:40px;font-size:18px;box-shadow:3px 3px 0 var(--ink)}
+
+.panel{border:3px solid var(--ink);border-radius:16px;background:var(--white);box-shadow:4px 4px 0 var(--ink)}
+#keybar{padding:8px 10px;display:flex;align-items:center;gap:8px}
+#keybar .gift{font-size:20px}
+#keyslots{display:flex;gap:6px;flex:1;justify-content:space-between}
+.slot{flex:1;text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:800;font-size:15px;
+  padding:6px 2px;border-radius:8px;background:#f1ebf7;color:#b9aecb;letter-spacing:1px}
+.slot.got{background:var(--sun);color:var(--ink);animation:pop .5s}
+#demo{font-size:11px;opacity:.65;text-align:center;margin-top:-6px}
+
+#screen{position:relative;height:270px;overflow:hidden;border:3px solid var(--ink);border-radius:20px;box-shadow:4px 4px 0 var(--ink);
+  background:linear-gradient(#ffe9c9 0 68%,#e2b98a 68% 100%)}
+#screen.room1{background:linear-gradient(var(--sky) 0 62%,#9fdc8f 62% 100%)}
+#screen.room2{background:linear-gradient(#d7f1ff 0 66%,#9ad0ea 66% 100%)}
+#screen.room3{background:linear-gradient(#4a3b78 0 66%,#7a64b0 66% 100%)}
+#screen.party{background:linear-gradient(#ffd3e2 0 66%,#ffb3cc 66% 100%)}
+#screen::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(transparent 0 3px,rgba(59,42,74,.035) 3px 4px)}
+#pook{position:absolute;left:50%;bottom:14px;width:192px;height:192px;margin-left:-96px;image-rendering:pixelated;image-rendering:crisp-edges}
+#prop{position:absolute;right:18px;bottom:22px;font-size:40px}
+#deco{position:absolute;left:14px;top:12px;font-size:26px;opacity:.9}
+#bubble{position:absolute;left:12px;right:12px;top:10px;margin:0 auto;width:fit-content;max-width:calc(100% - 24px);
+  background:var(--white);border:3px solid var(--ink);border-radius:14px;padding:8px 12px;font-weight:700;font-size:14px;line-height:1.3;text-align:center;z-index:2}
+#bubble::after{content:"";position:absolute;left:50%;bottom:-9px;width:12px;height:12px;margin-left:-6px;background:var(--white);
+  border-right:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:rotate(45deg)}
+.heart{position:absolute;font-size:22px;animation:floatup .9s ease-out forwards;pointer-events:none;z-index:3}
+
+#meters{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:10px 12px}
+.meter{font-size:12px;font-weight:800}
+.meter .bar{height:10px;border:2px solid var(--ink);border-radius:6px;background:#f1ebf7;overflow:hidden;margin-top:3px}
+.meter .fill{height:100%;background:var(--pink);transition:width .6s}
+.meter.full .fill{background:#6fd3a5}
+
+#actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.act{position:relative;border:3px solid var(--ink);border-radius:16px;background:var(--white);box-shadow:4px 4px 0 var(--ink);
+  padding:12px 6px;font-weight:800;font-size:16px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.act .ico{font-size:28px;line-height:1.1}
+.act:active,.btn:active,#mute:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.act.next{background:var(--sun);animation:nudge 1.6s infinite}
+.act.locked{background:#ece6f2;color:#9b8fb0}
+.act.locked .ico{filter:grayscale(1);opacity:.5}
+.act .badge{position:absolute;top:6px;right:8px;font-size:14px}
+.btn{border:3px solid var(--ink);border-radius:14px;background:var(--pink);color:var(--ink);box-shadow:3px 3px 0 var(--ink);
+  padding:11px 16px;font-weight:800;font-size:16px}
+.btn.ghost{background:var(--white)}
+.btn:disabled{opacity:.45;box-shadow:none;transform:none}
+#present{width:100%;font-size:19px;padding:15px;background:var(--sun);animation:nudge 1.2s infinite}
+
+#modal{position:fixed;inset:0;z-index:10;background:var(--cream);overflow:auto;-webkit-overflow-scrolling:touch}
+.minner{max-width:440px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-inset-bottom))}
+.mhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.mhead h2{margin:0;font-size:21px}
+#mclose{border:3px solid var(--ink);background:var(--white);border-radius:12px;width:44px;height:40px;font-size:18px;font-weight:900;box-shadow:3px 3px 0 var(--ink)}
+.how{font-size:14px;line-height:1.45;margin:6px 0 12px;background:var(--white);border:2px dashed var(--ink);border-radius:12px;padding:9px 11px}
+.status{font-weight:800;text-align:center;min-height:22px;margin:8px 0}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+
+/* feed */
+.slots,.palette{display:flex;gap:8px;justify-content:center;margin:10px 0}
+.fslot{width:60px;height:60px;border:3px solid var(--ink);border-radius:50%;background:var(--white);font-size:30px;box-shadow:inset 0 -6px 0 #e9e1f2;padding:0}
+.fslot.fixed{background:#d8f5e6}
+.food{width:54px;height:54px;border:3px solid var(--ink);border-radius:14px;background:var(--sun);font-size:28px;box-shadow:3px 3px 0 var(--ink);padding:0}
+.food:disabled{opacity:.3;box-shadow:none}
+.hist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.hrow{display:flex;align-items:center;justify-content:space-between;background:var(--white);border:2px solid var(--ink);border-radius:12px;padding:6px 10px;font-size:22px}
+.hrow .fb{font-size:14px;font-weight:800;display:flex;gap:10px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--ink);vertical-align:-1px;margin-right:3px}
+.dot.g{background:#58c98c}.dot.y{background:var(--sun)}
+
+/* park */
+.park{position:relative;width:100%;max-width:350px;aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);
+  border:4px solid #8a6a45;border-radius:10px;background:#a9e098;overflow:hidden;touch-action:none}
+.park .cell{display:flex;align-items:center;justify-content:center;font-size:clamp(20px,8vw,32px);line-height:1}
+.park .cell:nth-child(odd){background:rgba(255,255,255,.14)}
+#runner{position:absolute;width:14.2857%;height:14.2857%;display:flex;align-items:center;justify-content:center;font-size:clamp(20px,8vw,32px);
+  transition:left .18s linear,top .18s linear;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
+.dpad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,50px);gap:6px;justify-content:center;margin-top:12px}
+.dpad button{border:3px solid var(--ink);border-radius:12px;background:var(--white);font-size:20px;font-weight:900;box-shadow:3px 3px 0 var(--ink)}
+.dpad button:active{transform:translate(3px,3px);box-shadow:none}
+.dpad .u{grid-column:2}.dpad .l{grid-column:1;grid-row:2}.dpad .d{grid-column:2;grid-row:2}.dpad .r{grid-column:3;grid-row:2}
+
+/* bath */
+.coat{width:100%;max-width:320px;aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px;
+  border:3px solid var(--ink);border-radius:24px;background:#d7f1ff}
+.spot{border:3px solid var(--ink);border-radius:16px;font-size:26px;padding:0;background:var(--white);transition:background .15s}
+.spot.mud{background:var(--mud)}
+.spot.hint{animation:pulse .5s 4;outline:4px solid var(--pink)}
+
+/* sleep */
+.pads{width:100%;max-width:300px;aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pad{border:4px solid var(--ink);border-radius:26px;font-size:40px;box-shadow:4px 4px 0 var(--ink);opacity:.55;transition:opacity .1s,transform .1s}
+.pad.on{opacity:1;transform:scale(1.06)}
+.pad.p0{background:var(--pink)}.pad.p1{background:var(--sun)}.pad.p2{background:var(--mint)}.pad.p3{background:var(--lilac)}
+
+/* overlay */
+#overlay{position:fixed;inset:0;z-index:20;background:rgba(59,42,74,.55);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.card{position:relative;z-index:2;width:100%;max-width:380px;background:var(--white);border:3px solid var(--ink);border-radius:22px;box-shadow:6px 6px 0 var(--ink);
+  padding:20px 18px;text-align:center;animation:pop .35s}
+.card h3{margin:6px 0;font-size:22px}
+.card p{margin:8px 0;font-size:15px;line-height:1.45}
+.card .big{font-size:52px;line-height:1}
+.card .small{font-size:12px;opacity:.65}
+.tag{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:900;font-size:30px;letter-spacing:4px;
+  background:var(--sun);border:3px solid var(--ink);border-radius:12px;padding:8px 16px;margin:8px 0;transform:rotate(-3deg)}
+.fullkey{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:900;font-size:19px;letter-spacing:1px;word-break:break-all;
+  background:var(--sun);border:3px solid var(--ink);border-radius:12px;padding:12px 8px;margin:10px 0;-webkit-user-select:all;user-select:all}
+.card label{display:block;text-align:left;font-weight:800;font-size:13px;margin-top:10px}
+.card input,.card textarea{width:100%;font:inherit;font-size:16px;border:3px solid var(--ink);border-radius:10px;padding:8px;margin-top:4px;
+  -webkit-user-select:text;user-select:text;background:var(--cream);color:var(--ink)}
+.card textarea{resize:vertical;min-height:64px}
+.confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:1;animation:fall linear infinite;pointer-events:none}
+
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes floatup{to{transform:translateY(-70px) scale(1.4);opacity:0}}
+@keyframes pulse{50%{transform:scale(1.12)}}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media (max-height:700px){#screen{height:220px}#pook{width:168px;height:168px;margin-left:-84px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">POOK<small>pocket pup</small></div>
+    <button id="mute" aria-label="Sound">🔊</button>
+  </header>
+  <div id="keybar" class="panel"><span class="gift">🎁</span><div id="keyslots"></div></div>
+  <div id="demo" hidden>demo code — add #setup to the address to set the real one</div>
+  <div id="screen">
+    <div id="bubble"></div>
+    <div id="deco"></div>
+    <canvas id="pook" width="48" height="48"></canvas>
+    <div id="prop"></div>
+  </div>
+  <div id="meters" class="panel"></div>
+  <div id="actions"></div>
+  <button id="present" class="btn" hidden>🎁 Open your present</button>
+</div>
+
+<div id="modal" hidden><div class="minner">
+  <div class="mhead"><button id="mclose" aria-label="Back">←</button><h2 id="mtitle"></h2></div>
+  <div id="mbody"></div>
+</div></div>
+<div id="overlay" hidden></div>
+
+<script>
+'use strict';
+/* ====================================================================
+   GIFT SETTINGS — the only part you need to edit.
+   key:     the Steam key exactly as given (dashes are fine).
+   name:    who it is for (optional).
+   message: shown with the key at the very end (optional).
+   You can also leave this blank and open the page with #setup on the
+   end of the address to make a personal link from your phone.
+   ==================================================================== */
+const BAKED = { key: '', name: '', message: '' };
+/* ==================================================================== */
+
+const DEMO_KEY = 'DEMO-KEY1-GOES-HERE';
+const $ = s => document.querySelector(s);
+const rand = n => Math.floor(Math.random() * n);
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+
+/* ---------- gift config (baked in, or carried in the link) ---------- */
+function encCfg(o) {
+  const b = new TextEncoder().encode(JSON.stringify(o)); let s = '';
+  b.forEach((v, i) => { s += String.fromCharCode(v ^ ((73 + i * 7) & 255)); });
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function decCfg(t) {
+  try {
+    const s = atob(t.replace(/-/g, '+').replace(/_/g, '/'));
+    const b = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i) ^ ((73 + i * 7) & 255);
+    const o = JSON.parse(new TextDecoder().decode(b));
+    return o && typeof o.key === 'string' ? o : null;
+  } catch (e) { return null; }
+}
+let CFG, isDemo = false;
+function loadCfg() {
+  const m = location.hash.match(/g=([A-Za-z0-9_-]+)/);
+  const fromLink = m && decCfg(m[1]);
+  if (fromLink) store.set('pook-cfg', fromLink);
+  const c = fromLink || (BAKED.key.trim() ? BAKED : null) || store.get('pook-cfg');
+  isDemo = !c || !String(c.key || '').trim();
+  CFG = { key: (isDemo ? DEMO_KEY : String(c.key)).trim().toUpperCase(), name: (c && c.name) || '', message: (c && c.message) || '' };
+}
+function pieces() {
+  const raw = CFG.key.replace(/[^A-Z0-9]/g, ''); const out = []; let p = 0;
+  for (let i = 0; i < 4; i++) { const len = Math.ceil((raw.length - p) / (4 - i)); out.push(raw.slice(p, p + len)); p += len; }
+  return out;
+}
+
+/* ---------- save state ---------- */
+let S = store.get('pook-v1') || { started: false, done: [false, false, false, false] };
+const save = () => store.set('pook-v1', S);
+const stage = () => S.done.indexOf(false); // -1 = everything solved
+
+/* ---------- sound ---------- */
+let AC = null, muted = !!store.get('pook-mute');
+function beep(f, d = 0.12, type = 'square', vol = 0.05, when = 0) {
+  if (muted) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + when;
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + 0.02);
+  } catch (e) {}
+}
+const sfx = {
+  tap() { beep(660, .06); },
+  arf() { beep(520, .07); beep(780, .09, 'square', .05, .08); },
+  bump() { beep(150, .08, 'triangle', .08); },
+  good() { [523, 659, 784, 1047].forEach((f, i) => beep(f, .14, 'square', .05, i * .1)); },
+  bad() { beep(196, .22, 'sawtooth', .04); }
+};
+
+/* ---------- Pook, drawn pixel by pixel ---------- */
+const px = $('#pook').getContext('2d');
+let frame = 0, blink = false, hopUntil = 0;
+function disc(cx, cy, r, col) {
+  px.fillStyle = col;
+  for (let y = cy - r - 1; y <= cy + r + 1; y++) for (let x = cx - r - 1; x <= cx + r + 1; x++) {
+    const dx = x - cx, dy = y - cy; if (dx * dx + dy * dy <= r * r + r) px.fillRect(x, y, 1, 1);
+  }
+}
+function drawPook() {
+  px.clearRect(0, 0, 48, 48);
+  const st = stage(), happy = Date.now() < hopUntil || st === -1;
+  const oy = happy ? [0, -2, -3, -1][frame % 4] : 0;
+  const hb = happy ? 0 : frame % 2;
+  const wag = happy ? (frame % 2 ? 2 : -1) : (frame % 4 === 0 ? 1 : 0);
+  const parts = [
+    [36 + wag, 32 + oy, 3], [24, 36 + oy, 9], [17, 40 + oy, 4], [31, 40 + oy, 4], [18, 44 + oy, 2], [30, 44 + oy, 2],
+    [24, 19 + oy + hb, 11], [20, 9 + oy + hb, 3], [28, 9 + oy + hb, 3],
+    [15, 25 + oy + hb, 4], [33, 25 + oy + hb, 4]
+  ];
+  const ears = [[11, 16 + oy + hb, 4], [10, 22 + oy + hb, 3], [37, 16 + oy + hb, 4], [38, 22 + oy + hb, 3]];
+  parts.forEach(p => disc(p[0], p[1], p[2] + 1, '#3b2a4a'));
+  parts.forEach(p => disc(p[0], p[1], p[2], '#ddd4ec'));
+  parts.forEach(p => disc(p[0] - 1, p[1] - 1, p[2] - 1, '#ffffff'));
+  ears.forEach(p => disc(p[0], p[1], p[2] + 1, '#3b2a4a'));
+  ears.forEach(p => disc(p[0], p[1], p[2], '#e6dcf2'));
+  if (S.done[1] && !S.done[2]) [[17, 35, 2], [30, 39, 1], [13, 22, 1], [32, 12, 2], [26, 41, 1], [35, 24, 1]].forEach(m => disc(m[0], m[1] + oy, m[2], '#8a5a3b'));
+  const hy = 19 + oy + hb, ink = '#3b2a4a';
+  px.fillStyle = ink;
+  if (blink) { px.fillRect(18, hy, 3, 1); px.fillRect(28, hy, 3, 1); }
+  else if (st === 3 && !happy) { px.fillRect(19, hy - 1, 2, 2); px.fillRect(28, hy - 1, 2, 2); px.fillRect(18, hy - 2, 4, 1); px.fillRect(27, hy - 2, 4, 1); }
+  else { px.fillRect(19, hy - 2, 2, 3); px.fillRect(28, hy - 2, 2, 3); px.fillStyle = '#fff'; px.fillRect(19, hy - 2, 1, 1); px.fillRect(28, hy - 2, 1, 1); }
+  px.fillStyle = ink; px.fillRect(23, hy + 2, 3, 2);
+  px.fillRect(22, hy + 4, 1, 1); px.fillRect(24, hy + 4, 1, 1); px.fillRect(26, hy + 4, 1, 1); px.fillRect(23, hy + 5, 1, 1); px.fillRect(25, hy + 5, 1, 1);
+  if (happy) { px.fillStyle = '#ff6f94'; px.fillRect(23, hy + 6, 3, 2); }
+  px.fillStyle = '#ffb3c7'; px.fillRect(15, hy + 2, 2, 2); px.fillRect(32, hy + 2, 2, 2);
+}
+setInterval(() => { frame++; blink = !blink && Math.random() < 0.12; drawPook(); }, 320);
+
+/* ---------- main screen ---------- */
+const ROOMS = [
+  { icon: '🍖', name: 'Feed', meter: 'Tummy', title: "Pook's Picky Dinner", open: openFeed },
+  { icon: '🎾', name: 'Play', meter: 'Fun', title: 'Zoomies!', open: openPlay },
+  { icon: '🛁', name: 'Bath', meter: 'Clean', title: 'Bath Time', open: openBath },
+  { icon: '🌙', name: 'Sleep', meter: 'Rest', title: 'Lullaby', open: openSleep }
+];
+const LINES = [
+  "My tummy is rumbling… is it dinner time?",
+  "Yum! Now I've got the ZOOMIES. Park? Park!!",
+  "Uh oh. I may have found a mud puddle…",
+  "*yaaawn* …will you sing me to sleep?"
+];
+const PROPS = ['🥣', '🎾', '🫧', '🧸'], DECOS = ['🪟', '☀️', '🚿', '🌙 ✨'];
+const PETS = ['Arf!', '*happy wiggle*', 'Again! Again!', '*tail goes thwap thwap*', 'I love scritches!', 'Boop my nose!'];
+let bubbleTimer = 0;
+function say(t, ms) {
+  $('#bubble').textContent = t; clearTimeout(bubbleTimer);
+  if (ms) bubbleTimer = setTimeout(() => { $('#bubble').textContent = defaultLine(); }, ms);
+}
+function defaultLine() { const st = stage(); return st === -1 ? 'Best. Day. EVER. Your present is ready!' : LINES[st]; }
+function render() {
+  const st = stage(), ps = pieces();
+  $('#keyslots').innerHTML = ps.map((p, i) => `<div class="slot ${S.done[i] ? 'got' : ''}">${S.done[i] ? esc(p) : '?'.repeat(p.length || 1)}</div>`).join('');
+  $('#demo').hidden = !isDemo;
+  $('#screen').className = st === -1 ? 'party' : 'room' + st;
+  $('#prop').textContent = st === -1 ? '🎂' : PROPS[st];
+  $('#deco').textContent = st === -1 ? '🎈🎈' : DECOS[st];
+  $('#meters').innerHTML = ROOMS.map((r, i) => {
+    const v = S.done[i] ? 100 : (i === st ? 12 : 45);
+    return `<div class="meter ${S.done[i] ? 'full' : ''}">${r.meter}<div class="bar"><div class="fill" style="width:${v}%"></div></div></div>`;
+  }).join('');
+  $('#actions').innerHTML = ROOMS.map((r, i) => {
+    const cls = S.done[i] ? 'done' : (i === st ? 'next' : 'locked');
+    return `<button class="act ${cls}" data-i="${i}"><span class="ico">${r.icon}</span>${r.name}<span class="badge">${S.done[i] ? '✅' : (i === st ? '' : '🔒')}</span></button>`;
+  }).join('');
+  $('#present').hidden = st !== -1;
+  say(defaultLine());
+  drawPook();
+}
+$('#actions').addEventListener('click', e => {
+  const b = e.target.closest('.act'); if (!b) return;
+  const i = +b.dataset.i, st = stage();
+  if (!S.done[i] && i !== st) { sfx.bad(); say(`Not yet! First: ${ROOMS[st].name.toLowerCase()} me.`, 2200); return; }
+  sfx.tap(); ROOMS[i].open();
+});
+$('#pook').addEventListener('click', e => {
+  sfx.arf(); hopUntil = Date.now() + 1300; say(PETS[rand(PETS.length)], 1800);
+  const h = document.createElement('div'); h.className = 'heart'; h.textContent = '💗';
+  const r = $('#screen').getBoundingClientRect();
+  h.style.left = (e.clientX - r.left - 10) + 'px'; h.style.top = (e.clientY - r.top - 20) + 'px';
+  $('#screen').appendChild(h); setTimeout(() => h.remove(), 900);
+});
+$('#mute').addEventListener('click', () => { muted = !muted; store.set('pook-mute', muted); $('#mute').textContent = muted ? '🔇' : '🔊'; sfx.tap(); });
+$('#mute').textContent = muted ? '🔇' : '🔊';
+$('#present').addEventListener('click', finale);
+
+/* ---------- modal + cards ---------- */
+let cleanup = null;
+function openModal(i, html) {
+  $('#mtitle').textContent = ROOMS[i].icon + ' ' + ROOMS[i].title;
+  $('#mbody').innerHTML = html; $('#modal').hidden = false; $('#modal').scrollTop = 0;
+}
+function closeModal() { if (cleanup) { cleanup(); cleanup = null; } $('#modal').hidden = true; $('#mbody').innerHTML = ''; render(); }
+$('#mclose').addEventListener('click', () => { sfx.tap(); closeModal(); });
+function card(html, btn, cb) {
+  const o = $('#overlay');
+  o.innerHTML = `<div class="card">${html}${btn ? `<div class="row"><button class="btn" id="cardok">${btn}</button></div>` : ''}</div>`;
+  o.hidden = false;
+  if (btn) $('#cardok').addEventListener('click', () => { sfx.tap(); o.hidden = true; o.innerHTML = ''; if (cb) cb(); });
+}
+function win(i) {
+  const first = !S.done[i]; S.done[i] = true; save(); sfx.good(); hopUntil = Date.now() + 3000;
+  const html = first
+    ? `<div class="big">🏷️</div><h3>Pook dug something up!</h3><p>There's a little tag tucked in his fur. It reads:</p><div class="tag">${esc(pieces()[i])}</div><p class="small">Piece ${i + 1} of 4 — it's been added to the top of the screen.</p>`
+    : `<div class="big">🐶</div><h3>Pook loved that!</h3><p>He'd happily do it all over again.</p>`;
+  card(html, 'Good boy!', () => { closeModal(); if (stage() === -1 && first) say('I found ALL the pieces! Open your present!!'); });
+}
+
+/* ---------- 1. Feed: deduce the dinner order ---------- */
+function openFeed() {
+  const foods = ['🦴', '🥕', '🧀', '🍗', '🍎'];
+  const secret = shuffle([0, 1, 2, 3, 4]).slice(0, 4);
+  let cur = [], hist = [], hints = 0;
+  openModal(0, `<p class="how">Pook is a fussy eater. He wants <b>4 different treats</b>, in <b>exactly the right bowls</b>. Fill the bowls, serve, and read his reaction.<br>
+    <span class="dot g"></span>right treat, right bowl &nbsp; <span class="dot y"></span>right treat, wrong bowl</p>
+    <div class="slots" id="fslots"></div><div class="palette" id="fpal"></div>
+    <div class="status" id="fstat">Tap treats to fill the bowls.</div>
+    <div class="row"><button class="btn" id="fserve">Serve dinner</button><button class="btn ghost" id="fhint" hidden>Sniff hint</button></div>
+    <div class="hist" id="fhist"></div>`);
+  function draw() {
+    $('#fslots').innerHTML = [0, 1, 2, 3].map(k => `<button class="fslot" data-k="${k}">${cur[k] === undefined ? '' : foods[cur[k]]}</button>`).join('');
+    $('#fpal').innerHTML = foods.map((f, n) => `<button class="food" data-n="${n}" ${cur.includes(n) || cur.length >= 4 ? 'disabled' : ''}>${f}</button>`).join('');
+    $('#fserve').disabled = cur.length < 4;
+    $('#fhint').hidden = hist.length < 5 || hints >= 2;
+    $('#fhist').innerHTML = hist.map(h => `<div class="hrow"><span>${h.g.map(n => foods[n]).join(' ')}</span><span class="fb"><span><span class="dot g"></span>${h.a}</span><span><span class="dot y"></span>${h.b}</span></span></div>`).join('');
+  }
+  $('#fslots').addEventListener('click', e => { const b = e.target.closest('.fslot'); if (!b) return; const k = +b.dataset.k; if (k < cur.length) { cur.splice(k, 1); sfx.tap(); draw(); } });
+  $('#fpal').addEventListener('click', e => { const b = e.target.closest('.food'); if (!b || b.disabled) return; cur.push(+b.dataset.n); sfx.tap(); draw(); });
+  $('#fserve').addEventListener('click', () => {
+    if (cur.length < 4) return;
+    const a = cur.filter((n, k) => secret[k] === n).length, b = cur.filter(n => secret.includes(n)).length - a;
+    hist.unshift({ g: cur.slice(), a, b });
+    if (a === 4) { draw(); win(0); return; }
+    sfx.bad();
+    $('#fstat').textContent = a + b <= 2 ? 'Pook wrinkles his nose.' : a >= 2 ? 'Pook sniffs… so close!' : 'Pook tilts his head. Hmm.';
+    cur = []; draw();
+  });
+  $('#fhint').addEventListener('click', () => {
+    const k = hints++; sfx.arf();
+    $('#fstat').textContent = `Pook noses bowl ${k + 1}: it should be ${foods[secret[k]]}`; draw();
+  });
+  draw();
+}
+
+/* ---------- 2. Play: zoomies sliding puzzle ---------- */
+function openPlay() {
+  const N = 7, MINS = [3, 5, 6], DIRS = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
+  let lvl = 0, L, pos, moves = 0, busy = false, alive = true;
+  const slide = (rocks, p, d) => {
+    let x = p % N, y = (p / N) | 0;
+    for (;;) { const nx = x + d[0], ny = y + d[1]; if (nx < 0 || ny < 0 || nx >= N || ny >= N || rocks.has(ny * N + nx)) break; x = nx; y = ny; }
+    return y * N + x;
+  };
+  function solve(rocks, s, g) {
+    const dist = new Map([[s, 0]]), q = [s];
+    while (q.length) { const p = q.shift(); if (p === g) return dist.get(p);
+      for (const k in DIRS) { const n = slide(rocks, p, DIRS[k]); if (!dist.has(n)) { dist.set(n, dist.get(p) + 1); q.push(n); } } }
+    return -1;
+  }
+  function gen(min) {
+    let best = null;
+    for (let a = 0; a < 5000; a++) {
+      const rocks = new Set(), nr = 6 + rand(5); while (rocks.size < nr) rocks.add(rand(N * N));
+      let s, g; do { s = rand(N * N); } while (rocks.has(s)); do { g = rand(N * N); } while (rocks.has(g) || g === s);
+      const d = solve(rocks, s, g);
+      if (d > 0 && (!best || Math.abs(d - min) < Math.abs(best.d - min))) { best = { rocks, s, g, d }; if (d === min) break; }
+    }
+    return best;
+  }
+  openModal(1, `<p class="how">Pook has the zoomies! Once he starts running he <b>can't stop</b> until he bumps into a tree or the fence. Get him to <b>stop exactly on the ball</b>. Swipe the park or use the arrows.</p>
+    <div class="status" id="pstat"></div><div class="park" id="park"></div>
+    <div class="dpad"><button class="u" data-d="u">▲</button><button class="l" data-d="l">◀</button><button class="d" data-d="d">▼</button><button class="r" data-d="r">▶</button></div>
+    <div class="row"><button class="btn ghost" id="preset">↺ Back to start</button><button class="btn ghost" id="pnew">New park</button></div>`);
+  const park = $('#park');
+  function place() { $('#runner').style.left = (pos % N) * 100 / N + '%'; $('#runner').style.top = ((pos / N) | 0) * 100 / N + '%'; }
+  function stat() { $('#pstat').textContent = `Park ${lvl + 1} of 3 · moves ${moves} · possible in ${L.d}`; }
+  function newLevel() {
+    L = gen(MINS[lvl]); pos = L.s; moves = 0;
+    let h = ''; for (let i = 0; i < N * N; i++) h += `<div class="cell">${L.rocks.has(i) ? '🌳' : i === L.g ? '🎾' : ''}</div>`;
+    park.innerHTML = h + '<div id="runner">🐶</div>'; place(); stat();
+  }
+  function move(k) {
+    if (busy || !alive || !DIRS[k]) return;
+    const np = slide(L.rocks, pos, DIRS[k]);
+    if (np === pos) { sfx.bump(); return; }
+    pos = np; moves++; busy = true; sfx.tap(); place(); stat();
+    setTimeout(() => {
+      if (!alive) return; busy = false; sfx.bump();
+      if (pos === L.g) { lvl++; if (lvl >= 3) { win(1); } else { sfx.good(); $('#pstat').textContent = 'Got it! Next park…'; busy = true; setTimeout(() => { if (alive) { busy = false; newLevel(); } }, 900); } }
+    }, 200);
+  }
+  $('.dpad').addEventListener('click', e => { const b = e.target.closest('button'); if (b) move(b.dataset.d); });
+  $('#preset').addEventListener('click', () => { if (busy) return; pos = L.s; moves = 0; sfx.tap(); place(); stat(); });
+  $('#pnew').addEventListener('click', () => { if (busy) return; sfx.tap(); newLevel(); });
+  let t0 = null;
+  park.addEventListener('touchstart', e => { t0 = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
+  park.addEventListener('touchend', e => {
+    if (!t0) return; const dx = e.changedTouches[0].clientX - t0[0], dy = e.changedTouches[0].clientY - t0[1]; t0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u'));
+  });
+  const onKey = e => { const k = { ArrowUp: 'u', ArrowDown: 'd', ArrowLeft: 'l', ArrowRight: 'r' }[e.key]; if (k) { e.preventDefault(); move(k); } };
+  document.addEventListener('keydown', onKey);
+  cleanup = () => { alive = false; document.removeEventListener('keydown', onKey); };
+  newLevel();
+}
+
+/* ---------- 3. Bath: scrub puzzle ---------- */
+function openBath() {
+  const N = 4; let grid, sol, taps = 0;
+  function tog(i) {
+    const x = i % N, y = (i / N) | 0;
+    [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < N && ny < N) grid[ny * N + nx] ^= 1; });
+    if (sol.has(i)) sol.delete(i); else sol.add(i);
+  }
+  function scramble() { grid = new Array(N * N).fill(0); sol = new Set(); taps = 0; do { shuffle([...Array(N * N).keys()]).slice(0, 5).forEach(tog); } while (!grid.some(v => v)); }
+  openModal(2, `<p class="how">Somebody rolled in the mud. Scrub a patch to flip it — but the soap <b>splashes the patches next to it</b> too: muddy turns clean, clean turns muddy. Get his <b>whole coat clean</b>.</p>
+    <div class="status" id="bstat"></div><div class="coat" id="coat"></div>
+    <div class="row"><button class="btn ghost" id="bnew">New mud</button><button class="btn ghost" id="bhint" hidden>Where next?</button></div>`);
+  function draw(hint) {
+    $('#coat').innerHTML = grid.map((v, i) => `<button class="spot ${v ? 'mud' : ''} ${hint === i ? 'hint' : ''}" data-i="${i}">${v ? '🐾' : '✨'}</button>`).join('');
+    $('#bstat').textContent = `${grid.filter(v => v).length} muddy patches · ${taps} scrubs`;
+    $('#bhint').hidden = taps < 10;
+  }
+  $('#coat').addEventListener('click', e => {
+    const b = e.target.closest('.spot'); if (!b) return;
+    tog(+b.dataset.i); taps++; sfx.tap(); draw();
+    if (!grid.some(v => v)) win(2);
+  });
+  $('#bnew').addEventListener('click', () => { sfx.tap(); scramble(); draw(); });
+  $('#bhint').addEventListener('click', () => { sfx.arf(); draw([...sol][0]); });
+  scramble(); draw();
+}
+
+/* ---------- 4. Sleep: lullaby memory ---------- */
+function openSleep() {
+  const notes = [262, 330, 392, 523], icons = ['🎵', '⭐', '🌙', '☁️'], ROUNDS = 4;
+  const seq = []; while (seq.length < 2 + ROUNDS) { const n = rand(4); if (n !== seq[seq.length - 1]) seq.push(n); }
+  let round = 0, idx = 0, playing = false, started = false, alive = true;
+  openModal(3, `<p class="how">Pook can only drift off to his favourite lullaby. <b>Listen and watch</b>, then tap the same notes back in the same order. It gets a little longer each verse.</p>
+    <div class="status" id="sstat">Tap “Sing” when you're ready.</div>
+    <div class="pads" id="pads">${icons.map((c, i) => `<button class="pad p${i}" data-p="${i}">${c}</button>`).join('')}</div>
+    <div class="row"><button class="btn" id="ssing">▶ Sing</button></div>`);
+  const stat = t => { $('#sstat').textContent = t; };
+  function flash(p, len = 320) {
+    const el = document.querySelector(`.pad.p${p}`); if (!el) return;
+    el.classList.add('on'); beep(notes[p], len / 1000 + .1, 'triangle', .12);
+    setTimeout(() => el.classList.remove('on'), len);
+  }
+  function play() {
+    playing = true; idx = 0; started = true; const len = 3 + round;
+    stat(`Verse ${round + 1} of ${ROUNDS} — listen…`); $('#ssing').disabled = true;
+    for (let k = 0; k < len; k++) setTimeout(() => { if (alive) flash(seq[k]); }, 500 + k * 560);
+    setTimeout(() => { if (!alive) return; playing = false; stat(`Verse ${round + 1} of ${ROUNDS} — your turn!`); $('#ssing').disabled = false; $('#ssing').textContent = '↻ Hear it again'; }, 500 + len * 560);
+  }
+  $('#ssing').addEventListener('click', () => { if (!playing) play(); });
+  $('#pads').addEventListener('click', e => {
+    const b = e.target.closest('.pad'); if (!b || playing) return;
+    const p = +b.dataset.p; flash(p, 200);
+    if (!started) return;
+    if (p !== seq[idx]) { playing = true; setTimeout(() => sfx.bad(), 220); stat("Pook's ear twitches. Not quite — listen again…"); setTimeout(() => { if (alive) play(); }, 1500); return; }
+    idx++;
+    if (idx === 3 + round) {
+      round++;
+      if (round >= ROUNDS) { playing = true; stat('Zzz…'); setTimeout(() => { if (alive) win(3); }, 500); }
+      else { playing = true; stat('His eyes are getting heavy… one more verse.'); setTimeout(() => { if (alive) play(); }, 1300); }
+    }
+  });
+  cleanup = () => { alive = false; };
+}
+
+/* ---------- finale ---------- */
+function finale() {
+  sfx.good(); hopUntil = Date.now() + 5000;
+  const who = CFG.name ? ', ' + esc(CFG.name) : '';
+  card(`<div class="big">🎉</div><h3>Happy Birthday${who}!</h3>
+    <p>${CFG.message ? esc(CFG.message).replace(/\n/g, '<br>') : 'Pook was guarding your present all along.'}</p>
+    <p class="small">Your Steam key</p><div class="fullkey" id="fullkey">${esc(CFG.key)}</div>
+    <div class="row"><button class="btn" id="copykey">Copy key</button><button class="btn ghost" id="closefin">Back to Pook</button></div>
+    <p class="small">In Steam: Games → Activate a Product on Steam, then paste.</p>`);
+  const o = $('#overlay'), cols = ['#ff8fb1', '#ffd76a', '#a8e6cf', '#cdb8ff', '#bfe3ff'];
+  for (let i = 0; i < 44; i++) {
+    const c = document.createElement('div'); c.className = 'confetti';
+    c.style.left = rand(100) + 'vw'; c.style.background = cols[i % 5];
+    c.style.animationDuration = (2.5 + Math.random() * 3) + 's'; c.style.animationDelay = (-Math.random() * 5) + 's';
+    o.appendChild(c);
+  }
+  $('#copykey').addEventListener('click', () => copyText(CFG.key, $('#copykey')));
+  $('#closefin').addEventListener('click', () => { o.hidden = true; o.innerHTML = ''; });
+}
+function copyText(t, btn) {
+  const ok = () => { const old = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = old; }, 1500); };
+  const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, fallback); else fallback();
+}
+
+/* ---------- intro + gift-giver setup ---------- */
+function intro() {
+  const who = CFG.name ? ', ' + esc(CFG.name) : '';
+  card(`<div class="big">🐶</div><h3>Happy Birthday${who}!</h3>
+    <p>This is <b>Pook</b>. He's small, fluffy, and he has been trusted with your birthday present.</p>
+    <p>Unfortunately he <i>hid</i> it. In four pieces. Take good care of him and he might remember where each one went.</p>`,
+    'Hi, Pook!', () => { S.started = true; save(); sfx.arf(); hopUntil = Date.now() + 2000; });
+}
+function setup() {
+  const c = store.get('pook-cfg') || BAKED;
+  card(`<h3>Gift setup</h3><p class="small">Only for the gift-giver. Fill this in, make the link, and send that link on the day.</p>
+    <label>Steam key<input id="skey" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX" value="${esc(c.key || '')}"></label>
+    <label>Their name (optional)<input id="sname" autocomplete="off" value="${esc(c.name || '')}"></label>
+    <label>Message shown with the key (optional)<textarea id="smsg">${esc(c.message || '')}</textarea></label>
+    <div class="row"><button class="btn" id="smake">Make link</button></div>
+    <div id="sout" hidden><label>Personal link<textarea id="slink" readonly></textarea></label>
+      <div class="row"><button class="btn" id="scopy">Copy link</button><button class="btn ghost" id="sopen">Try it</button></div></div>
+    <div class="row"><button class="btn ghost" id="sreset">Reset progress on this phone</button></div>`);
+  $('#smake').addEventListener('click', () => {
+    const o = { key: $('#skey').value.trim(), name: $('#sname').value.trim(), message: $('#smsg').value.trim() };
+    if (!o.key) { $('#skey').focus(); return; }
+    $('#slink').value = location.href.split('#')[0] + '#g=' + encCfg(o); $('#sout').hidden = false;
+  });
+  $('#scopy').addEventListener('click', () => copyText($('#slink').value, $('#scopy')));
+  $('#sopen').addEventListener('click', () => { location.href = $('#slink').value; location.reload(); });
+  $('#sreset').addEventListener('click', () => { store.del('pook-v1'); S = { started: false, done: [false, false, false, false] }; $('#sreset').textContent = 'Progress reset ✓'; render(); });
+}
+
+/* ---------- boot ---------- */
+function boot() {
+  loadCfg(); render();
+  if (/(^|#|&)setup\b/.test(location.hash)) setup();
+  else if (!S.started) intro();
+}
+window.addEventListener('hashchange', () => { $('#overlay').hidden = true; boot(); });
+boot();
+</script>
+</body>
+</html>

@@ -492,7 +492,7 @@ const JARLAB = ['MEDICINE', 'NOT MEDICINE', 'MIXED'];
 const NAME = id => CARDS[id] ? `A TRADING CARD: "${CARDS[id][0]}"` : ({
   coin: 'A COIN WITH A SURPRISING AMOUNT OF UTILITY', opener: 'A CAN OPENER', can: 'A SEALED CAN', canopen: 'AN OPEN CAN', ball: 'A BALL', plug: 'A BATH PLUG', soap: 'SOAP',
   key: 'A SMALL KEY', blanket: 'A BLANKET', jugA: `BIG JUG (${jamt('jugA')} OF 10)`, jugB: `MIDDLE JUG (${jamt('jugB')} OF 7)`, jugC: `SMALL JUG (${jamt('jugC')} OF 3)`,
-  jar0: `JAR LABELLED "${JARLAB[0]}"`, jar1: `JAR LABELLED "${JARLAB[1]}"`, jar2: `JAR LABELLED "${JARLAB[2]}"`, teddy: 'HIS BEAR', crank: 'A SMALL CRANK'
+  jar0: `BOTTLE LABELLED "${JARLAB[0]}"`, jar1: `BOTTLE LABELLED "${JARLAB[1]}"`, jar2: `BOTTLE LABELLED "${JARLAB[2]}"`, teddy: 'HIS BEAR', crank: 'A SMALL CRANK'
 }[id]);
 
 /* ---------- puzzles' fixed data ---------- */
@@ -731,17 +731,17 @@ function tvPanel() {
 }
 function jarPanel() {
   const held = [0, 1, 2].find(i => has('jar' + i)), s = F.jsample;
-  openPanel(`<div class="t">THREE JARS. A NOTE:</div><div style="font-size:10px;line-height:1.25">"EVERY LABEL IS FALSE. ONE JAR IS ALL MEDICINE (WHITE). ONE IS ALL NOT (ORANGE). ONE IS MIXED. YOU ONLY HAVE THE STRENGTH TO OPEN ONE CAP AND TIP OUT ONE PILL."</div>
+  openPanel(`<div class="t">THREE BOTTLES. A NOTE:</div><div style="font-size:10px;line-height:1.25">"EVERY LABEL IS FALSE. ONE BOTTLE IS ALL MEDICINE (WHITE). ONE IS ALL NOT (ORANGE). ONE IS MIXED. YOU ONLY HAVE THE STRENGTH TO OPEN ONE CAP AND TIP OUT ONE PILL."</div>
     ${[0, 1, 2].map(i => `<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span>"${JARLAB[i]}"${s && s.i === i ? ' — ' + s.col : ''}</span><span style="white-space:nowrap"><button class="jb" data-a="s${i}" ${s ? 'disabled' : ''}>OPEN</button> <button class="jb" data-a="t${i}" ${!s || held === i ? 'disabled' : ''}>${held === i ? 'HELD' : held !== undefined ? 'SWAP' : 'TAKE'}</button></span></div>`).join('')}
     <div class="row"><button class="jb" data-a="x">CLOSE</button></div>`,
     a => {
       if (a === 'x') return closePanel();
       const i = +a[1];
       if (a[0] === 's') { const c = JARS[F.jperm][i]; F.jsample = { i, col: c === 'med' ? 'WHITE' : c === 'poi' ? 'ORANGE' : (rand(2) ? 'WHITE' : 'ORANGE') }; sfx.tap(); save(); jarPanel(); return say(`THE CAP COMES OFF. ONE PILL: ${F.jsample.col}. YOUR HANDS ARE DONE.`); }
-      drop('jar0', 'jar1', 'jar2'); give('jar' + i); sfx.take(); save(); renderInv(); jarPanel(); say(`YOU ARE HOLDING THE "${JARLAB[i]}" JAR.`);
+      drop('jar0', 'jar1', 'jar2'); give('jar' + i); sfx.take(); save(); renderInv(); jarPanel(); say(`YOU ARE HOLDING THE "${JARLAB[i]}" BOTTLE.`);
     });
 }
-const CARDS = { cardM: ['RUBBER DUCKS'], cardV: ['PILL JARS'], cardP: ['WINDOWS'], cardD: ['SWITCHES'] };
+const CARDS = { cardM: ['RUBBER DUCKS'], cardV: ['MEDICINE BOTTLES'], cardP: ['WINDOWS'], cardD: ['SWITCHES'] };
 const CARD_ANS = ['cardM', 'cardP', 'cardV', 'cardD'];   // 1 duck, 2 windows, 3 jars, 6 switches
 let panelInv = null;
 let boxRedraw = null, cardDrag = null, dragDone = 0;
@@ -1069,10 +1069,10 @@ const ROOMS = [
         }),
         H(104, 33, 36, 12, () => {
           if (!F.cab) return lockPanel('cab', "MIRROR CABINET... IT'S LOCKED", ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap'); say('THE CABINET OPENS. ONE BAR OF SOAP.'); });
-          if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
+          if (N) return S.done[5] ? say('THREE BOTTLES. LEAVE THEM.') : jarPanel();
           say('AN EMPTY CABINET.');
         }),
-        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. IT SHOWS A PILL JAR.'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })
+        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. IT SHOWS A MEDICINE BOTTLE.'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })
       ];
     } },
   { name: 'BEDROOM',
@@ -1091,7 +1091,7 @@ const ROOMS = [
     hot() {
       const N = isNight();
       return [
-        H(139, 28, 16, 22, () => N ? say('SIX SWITCHES ON THE PLATE. NONE OF THEM DO ANYTHING NOW.') : S.done[3] ? say('LEAVE THE LIGHTS.') : switchPanel()),
+        H(139, 28, 16, 22, () => N ? say('THE SWITCHES DO NOTHING NOW.') : S.done[3] ? say('LEAVE THE LIGHTS.') : switchPanel()),
         H(26, 8, 30, 26, () => bedDark() ? say('SOMETHING HANGS ON THE WALL. TOO DARK TO READ.') : mazePanel()),
         H(82, 44, 16, 34, it => {
           if (bedDark()) return say('TOO DARK. SOMETHING SMALL STANDS BY THE BED.');
@@ -1334,9 +1334,9 @@ function menu() {
 3 DEN CHESS BOARD: QUEEN C4 TO G8 (A SACRIFICE), POOK TAKES WITH THE ROOK, THEN KNIGHT H6 TO F7 IS MATE (GIVES PLUG). HOT TAP, MIRROR, CABINET ${CAB_CODE} (GIVES SOAP). PLUG + SOAP ON TUB.
 4 NIGHTSTAND NOTE = MIDDLE LETTERS OF 3-LETTER WORDS. WARDROBE TILES: HAT EGG DOG ANT EYE (AGONY). BLANKET ON BED, THEN SWITCHES ${SW_ANS} AGAIN FOR DARK, THEN TAP THE BED.
 5 THREE JUGS 10/7/3, BIG ONE FULL. POUR 10>7, 7>3, 3>10, 7>3, 3>10, 7>3, 10>7, 7>3. THE 7-JUG NOW HOLDS 5: USE IT ON THE BOWL. (BIG JUG ON TAP = START OVER. NOTHING CAN BE DUMPED.)
-6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
+6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT BOTTLE. ORANGE = GIVE "NOT MEDICINE".
 7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN READ THE 5 CHANNELS. RIGHT NOW THE BEAR IS ${F.liar ? PLACES[F.liar.ans] : 'NOT PLACED UNTIL THE TV TUNES'} (MOVES AFTER A WRONG SEARCH). BEAR ON POOK.
-8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER BY HOW MANY ARE IN THE HOUSE: DUCK (1), WINDOWS (2, BOTH IN THE DEN), PILL JARS (3), SWITCHES (6 ON THE BEDROOM PLATE).`);
+8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER BY HOW MANY ARE IN THE HOUSE: DUCK (1), WINDOWS (2, BOTH IN THE DEN), MEDICINE BOTTLES (3), SWITCHES (6 ON THE BEDROOM PLATE).`);
     });
 }
 function dbgSolve() {

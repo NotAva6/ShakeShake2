@@ -422,14 +422,14 @@ const GLYPH = { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙', k: '
 function chessPanel() {
   let pick = -1; const flat = CHESS.join('');
   const draw = () => openPanel(`<div style="display:flex;gap:8px;align-items:flex-start"><div class="chess">${[...flat].map((ch, i) => `<button class="sq ${((i >> 3) + i) & 1 ? 'dk' : ''} ${pick === i ? 'on' : ''}" data-a="${i}">${ch === '.' ? '' : GLYPH[ch] + '︎'}</button>`).join('')}</div>
-    <div style="display:flex;flex-direction:column;gap:8px"><div>POOK PLAYS BLACK.</div><div>WHITE TO MOVE.</div><div>END IT IN ONE.</div><button data-a="x">LEAVE</button></div></div>`,
+    <div style="display:flex;flex-direction:column;gap:8px"><div>POOK PLAYS BLACK.</div><div>WHITE TO MOVE.</div><button data-a="x">LEAVE</button></div></div>`,
     a => {
       if (a === 'x') return closePanel();
       const i = +a, mine = /[A-Z]/.test(flat[i]);
       if (mine) { pick = pick === i ? -1 : i; sfx.tap(); return draw(); }
       if (pick < 0) return say('THAT IS NOT YOUR PIECE.');
       if (pick === 30 && i === 13) { closePanel(); F.chess = 1; give('plug'); sfx.take(); angryT = Date.now() + 6000; say('KNIGHT TO F7. CHECKMATE. POOK FLIPS THE BOARD. BEHIND IT: A BATH PLUG. TAKEN.'); save(); return render(); }
-      pick = -1; sfx.bad(); say('POOK PUTS YOUR PIECE BACK. THAT IS NOT THE BEST MOVE.'); draw();
+      pick = -1; sfx.bad(); angryT = Date.now() + 3000; say('POOK FROWNS... YOU COULD DO BETTER.'); draw();
     });
   draw();
 }

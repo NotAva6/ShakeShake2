@@ -135,6 +135,18 @@ button{font:inherit;cursor:pointer;border-radius:0}
 #msg.talk{padding:2px 68px 2px 4px}
 #msg.talk #msgt{display:block;position:relative;height:100%;border:2px solid var(--fg);padding:2px 5px;font-size:11px;line-height:1.2}
 #msg.talk #msgt::after{content:"";position:absolute;right:-8px;bottom:10px;width:6px;height:6px;background:var(--bg);border:2px solid var(--fg);border-left:0}
+.fog{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;border:2px solid var(--fg);background-color:var(--k);
+  background-image:linear-gradient(45deg,var(--w) 25%,transparent 25%,transparent 75%,var(--w) 75%),linear-gradient(45deg,var(--w) 25%,transparent 25%,transparent 75%,var(--w) 75%);background-size:4px 4px;background-position:0 0,2px 2px;
+  font-family:"Comic Sans MS","Chalkboard SE","Marker Felt","Bradley Hand",cursive;font-size:24px;font-weight:700;color:var(--k);text-transform:none;overflow:hidden}
+.fog div{position:relative;white-space:nowrap;background:var(--k);padding:0 8px;border-radius:12px;text-shadow:1px 0 var(--k),-1px 0 var(--k),0 1px var(--k),0 -1px var(--k);color:var(--w)}
+.fog .drip{position:absolute;top:92%;width:4px;background:var(--k);border-radius:0 0 2px 2px}
+.gb{display:inline-flex;gap:2px;width:48px;justify-content:center;align-items:center}
+.gb i{width:11px;height:11px;border:1px solid var(--fg);font-style:normal;text-align:center}
+.gb i.m{width:14px;height:14px;border-width:3px}
+.gb.ex{width:auto}
+.gb.ex i{width:17px;height:17px;font-size:11px;line-height:15px}
+.gb.ex i.m{width:20px;height:20px;line-height:14px}
+.fog .sym{font-family:"Courier New",ui-monospace,monospace;font-size:30px;line-height:1;vertical-align:-2px}
 </style>
 </head>
 <body>
@@ -334,6 +346,7 @@ Object.assign(ICON, {
   eye() { R(4, 5, 8, 1); R(2, 6, 2, 1); R(12, 6, 2, 1); R(1, 7, 1, 2); R(14, 7, 1, 2); R(2, 9, 2, 1); R(12, 9, 2, 1); R(4, 10, 8, 1); R(6, 6, 4, 4, 'o'); R(7, 7, 2, 2); R(4, 2, 1, 2); R(8, 1, 1, 3); R(11, 2, 1, 2); }
 });
 const WORD_ANS = ['hat', 'egg', 'dog', 'ant', 'eye'];
+ICON.sun = () => { DO(8, 8, 3, 'o'); R(8, 1, 1, 3); R(8, 12, 1, 3); R(1, 8, 3, 1); R(12, 8, 3, 1); [[3, 3], [4, 4], [12, 3], [11, 4], [3, 12], [4, 11], [12, 12], [11, 11]].forEach(p => R(p[0], p[1], 1, 1)); };
 Object.assign(ICON, {
   cardD() { B(3, 1, 10, 14, 'w'); R(5, 3, 6, 7); R(5, 12, 6, 1); },
   cardV() { B(3, 1, 10, 14, 'w'); R(7, 3, 2, 6); R(5, 8, 6, 2, 'o'); R(5, 12, 6, 1); },
@@ -384,7 +397,7 @@ function say(t) { elMsg.textContent = t || ''; lastSay = Date.now(); }
 function drawFace() { const o = g; g = $('#pface').getContext('2d'); g.clearRect(0, 0, 30, 26); pook(15, 38); g = o; }
 function openPanel(html, handler, modal) {
   // on puzzle screens Pook's face sits bottom-right and he speaks the title (and any wrong-answer text)
-  let title = null;
+  let title = null; $('#bub').hidden = true;
   if (!modal) html = html.replace(/<div class="t">([\s\S]*?)<\/div>/, (m, t) => { title = t; return ''; });
   $('#msg').classList.toggle('talk', !modal); $('#pface').hidden = !!modal;
   if (!modal) { if (title !== null && title !== curTitle) { curTitle = title; elMsg.innerHTML = title; lastSay = Date.now(); } drawFace(); }
@@ -413,6 +426,9 @@ function clueNote() {
   const rows = [['06428', '.ll.l'], ['58094', 'fl..l'], ['94521', '.ll..'], ['29761', '...l.'], ['68317', 'lll..']];
   openPanel(`<div class="t">A NOTE ON THE FRIDGE</div><div class="sp"></div><div class="c">${rows.map(r => `<div style="margin:0;line-height:1">${[...r[0]].map((ch, i) => `<span class="dg ${r[1][i] === '.' ? '' : r[1][i]}">${ch}</span>`).join('')}</div>`).join('')}</div>
     <div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
+}
+function mirrorPanel() {
+  openPanel(`<div class="t">WRITTEN IN THE STEAM, BY A FINGER</div><div class="fog"><div style="transform:rotate(-3deg)"><b class="sym">▲</b> + <b class="sym">▲</b> + <b class="sym">●</b> = 15<i class="drip" style="left:24%;height:16px"></i></div><div style="transform:rotate(2deg);margin-left:18px"><b class="sym">▲</b> + <b class="sym">●</b> + <b class="sym">●</b> = 18<i class="drip" style="left:72%;height:22px"></i></div><div style="transform:rotate(-1deg);margin-left:-12px"><b class="sym">■</b> × <b class="sym">▲</b> = 8<i class="drip" style="left:38%;height:12px"></i></div></div><div class="row"><button data-a="x">STEP BACK</button></div>`, () => closePanel());
 }
 function lockPanel(id, title, labels, answer, onOpen) {
   F.dl = F.dl || {}; let d = F.dl[id]; if (!d || d.length !== answer.length) d = F.dl[id] = Array(answer.length).fill(0);
@@ -448,7 +464,7 @@ function chessPanel() {
       const i = +a, mine = /[A-Z]/.test(flat[i]);
       if (mine) { pick = pick === i ? -1 : i; sfx.tap(); return draw(); }
       if (pick < 0) return say('THAT IS NOT YOUR PIECE.');
-      if (pick === 30 && i === 13) { closePanel(); F.chess = 1; give('plug'); sfx.take(); angryT = Date.now() + 6000; say('KNIGHT TO F7. CHECKMATE. POOK FLIPS THE BOARD. BEHIND IT: A BATH PLUG. TAKEN.'); save(); return render(); }
+      if (pick === 30 && i === 13) { closePanel(); F.chess = 1; give('plug'); sfx.take(); angryT = Date.now() + 6000; say('POOK IS MAD HE LOST. HE FLIPPED THE BOARD, UNDER IT WAS A BATH PLUG.'); save(); return render(); }
       pick = -1; sfx.bad(); angryT = Date.now() + 3000; say('POOK FROWNS... YOU COULD DO BETTER.'); draw();
     });
   draw();
@@ -457,7 +473,8 @@ function wordPanel() {
   const seq = F.wseq || (F.wseq = ['dog', 'eye', 'hat', 'ant', 'egg']); let pick = -1;
   const draw = () => {
     openPanel(`<div class="t">WARDROBE... IT'S LOCKED</div><div class="sp"></div><div class="row" style="gap:4px">${seq.map((id, i) => `<button class="tile ${pick === i ? 'on' : ''}" data-a="${i}"><canvas width="16" height="16"></canvas></button>`).join('')}</div>
-      <div class="c">TAP TWO TILES TO SWAP THEM.</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
+      <div class="row" style="gap:4px">${seq.map(() => '<span class="gb"><i></i><i class="m"></i><i></i></span>').join('')}</div>
+      <div class="row" style="gap:6px;font-size:10px"><span>LIKE</span><canvas id="exi" width="16" height="16" style="width:32px;height:32px;margin:0"></canvas><span class="gb ex"><i>S</i><i class="m">U</i><i>N</i></span><span>· TAP TWO TILES TO SWAP</span></div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
       a => {
         if (a === 'x') return closePanel();
         if (a === 'go') {
@@ -467,6 +484,7 @@ function wordPanel() {
         const i = +a; if (pick < 0) pick = i; else { [seq[pick], seq[i]] = [seq[i], seq[pick]]; pick = -1; save(); } sfx.tap(); draw();
       });
     elPanel.querySelectorAll('.tile canvas').forEach((c, i) => { g = c.getContext('2d'); PAL = dayPal; R(0, 0, 16, 16, 'w'); ICON[seq[i]](); });
+    g = $('#exi').getContext('2d'); R(0, 0, 16, 16, 'w'); ICON.sun();
     g = mainG;
   };
   draw();
@@ -609,7 +627,7 @@ const NEEDS = ['POOK STARES AT THE EMPTY BOWL.', 'POOK IS FED. POOK WANTS A TOY.
 function hint() {
   const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
   nextTalk = Date.now() + 35000 + rand(40000); const angry = rand(5) === 0; if (angry) { angryT = Date.now() + 4500; sfx.bad(); }
-  say(NEEDS[st]); bubble(angry ? '??? WHAT ARE YOU DOING ???' : POOK_LINES[rand(POOK_LINES.length)]);
+  say(NEEDS[st]); bubble(angry ? ANGRY_LINES[rand(ANGRY_LINES.length)] : POOK_LINES[rand(POOK_LINES.length)]);
 }
 function onPook(it) {
   if (!it) return hint();
@@ -748,7 +766,7 @@ const ROOMS = [
           if (N && !F.sc2) { F.sc2 = 1; scare(); return say('THAT WAS NOT YOUR REFLECTION.'); }
           if (N) { glitch(250); return say('A MIRROR. YOUR REFLECTION ARRIVES A LITTLE LATE.'); }
           if (!F.fog) return say('A MIRROR. YOU LOOK FINE.');
-          note('WRITTEN IN THE STEAM, BY A FINGER', '▲ + ▲ + ● = 15\n▲ + ● + ● = 18\n■ × ▲ = 8\n\nTHE CABINET:  ● ■ ▲');
+          mirrorPanel();
         }),
         H(104, 33, 36, 12, () => {
           if (!F.cab) return lockPanel('cab', "MIRROR CABINET... IT'S LOCKED", ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap'); say('THE CABINET OPENS. ONE BAR OF SOAP. TAKEN.'); });
@@ -819,11 +837,12 @@ let bubT = 0;
 function bubble(t) {
   const el = $('#bub'), ps = pookSpot[S.room]; el.textContent = t; el.hidden = false;
   el.style.right = Math.max(1, (160 - ps[0] - 16) / 160 * 100) + '%'; el.style.bottom = (108 - ps[1] + 42) / 108 * 100 + '%';
-  clearTimeout(bubT); bubT = setTimeout(() => { el.hidden = true; }, 5500);
+  clearTimeout(bubT); bubT = setTimeout(() => { el.hidden = true; }, 4000);
 }
+const ANGRY_LINES = ['??? WHAT ARE YOU DOING ???', 'YOU ARE WRONG.', 'STOP THAT.', 'I SAW THAT.', 'BAD CARETAKER.', 'NO. NO. NO.', 'I AM TELLING THE MAILMAN.'];
 function pookTalk() {
   nextTalk = Date.now() + 35000 + rand(40000);
-  if (rand(4) === 0) { angryT = Date.now() + 4500; sfx.bad(); bubble('??? WHAT ARE YOU DOING ???'); }
+  if (rand(4) === 0) { angryT = Date.now() + 4500; sfx.bad(); bubble(ANGRY_LINES[rand(ANGRY_LINES.length)]); }
   else bubble(POOK_LINES[rand(POOK_LINES.length)]);
 }
 const SCARE = 'VQFVVVVVVVVVVVVVVVUBAAAAAAAAAAAAAFBVUVVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVVVVAQAAAAAAAAAAAABARERVVVUFAAAAAAAAAABVAVVVVVVVVVVVVVVVVQEAAAAAAAAAAAAAABVRVVVVEQEAAAAAAAAAVQBUVVVVVVVVVVVVVVVFAAAAAAAAAAAAAEBEQFVVVUUAAAAAAAAAAFUBVVVVVVVVVVVVVVVVZQAAAAAAAAAAAABUVlFVVVUVAQAAAAAAAABVAFRVVVVVVVVVVVVVVVkAAAAAAAAAAAAApEZEVVVVRQAAAAAAAAAAVQFVVVVVVVVVVVVVVaVqAAAAAEBRAQAAAKUaUVVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVZWpWgAAAABAVQEAAACUKkBVVVVEAAAAAAAAAABVAVVVVVVVVVVVVVWmqhYAAAAAUFUBAAAAVapRVVVVFQEAAAAAAAAAVQFUVVVVVVVVVVVVqZoFAAAAAFBVBQAAAECpRVVVVUUAAAAAAAAAAFUBVVVVVVVVVVVVVapqFQAAAABQagEAAABApVpVVVUVAQAAAAAAAABVAFRVVVVVVVVVVZWpVQUAAAAAQGkAAAAAQJVqVVVVBAAAAAAAAAAAVQFVVVVVVVVVVVVVqlYRAQEAAVBqAQABAABVqlVVVRUBAAAAAAAAAFUAVFVVVVVVVVVVVVVVAAAARARQaQBABAAAVJlVVVUFAAAAAAAAAABVAVVVVVVVVVVVVVVVVREQEFURUGoAURUAAFFVVVVVEQAAAAAAAAAAVQBUVFVVVVVVVVVVVVUAAERVBVRZQFRVAABUVVVVVQQAAAAAAAAAAFUBVVVVVVVVVVVVVVVVEQFVVRVVWlFVVRUBVVVVZVUFAQAAAAAAAABVAVRVVVVVVVVVVVVVVQAAVVUVlFpUVVVFAFRVVZVVBQAAAAAAAAAAVQFVVVVVVVVVVVZVVRUAQFVlVZVaVVVVFRFQVVWlVhUAAAAAAAAAAFUBVFVVVVVVVZVVVVUFAECVqlqVWpWqVUUAQFVVlVoEAAAAAAAAAABVAVVVVVVVVVWqVlVVAQBRpapqpVqpqloVAQFVVVVqFQEAAAAAAAAAVQFUVVVVVVVVqVVFRQAAVKmqqpVaqqpaBQAAVVVVaQUAAAAAAAAAAFUBVVVVVVVVZaZVFREAAFWqqqqlaqqqahUQEVVVVWoRAAAAAAAAAABVAFRUVVVVVZVVVQAAAECVqqqqlaqqqmpVAABURVWpBAAAAAAAAAAAVQFVVVVVVVVVVRUAAAAApaqqqqaqqqpqVRERVRVVpQEAAAAAAAAAAFUAVFVVVVVVVVUFAAAAQKmqqqqVqqqqqlUFAEQFQJUBAAAAAAAAAABVAVVVVVVVVVVVAAAAAFCpqqqqpqqqqqpaFRBRVQBVBgAAAAAAAAAAVQBUVFVVVVVVBQAAAABUqaqqqpWqqqqqalVARFQAVBUAAAAAAAAAAFUBVVVVVVVVVQEAAABAVaWqqqqVqqqqqqpWERVVAVAVAAAAAAAAAABVAFRVVVVVVUQAAAAAQFWVqqqqVaqqqqqaVQVERAAAVQAAAAAAAAAAVQFUVVVVVVUQAAAAAFBVVamqalWqqqqqVlUVUVEBAFQBAAAAAAAAAFUAVFVVVVVVAAAAAABUVVWkqmpVlamqVlVVVURABABQAAAAAAAAAABVAVVVVVVVFQAAAAAAVVZqpapqVVWlqlZVVVUVARUAUAEAAAAAAAAAVQBUVVVVVQUAAAAAAFWlalSpalVVlWpFqVVVRQAEAEAAAAAAAAAAAFUAUFVVVVUVAAAAAEBVqqpQVVVVVVVWgWpqVVUAUAEAAAAAAAAAAABVAFBVVVVVBQAAAABAVaqqQFVVVVVVVYCWKVRVAAAAAAAAAAAAAAAAVQBQVVVVVQEAAAAAUFqqqlFVVVVVVVWApiplVQEAEQAAAAAAAAAAAFUAVFVVVVUAAAAAAFAKqmpAVVVVVVVVgKoppFUAAAAAAAAAAAAAAABVAFBVVVVVAAAAAABQGqlqUVVVVVVVVYFqKqBWAQAQAAAAAAAAAAAAVQBQVVVVVQAAAAAAUFqkWlRVVVVVVVVAqRqoVgAAAAAAAAAAAAAAAFUAUVVVVRUAAAAAAFBqVVVVVVVVVVVVEaVWqlYBAAAAAAAAAAAAAABVAFRVVVUFAAAAAABUWkVVVVVVVVVVVVVUVapWAAAAAAAAAAAAAAAAVQBQVVVVFQAAAABQpWpVVVVVVVVVVVVVVVWqVgEAAAAAAAAAAAAAAFUAUFVVBQAAAAAAVKVaVVVVVVVVVVVVVVWVqloFAAAAAAAAAAAAAABVAFFVVQEAAAAAAFWqalZVVVZVVVVVVVVVqqpqVQEAAAAAAAEAAAAAVQBAVVUAAAAAAECVqlpaVZVVVVVVVVVVlaqqqlUFAAAAAAAAAAAAAFUAEFVVAAAAAABVlapqalVlVVVVVaVmVaWqqqpWFQAAAAAAAAAAAABVAABUBQAAAABQVZWqqlWVmVVVVVWVqZmpqqmqVVUFAAAAAAAAAAAAVQAAVRUAAAAAVVWmqmplpqpWZapWpaqqqqqqqmpWFQAAAAAAAAAAAFUAAFQFAAAAAFVVlaqqVamqVZmZWpWqqqqqqqpaVRUAAAAAAAAAAABVAABVAQAAAFBVVaWqqlaqqqqqqmqlqqqqqqqqalUVAAAAAAAAAAAAVQAAVAAAAABAVVWVqqpZqaqqqqqqqaqqqqqqqlpVFQAAAAAAAAAAAFUAAFUBAAAAUFVlpaqqaqqqqqqqqqqqqqqqqqpqVRUAAAAAAAAAAABVAABUAAAAAEBVVZmqqlqqqqqaqqqqqqqqqqmqalUVAAAAAAAAAAAAVQAAVQEAAABQVWWlqqpWqqqqpqqqqqqqqqqqqmpVFQAAAAAAAAAAAFQAAFQAAAAAQFVVlaqqlZmpmZmpqqqqqqqpqapaVRUAAAAAAAAAAABVAABVAQAAAABVZaWqalZWqqqmqqqqqqpqZqqqalUVAAAAAAAAAAAARAAARAAAAABAVVWVqlpVlaqamaqqqqqaalWpqlpVVQAAAAAAAAAAABEAABAAAAAAUFVlpapqVZWqamamqqqqlmpVqqpaVRUAAAAAAAAAAAAEAAAAAAAAAEBVVZWqalWVqlpVlamqqpVqVaqqVVVVAAAAAAAAAAAAEQAAAAAAAABQVVWmqmpVpapqZmaqqqpWalWqqlZVFQAAAAAAAAAAAAAAAAAAAAAAQFVVmapqVZWqWlVVmaqqVVpVqqpVVRUAAAAAAAAAAAAQAAAAAAAAAFBVVaaqalWlqmplZqaqqlZmVaqqVlUVAAAAAAAAAAAAAAAAAAAAAABAVVWVqqpVpapZVZWpqqpVVVWpqVlVBQAAAAAAAAAAAAAAAAAAAAAAAFVVpqpqVamqZmZmqqqqVlZVqqpaVRUAAAAAAAAAAAAAAAAAAAAAAABVVZWqWlWpqlpZWZmqqlZVVaqqVVUFAAAAAAAAAAAAAAAAAAAAAABAVVWlqmpVqqpqZWalqqpWVVWqalVVAQAAAAAAAAAAAAAAAAAAAAAAQFVVValZVamqapVVmaqqWlWVqVlVVQAAAAAAAAAAAAAAAAAAAAAAAEBVVVVmalWqqmpmZmqqqlZVlapWVVUBAAAAAAAAAAAAAAAAAAAAAABAVVVVVVVVqapamZmZqqpWVZVaVVVVAAAAAAAAAAAAAAAAAAAAAAAAUFVVVVVlVaqqamWmqqqqVlWlVlVVVQEAAAAAAAAAAAAAAAAAAAAAAEBVVVVVVVWpqlqVmamqqlZVlVVVVVUAAAAAAAAAAAAAAAAAAAAAAABAVVVVpVZWqqpqZaqqqqpWVWVVVVVVAQAAAAAAAAAAAAAAAAAAAAAAQFVVVVVVVamqWpWqmaqqVlVVVVVVVQAAAAAAAAAAAAAAAAAAAAAAAABVpWZVVVWlqmplqqqqqlZVVVVVVRUAAAAAAAAAAAAAAAAAAAAAAAAAVKWqVVVVpapalamZlapVVVVVVVUVAAAAAAAAAAAAAAAAAAAAAAAAAFWlqlZVVZWqVlWqapZWVVVVVVVqFQAAAAAAAAAAAAAAAAAAAAAAAABQlapaVVVVVVVVVVVVVVVVVVWVWgUAAAAAAAAAAAAAAAAAAAAAAAAAUFWqqlZVVVVVVVVVVVVVVVVVpmoVAAARAAAAAAAAAAAAAAAAAAAAAEBVqappVVVVVVVVVVVVVVVVlapZFQBABAAAAAAAAAAAAAAAAAAAAABRlZqqqlZVVVVVVVVVVVVVVapqVRUAUBUAAAAAAAAAAAAAAAAAAAAARJWZqqqqVVVVVVVVVVVVVamqalUVAFQFAAAAAAAAAAAAAAAAAAAAAFCVqqqqqlpVVWVVZVVVVZWqqmZWFQBVJQAAAAAAAAAAAAAAAAAAAABUVampqqpqlVWplalVWVWpqpqVWgUAVWkAAAAAAAAAAAAAAAAAAAAAVVWppqqqaqVaqqqqlmpqqmqmploBAFYqAAAAAAAAAAAAAAAEAAAAAFRVpUaZqqqpmqqaqpqqqqpaqWpVAABWaQAAAAAAAAAAAAAAAQAAAABQVVVqmaqqqqqqqqqqqqpqWqpqFZBqZioAAAAAAAAAAAAAQAAAAAAAUFVVlZmpqqmqqpqqqqqqWYmpaQWgqppZAAAAAAAAAAAAAFABAAAQAZVWVZVqZlqqqqqqqqqqqlaaqmoBqaqqalABAAAAAAAAAABAAAAAVEWlWlWVmqpZqqqqmqqqqppGmZlZAKmqqmpUBQAAAAAAAAAAUAEAAFBVpWpVVaaqZqqqqqqqqqqqWmpVFQCqqqpqlRYAAAAAAAAAAFQAAACQVaWqVVWZqpqlqqqqqqqqlZlZVQWAqqqqqpUFAAAAAAAAAABVAQAAkVqlqlZVVqpqlaqqqqpqZlWlalUBkKqqqqqmWgUAAQAAAAAAVAEAAJSqlapaVVWpWkClqqqqapVVlWoVAKSqqqqqqloFAAAAAAAAEFUBAABQqpaqalVVqWpRpaqqqmqpZZVqBQCoqqqqqqpqFQABAAAAAERVBQAAlKqVqqpVValalJWamaqqqaVVVQAAqaqqqqqqqhUAAAAAAABVVQUAAFWqqqqqalWlaqWqqmqqqqqmVhUAQKqqqqqqqqpWAQEAAABAVVUFAABVqpqqqqpVlVmVqqqqqqqqmlYVAICqqqqqqqqqVUUBAAAAQFVVBgAAVaqqqqqqVlVlpaaqqqqqqqZWFRCkqqqqqqqqqlZVAQAAAEBVlQUAAJSqmqqqqlpVqampqqqqqqmaWgWoqqqqqqqqqqpVVQAAAABAZaUWAQFVqqqqqqpqVaqqpqqqqqqqqlqVqqqqqqqqqqqqVlUBAAAAQJWVWUVFVKqqqqqqqlZZqaWaqqqpqVpVpaqqqqqqqqqqqlpVAAAAAFClplZVVVWpqqqqqqpWVWqlWqqqpalaVaWqqqqqqqqqqqpqVQEAAABQlZlZVVVVpaqqqqqqWlVZpZqaqlWpWlWpqqqqqqqqqqqqqlUAAAAAUKWqalVqVaWqqqqqqqpVVqVqpmpVplpVqqqqqqqqqqqqqqpWAQAAAFSZmlpVqlmVqqqqqqqqVVVVmpZaVZVVVaqqqqqqqqqqqqqqVQEAAABUpapqVapqpaqqqqqqqlZVVaVWalVVVaWqqqqqqqqqqqqqqlYBAAAAVKmqmZWqqpqqqqqqqqpqVVVVVVVVVVWlqqqqqqqqqqqqqqpVBQAA';
@@ -870,6 +889,7 @@ setInterval(() => {
 /* ---------- input ---------- */
 elCv.addEventListener('click', e => {
   if (!elPanel.hidden || Date.now() < scareT) return;
+  $('#bub').hidden = true;
   const r = elCv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 160, y = (e.clientY - r.top) / r.height * 108;
   if (F.end) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
   const it = sel; sel = null;
@@ -882,7 +902,7 @@ elCv.addEventListener('click', e => {
 $('#inv').addEventListener('click', e => {
   const b = e.target.closest('.sl'); if (!b || !b.dataset.i) return; const id = b.dataset.i;
   if (!elPanel.hidden) { if (panelInv && !panelModal) panelInv(id); return; }
-  if (!sel) { sel = id; sfx.tap(); say(`${NAME(id)}. NOW TAP WHERE TO USE IT.`); }
+  if (!sel) { sel = id; sfx.tap(); say(`${NAME(id)}.`); }
   else if (sel === id) { sel = null; say(''); }
   else {
     const a = sel, pair = [a, id].sort().join('+'); sel = null;
@@ -968,7 +988,7 @@ function splash(done) {
     if (ci >= lines[li].length) { li++; ci = 0; timer = setTimeout(step, 1800); } else timer = setTimeout(step, 75);
   };
   timer = setTimeout(step, 1000);
-  el.onclick = () => { if (!fin) return finish(); el.hidden = true; el.onclick = null; clearTimeout(timer); sfx.tap(); done(); };
+  el.onclick = () => { if (!fin) return; el.hidden = true; el.onclick = null; clearTimeout(timer); sfx.tap(); done(); };
 }
 
 function power(next) {
@@ -983,7 +1003,7 @@ function boot() {
   if (/(^|#|&)setup\b/.test(location.hash)) return setup();
   closePanel(); render(); say('');
   power(() => splash(() => { if (S.boot) return; pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n<span id="ld" style="display:inline-block;width:19ch;text-align:left"></span><span id="ld2" style="visibility:hidden">\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.</span>`,
-    'POOK HAS NEEDS.\nMEET THEM, AND POOK WILL GIVE BACK\nWHAT HE IS KEEPING FOR YOU.\n\nTAP THINGS. PICK THINGS UP.\nUSE THEM ON OTHER THINGS.', 'DO NOT LEAVE POOK ALONE\nFOR TOO LONG.'],
+    'POOK HAS NEEDS.\nMEET THEM, AND POOK WILL GIVE BACK\nWHAT HE IS KEEPING FOR YOU.', 'DO NOT LEAVE POOK ALONE\nFOR TOO LONG.'],
     () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); }); }));
 }
 window.addEventListener('hashchange', boot);

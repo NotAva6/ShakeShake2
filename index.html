@@ -843,7 +843,7 @@ const NEEDS = ['POOK IS HUNGRY.', 'POOK IS BORED.', 'POOK IS DIRTY.', 'POOK IS T
 function hint() {
   if (F.pendEnd != null) return say('POOK IS ASLEEP.');
   const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
-  nextTalk = Date.now() + 35000 + rand(40000); const angry = rand(5) === 0; if (angry) { angryT = Date.now() + 4500; sfx.bad(); }
+  nextTalk = Date.now() + 35000 + rand(40000); if (pookShaking() && F.warned) { say(NEEDS[st]); return bubble('I WANT MY BEAR'); } const angry = rand(5) === 0; if (angry) { angryT = Date.now() + 4500; sfx.bad(); }
   say(NEEDS[st]); bubble(angry ? ANGRY_LINES[rand(ANGRY_LINES.length)] : POOK_LINES[rand(POOK_LINES.length)]);
 }
 function onPook(it) {
@@ -1094,6 +1094,7 @@ function bubble(t) {
 const ANGRY_LINES = ['??? WHAT ARE YOU DOING ???', 'YOU ARE WRONG.', 'STOP THAT.', 'I SAW THAT.', 'BAD CARETAKER.', 'NO. NO. NO.', 'I AM TELLING THE MAILMAN.'];
 function pookTalk() {
   nextTalk = Date.now() + 35000 + rand(40000);
+  if (pookShaking() && F.warned) { nextTalk = Date.now() + 9000 + rand(6000); return bubble('I WANT MY BEAR'); }   // too scared for anything else
   if (rand(4) === 0) { angryT = Date.now() + 4500; sfx.bad(); bubble(ANGRY_LINES[rand(ANGRY_LINES.length)]); }
   else bubble(POOK_LINES[rand(POOK_LINES.length)]);
 }

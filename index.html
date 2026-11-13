@@ -51,6 +51,9 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .dial{display:flex;flex-direction:column;align-items:center;gap:3px}
 .dial b{font-size:22px;border:2px solid var(--fg);width:38px;text-align:center}
 .dial button{width:38px}
+.dg{display:inline-block;width:22px;height:22px;line-height:18px;text-align:center;border:2px solid transparent;font-size:15px;margin-right:3px}
+.dg.l{border-color:var(--fg)}
+.dg.f{background:var(--o);color:var(--k);border-color:var(--fg)}
 .seq{min-height:24px;border:2px solid var(--fg);text-align:center;font-size:16px;letter-spacing:2px;padding:1px}
 #msg{border-top:2px solid var(--fg);height:52px;padding:4px 6px;font-size:12px;line-height:1.25;text-transform:uppercase;overflow:hidden}
 #inv{display:flex;border-top:2px solid var(--fg)}
@@ -60,7 +63,7 @@ button{font:inherit;cursor:pointer;border-radius:0}
 .sl.sel{outline:3px solid var(--o);outline-offset:-3px}
 .sl i{position:absolute;right:1px;bottom:0;font-size:9px;font-style:normal;color:var(--fg);background:var(--bg);padding:0 1px}
 #fx{position:absolute;inset:0;pointer-events:none;z-index:5;background:repeating-linear-gradient(transparent 0 2px,rgba(18,16,14,.14) 2px 3px)}
-#controls{display:flex;justify-content:space-between;align-items:center;padding:14px 6px 2px}
+#controls{display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px}
 .pad{display:flex;gap:12px}
 .hb{width:58px;height:58px;border-radius:50%;border:3px solid var(--k);background:var(--k);color:var(--w);font-size:20px;box-shadow:0 4px 0 var(--o);display:flex;align-items:center;justify-content:center;padding:0}
 .hb:active{transform:translateY(3px);box-shadow:0 1px 0 var(--o)}
@@ -70,6 +73,12 @@ button{font:inherit;cursor:pointer;border-radius:0}
 #bmenu{font-size:10px;background:var(--k);color:var(--w);border:0;border-radius:10px;padding:6px 12px;letter-spacing:1px}
 .legend{text-align:center;font-size:9px;letter-spacing:1px;margin-top:10px}
 @keyframes flick{0%,91%,100%{opacity:1}92%{opacity:.84}93%{opacity:1}96%{opacity:.93}97%{opacity:1}}
+
+/* intro splash */
+#splash{position:fixed;inset:0;z-index:15;background:#000;color:var(--w);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:26px;padding:34px;font-size:17px;line-height:1.7;letter-spacing:1.5px;text-align:center}
+#splash p{margin:0;max-width:340px;min-height:1.7em}
+#splash .tap{font-size:11px;color:var(--w);animation:blink 1.4s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
 
 /* gift-giver setup (not part of the game) */
 #setup{position:fixed;inset:0;z-index:20;background:var(--k);color:var(--w);overflow:auto;padding:16px}
@@ -93,13 +102,14 @@ button{font:inherit;cursor:pointer;border-radius:0}
       <div id="fx"></div>
     </div></div>
     <div id="controls">
-      <div class="pad"><button class="hb" id="bl" aria-label="Previous room"><span class="tl"></span></button><button class="hb" id="br" aria-label="Next room"><span class="tr"></span></button></div>
+      <button class="hb" id="bl" aria-label="Previous room"><span class="tl"></span></button>
       <button id="bmenu">MENU</button>
-      <div class="pad"><button class="hb" id="bb">B</button><button class="hb a" id="ba">A</button></div>
+      <button class="hb" id="br" aria-label="Next room"><span class="tr"></span></button>
     </div>
-    <div class="legend">&lt; &gt; ROOMS &nbsp;·&nbsp; A ASK POOK &nbsp;·&nbsp; B BACK</div>
+    <div class="legend">&lt; &gt; CHANGE ROOM &nbsp;·&nbsp; TAP THE SCREEN</div>
   </div>
 </div>
+<div id="splash" hidden></div>
 <div id="setup" hidden></div>
 
 <script>
@@ -112,7 +122,7 @@ button{font:inherit;cursor:pointer;border-radius:0}
    message: shown with the final key (optional).
    Or leave blank and open the page with #setup on the end of the
    address to make a personal link from your phone.
-   Add #debug to the address to get skip options in the MENU.
+   Press F1 (or add #debug to the address) for skip options in the MENU.
    ==================================================================== */
 const BAKED = { key: '', key2: '', name: '', message: '' };
 /* ==================================================================== */
@@ -157,7 +167,7 @@ function pieces(k) {
   for (let i = 0; i < 4; i++) { const len = Math.ceil((raw.length - p) / (4 - i)); out.push(raw.slice(p, p + len)); p += len; }
   return out;
 }
-const isDebug = () => /debug/i.test(location.hash);
+const isDebug = () => forceDebug || /debug/i.test(location.hash);
 
 /* ---------- save state ---------- */
 const fresh = () => ({ boot: false, done: [0, 0, 0, 0, 0, 0, 0, 0], inv: [], room: 0, tape: 0, f: {}, hi: 0 });
@@ -306,27 +316,33 @@ function pages(list, done) {
   show();
 }
 function note(title, body) { openPanel(`<div class="t">${title}</div><pre>${body}</pre><div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => { closePanel(); }); }
-function lockPanel(title, labels, answer, onOpen) {
-  const d = [0, 0, 0];
+function clueNote() {
+  // f = right digit, right place (filled). l = right digit, wrong place (outline). . = not in the code.
+  const rows = [['391', 'f..'], ['294', 'l..'], ['673', '.ll'], ['609', '...'], ['643', '..l']];
+  openPanel(`<div class="t">NOTE TO SELF: CUPBOARD LOCK</div><div style="display:flex;gap:14px;align-items:center"><div style="flex:none;white-space:nowrap">${rows.map(r => `<div style="margin:2px 0">${[...r[0]].map((ch, i) => `<span class="dg ${r[1][i] === '.' ? '' : r[1][i]}">${ch}</span>`).join('')}</div>`).join('')}</div>
+    <div><div><span class="dg f">&nbsp;</span>RIGHT DIGIT, RIGHT PLACE</div><div style="margin-top:8px"><span class="dg l">&nbsp;</span>RIGHT DIGIT, WRONG PLACE</div></div></div>
+    <div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
+}
+function lockPanel(id, title, labels, answer, onOpen) {
+  F.dl = F.dl || {}; const d = F.dl[id] || (F.dl[id] = [0, 0, 0]);
   const draw = () => openPanel(`<div class="t">${title}</div><div class="sp"></div><div class="row">${d.map((v, i) => `<div class="dial"><span>${labels[i]}</span><button data-a="u${i}">+</button><b>${v}</b><button data-a="d${i}">−</button></div>`).join('')}</div><div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="x">LEAVE</button></div>`,
     a => {
       if (a === 'x') return closePanel();
       if (a === 'go') { if (d.join('') === answer) { closePanel(); sfx.take(); onOpen(); save(); render(); } else { sfx.bad(); say('THE LOCK DOES NOT MOVE.'); } return; }
-      const i = +a[1]; d[i] = (d[i] + (a[0] === 'u' ? 1 : 9)) % 10; sfx.tap(); draw();
+      const i = +a[1]; d[i] = (d[i] + (a[0] === 'u' ? 1 : 9)) % 10; sfx.tap(); save(); draw();
     });
   draw();
 }
 function arrowPanel(onOpen) {
-  let seq = '';
-  const draw = () => openPanel(`<div class="t">TOY BOX. A LOCK WITH FOUR ARROWS.</div><div class="seq">${[...seq].map(c => ARROW[c]).join(' ') || '&nbsp;'}</div>
+  const draw = () => openPanel(`<div class="t">TOY BOX. A LOCK WITH FOUR ARROWS.</div><div class="seq">${[...(F.aseq || '')].map(c => ARROW[c]).join(' ') || '&nbsp;'}</div>
     <div class="row"><button data-a="L">←</button><button data-a="U">↑</button><button data-a="D">↓</button><button data-a="R">→</button></div>
-    <div class="sp"></div><div class="row"><button class="o" data-a="go">TRY THE LOCK</button><button data-a="clr">CLEAR</button><button data-a="x">LEAVE</button></div>`,
+    <div class="sp"></div><div class="row"><button class="o" data-a="go">TRY</button><button data-a="del">UNDO</button><button data-a="clr">CLEAR</button><button data-a="x">LEAVE</button></div>`,
     a => {
+      let seq = F.aseq || '';
       if (a === 'x') return closePanel();
-      if (a === 'clr') seq = '';
-      else if (a === 'go') { if (seq === MAZE_ANS) { closePanel(); sfx.take(); onOpen(); save(); render(); return; } sfx.bad(); say('THE LOCK DOES NOT MOVE.'); seq = ''; }
-      else if (seq.length < 16) { seq += a; sfx.tap(); }
-      draw();
+      if (a === 'go') { if (seq === MAZE_ANS) { closePanel(); sfx.take(); onOpen(); save(); render(); } else { sfx.bad(); say('THE LOCK DOES NOT MOVE.'); } return; }
+      if (a === 'clr') seq = ''; else if (a === 'del') seq = seq.slice(0, -1); else if (seq.length < 16) { seq += a; sfx.tap(); }
+      F.aseq = seq; save(); draw();
     });
   draw();
 }
@@ -379,14 +395,18 @@ function jarPanel() {
   if (held !== undefined) say(`YOU ARE HOLDING THE "${JARLAB[held]}" JAR.`);
 }
 function boxPanel() {
-  let seq = [];
+  const seq = F.bseq || (F.bseq = []);
   const draw = () => openPanel(`<div class="t">A MUSIC BOX. ENGRAVED:</div><div class="c">"PLAY HIS DAY BACK TO HIM."</div><div class="seq">${seq.join(' · ') || '&nbsp;'}</div>
-    <div class="row">${['TUB', 'BOWL', 'BED', 'BALL'].map(k => `<button data-a="${k}">${k}</button>`).join('')}</div><div class="sp"></div><div class="row"><button data-a="x">LEAVE</button></div>`,
+    <div class="row">${['TUB', 'BOWL', 'BED', 'BALL'].map(k => `<button data-a="${k}">${k}</button>`).join('')}</div><div class="sp"></div><div class="row"><button data-a="clr">CLEAR</button><button data-a="x">LEAVE</button></div>`,
     a => {
       if (a === 'x') return closePanel();
+      if (a === 'clr') { seq.length = 0; save(); return draw(); }
       if (seq.length >= 4) return;
-      seq.push(a); sfx.note(seq.length - 1); draw();
-      if (seq.length === 4) { if (seq.join() === SONG.join()) return setTimeout(() => need(7), 500); sfx.bad(); say('THE BOX CLICKS SHUT. WRONG ORDER.'); setTimeout(() => { seq = []; if (!elPanel.hidden && !panelModal) draw(); }, 500); }
+      seq.push(a); sfx.note(seq.length - 1); save(); draw();
+      if (seq.length === 4) {
+        if (seq.join() === SONG.join()) return setTimeout(() => need(7), 500);
+        sfx.bad(); say('THE BOX CLICKS SHUT. WRONG ORDER.'); seq.length = 0; save(); setTimeout(() => { if (!elPanel.hidden && !panelModal) draw(); }, 500);
+      }
     });
   draw();
 }
@@ -429,20 +449,9 @@ function copyText(t, btn) {
   const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, fallback); else fallback();
 }
-const HINTS = [
-  ['POOK STARES AT THE EMPTY BOWL.', 'THE CUPBOARD IS LOCKED. THE NOTE ON THE FRIDGE IS A LOGIC PUZZLE: FIVE WRONG GUESSES, ONE RIGHT CODE.', 'A CAN NEEDS AN OPENER. THE DRAWER NEEDS SOMETHING FLAT. SOFAS EAT COINS.'],
-  ['POOK IS FED. POOK WANTS A TOY. POOK HAS NO TOY.', 'THE TOY BOX WANTS ARROWS. THE BEDROOM POSTER IS A MAP.', 'ONE ARROW FOR EACH STRAIGHT RUN OF THE ROUTE. NOT ONE PER STEP.'],
-  ['POOK IS FILTHY. KEEP HIM OFF THE BED.', 'A BATH NEEDS A PLUG, HOT WATER AND SOAP.', 'RUN THE HOT TAP. READ THE MIRROR. THREE SHAPES ARE THREE NUMBERS.'],
-  ['POOK IS TIRED. THE BED IS BARE. THE LIGHTS ARE LOUD.', 'THE WARDROBE NEEDS A KEY. THE BED NEEDS A BLANKET.', 'EVERY BULB MUST BE OFF. ONE SWITCH ONLY MAKES THINGS WORSE.'],
-  ['POOK IS THIRSTY. EXACTLY THIRSTY.', 'TWO JUGS ON THE COUNTER: 5 AND 3. THE BOWL WANTS 4. READ THE FRIDGE.', 'FILL AT THE TAP. EMPTY INTO THE SINK. POUR ONE JUG INTO THE OTHER.'],
-  ['POOK ATE SOMETHING IN THE DARK. POOK FEELS WRONG.', 'THE BATHROOM CABINET. EVERY LABEL IS FALSE.', 'WHICH JAR CANNOT BE WHAT IT SAYS, AND SO MUST BE PURE? LOOK AT A PILL FROM THAT ONE.'],
-  ['POOK WANTS HIS BEAR. THE TELEVISION KNOWS WHERE IT IS.', 'FOUR CHANNELS. ONLY ONE IS TRUE.', 'TRY EACH HIDING PLACE IN YOUR HEAD AND COUNT THE TRUE CHANNELS. ONLY ONE PLACE GIVES EXACTLY ONE.'],
-  ['POOK WANTS HIS SONG.', 'THE MUSIC BOX NEEDS A CRANK.', 'PLAY HIS DAY BACK TO HIM. WHAT DID HE NEED FIRST?']
-];
-function hint() {
-  const st = stage(); if (F.end || st < 0) return say('POOK IS ASLEEP. HAPPY BIRTHDAY.');
-  const list = HINTS[st]; say(list[S.hi % list.length]); S.hi = (S.hi + 1) % list.length; save();
-}
+const NEEDS = ['POOK STARES AT THE EMPTY BOWL.', 'POOK IS FED. POOK WANTS A TOY. POOK HAS NO TOY.', 'POOK IS FILTHY. KEEP HIM OFF THE BED.', 'POOK IS TIRED. THE BED IS BARE. THE LIGHTS ARE LOUD.',
+  'POOK IS THIRSTY. EXACTLY THIRSTY.', 'POOK ATE SOMETHING IN THE DARK. POOK FEELS WRONG.', 'POOK WANTS HIS BEAR. THE TELEVISION IS ON.', 'POOK WANTS HIS SONG.'];
+function hint() { const st = stage(); say(F.end || st < 0 ? 'POOK IS ASLEEP. HAPPY BIRTHDAY.' : NEEDS[st]); }
 function onPook(it) {
   if (!it) return hint();
   if (it === 'ball') return S.done[0] ? need(1) : say('POOK IGNORES THE BALL. POOK IS HUNGRY.');
@@ -500,9 +509,9 @@ const ROOMS = [
         }),
         H(13, 30, 11, 11, () => N
           ? note('A NOTE ON THE FRIDGE', 'NIGHT WATER.\n\nEXACTLY 4 CUPS.\nNOT 3. NOT 5.\n\nHE CAN TELL.')
-          : note('NOTE TO SELF: CUPBOARD LOCK', '3 9 1  ONE DIGIT RIGHT, RIGHT PLACE\n2 9 4  ONE DIGIT RIGHT, WRONG PLACE\n6 7 3  TWO DIGITS RIGHT, WRONG PLACES\n6 0 9  NOTHING IS RIGHT\n6 4 3  ONE DIGIT RIGHT, WRONG PLACE')),
+          : clueNote()),
         H(8, 26, 30, 52, () => { if (N && !F.teddy) return searchWrong('THE FRIDGE IS EMPTY. THE LIGHT INSIDE STAYS OFF.'); say('THE FRIDGE HUMS. IT IS EMPTY, EXCEPT FOR THE HUM.'); }),
-        H(50, 10, 46, 26, () => F.cup ? say('BARE SHELVES.') : lockPanel('A WALL CUPBOARD. THREE-DIGIT PADLOCK.', ['', '', ''], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
+        H(50, 10, 46, 26, () => F.cup ? say('BARE SHELVES.') : lockPanel('cup', 'A WALL CUPBOARD. THREE-DIGIT PADLOCK.', ['', '', ''], CUP_CODE, () => { F.cup = 1; give('can'); say('THE CUPBOARD OPENS. ONE CAN OF FOOD. TAKEN.'); })),
         H(50, 58, 24, 12, it => {
           if (F.drawer) return say('AN EMPTY DRAWER.');
           if (it === 'coin') { F.drawer = 1; drop('coin'); give('opener'); sfx.take(); return say('THE COIN TURNS THE SCREW. INSIDE: A CAN OPENER. TAKEN.'); }
@@ -577,7 +586,7 @@ const ROOMS = [
           note('WRITTEN IN THE STEAM, BY A FINGER', '▲ + ▲ + ● = 15\n▲ + ● + ● = 18\n■ × ▲ = 8\n\nTHE CABINET:  ● ■ ▲');
         }),
         H(104, 33, 36, 12, () => {
-          if (!F.cab) return lockPanel('A MIRROR CABINET. THREE DIALS.', ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap', 'key'); say('THE CABINET OPENS. SOAP. AND A SMALL KEY. TAKEN.'); });
+          if (!F.cab) return lockPanel('cab', 'A MIRROR CABINET. THREE DIALS.', ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap', 'key'); say('THE CABINET OPENS. SOAP. AND A SMALL KEY. TAKEN.'); });
           if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
           say('AN EMPTY CABINET.');
         }),
@@ -683,11 +692,8 @@ $('#inv').addEventListener('click', e => {
 function go(d) { if (panelModal) return; closePanel(); sel = null; S.room = (S.room + d + 4) % 4; sfx.tap(); say(''); save(); render(); }
 $('#bl').addEventListener('click', () => go(-1));
 $('#br').addEventListener('click', () => go(1));
-$('#bb').addEventListener('click', () => { if (panelModal) return; sfx.tap(); if (!elPanel.hidden) closePanel(); else if (sel) { sel = null; say(''); renderInv(); } });
-$('#ba').addEventListener('click', () => {
-  if (!elPanel.hidden) { const b = elPanel.querySelector('button.o'); if (b) b.click(); return; }
-  sfx.tap(); hint();
-});
+let forceDebug = false;
+document.addEventListener('keydown', e => { if (e.key === 'F1') { e.preventDefault(); forceDebug = true; if (!panelModal) menu(); } });
 $('#codes').addEventListener('click', e => { const b = e.target.closest('.crow'); if (!b || !elPanel.hidden) return; const k = +b.dataset.k; if (S.done.slice(k * 4, k * 4 + 4).every(Boolean)) keyReveal(k, null); });
 $('#bmenu').addEventListener('click', () => { if (!panelModal) menu(); });
 function menu() {
@@ -742,14 +748,30 @@ function setup() {
   $('#sclose').onclick = () => { el.hidden = true; history.replaceState(null, '', location.href.split('#')[0]); boot(); };
 }
 
+/* ---------- intro splash: black screen, text types itself ---------- */
+function splash(done) {
+  const el = $('#splash'), lines = ['FOR YOUR BIRTHDAY, YOU WERE GIFTED AN OLD TOY YOU SCARCELY REMEMBER FROM CHILDHOOD.', 'BUT SOMETHING FEELS DIFFERENT.'];
+  el.innerHTML = '<p id="sp0"></p><p id="sp1" style="color:var(--o)"></p><p id="sp2" class="tap" style="visibility:hidden">TAP TO BEGIN</p>'; el.hidden = false;
+  let li = 0, ci = 0, fin = false, timer = 0;
+  const finish = () => { fin = true; clearTimeout(timer); lines.forEach((t, i) => { $('#sp' + i).textContent = t; }); $('#sp2').style.visibility = 'visible'; };
+  const step = () => {
+    if (li >= lines.length) return finish();
+    $('#sp' + li).textContent = lines[li].slice(0, ++ci);
+    if (ci >= lines[li].length) { li++; ci = 0; timer = setTimeout(step, 1800); } else timer = setTimeout(step, 75);
+  };
+  timer = setTimeout(step, 1000);
+  el.onclick = () => { if (!fin) return finish(); el.hidden = true; el.onclick = null; clearTimeout(timer); sfx.tap(); done(); };
+}
+
 /* ---------- boot ---------- */
 function boot() {
   loadCfg(); F = S.f; $('#setup').hidden = true;
   if (/(^|#|&)setup\b/.test(location.hash)) return setup();
   closePanel(); render(); say('');
-  if (!S.boot) pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n................ OK\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.`,
+  $('#splash').hidden = true;
+  if (!S.boot) splash(() => pages(['POOK-OS 1.3\n(C) 1987 SHAKECO HOME ELECTRONICS\n\nCARETAKER UNIT ONLINE.', `LOADING COMPANION: POOK\n................ OK\n\nHAPPY BIRTHDAY${CFG.name ? ', ' + esc(CFG.name) : ''}.`,
     'POOK HAS NEEDS.\nMEET THEM, AND POOK WILL GIVE BACK\nWHAT HE IS KEEPING FOR YOU.\n\nTAP THINGS. PICK THINGS UP.\nUSE THEM ON OTHER THINGS.', 'DO NOT LEAVE POOK ALONE\nFOR TOO LONG.'],
-    () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); });
+    () => { S.boot = true; save(); say('POOK STARES AT THE EMPTY BOWL.'); }));
 }
 window.addEventListener('hashchange', boot);
 boot();

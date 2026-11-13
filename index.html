@@ -202,6 +202,11 @@ button{font:inherit;cursor:pointer;border-radius:0}
 #inv .sl,.cslot{touch-action:none}
 .cghost{position:fixed;left:0;top:0;z-index:35;width:66px;min-height:46px;display:flex;align-items:center;justify-content:center;background:var(--w);color:var(--k);border:2px solid var(--k);box-shadow:4px 4px 0 var(--o);font-size:9px;padding:3px;text-align:center;pointer-events:none}
 .cslot canvas{width:32px;height:32px;image-rendering:pixelated;image-rendering:crisp-edges;display:block;margin:0 auto;pointer-events:none}
+.mid{flex-direction:column;gap:6px;align-items:stretch}
+.midr{display:flex;gap:8px;align-items:flex-end}
+#bback{font-size:10px;letter-spacing:3px;background:var(--k);color:var(--w);border:0;border-radius:0;clip-path:var(--px2);padding:7px 10px;width:100%}
+#bback:disabled{opacity:.28}
+#bback:not(:disabled):active{transform:translateY(2px)}
 </style>
 </head>
 <body>
@@ -218,7 +223,7 @@ button{font:inherit;cursor:pointer;border-radius:0}
     </div></div>
     <div id="controls">
       <button class="hb" id="bl" aria-label="Previous room"><span class="tl"></span></button>
-      <div class="mid"><button id="bwords">WORD</button><button id="bmenu">MENU</button></div>
+      <div class="mid"><button id="bback" disabled>BACK</button><div class="midr"><button id="bwords">WORD</button><button id="bmenu">MENU</button></div></div>
       <button class="hb" id="br" aria-label="Next room"><span class="tr"></span></button>
     </div>
     <div class="legend">&lt; &gt; CHANGE ROOM &nbsp;·&nbsp; TAP THE SCREEN</div>
@@ -1224,7 +1229,7 @@ function render() {
   renderInv(); draw(); water();
 }
 setInterval(() => {
-  frame++; if (elPanel.hidden) draw(); else if (!$('#pface').hidden) drawFace();
+  frame++; updBack(); if (elPanel.hidden) draw(); else if (!$('#pface').hidden) drawFace();
   const idle = elPanel.hidden && $('#splash').hidden && $('#setup').hidden && Date.now() > scareT;
   if (idle && isNight() && rand(140) === 0) glitch(180);
   if (idle && S.boot && !asleep() && Date.now() > nextTalk && Date.now() - lastSay > 6000) pookTalk();
@@ -1264,6 +1269,15 @@ let forceDebug = false;
 document.addEventListener('keydown', e => { if (e.key === 'F1') { e.preventDefault(); forceDebug = true; if (!panelModal) menu(); } });
 $('#codes').addEventListener('click', e => { const b = e.target.closest('.crow'); if (!b || !elPanel.hidden) return; const k = +b.dataset.k; if (S.done.slice(k * 4, k * 4 + 4).every(Boolean)) keyReveal(k, null); });
 let panelKind = null;
+/* BACK: lit whenever there is something to back out of (an open screen, or an item in hand) */
+const canBack = () => (!elPanel.hidden && !panelModal) || !!sel;
+function updBack() { $('#bback').disabled = !canBack(); }
+$('#bback').addEventListener('click', () => {
+  if (!canBack()) return; sfx.tap();
+  if (!elPanel.hidden) { closePanel(); render(); } else { sel = null; say(''); renderInv(); }
+  updBack();
+});
+['click', 'pointerup'].forEach(ev => document.addEventListener(ev, () => setTimeout(updBack, 0)));
 $('#bmenu').addEventListener('click', () => { if (panelModal) return; sfx.tap(); if (panelKind === 'menu') return closePanel(); menu(); panelKind = 'menu'; });
 $('#bwords').addEventListener('click', () => {
   if (panelModal || Date.now() < scareT) return; sfx.tap();

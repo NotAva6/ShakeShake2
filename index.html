@@ -730,9 +730,9 @@ function tvPanel() {
   draw(); rant();
 }
 function jarPanel() {
-  const held = [0, 1, 2].find(i => has('jar' + i)), s = F.jsample;
+  const held = [0, 1, 2].find(i => has('jar' + i)), s = F.jsample, ro = !!S.done[5];   // ro: puzzle finished, look but don't touch
   openPanel(`<div class="t">THREE BOTTLES. A NOTE:</div><div style="font-size:10px;line-height:1.25">"EVERY LABEL IS FALSE. ONE BOTTLE IS ALL MEDICINE (WHITE). ONE IS ALL NOT (ORANGE). ONE IS MIXED. YOU ONLY HAVE THE STRENGTH TO OPEN ONE CAP AND TIP OUT ONE PILL."</div>
-    ${[0, 1, 2].map(i => `<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span>"${JARLAB[i]}"${s && s.i === i ? ' — ' + s.col : ''}</span><span style="white-space:nowrap"><button class="jb" data-a="s${i}" ${s ? 'disabled' : ''}>OPEN</button> <button class="jb" data-a="t${i}" ${!s || held === i ? 'disabled' : ''}>${held === i ? 'HELD' : held !== undefined ? 'SWAP' : 'TAKE'}</button></span></div>`).join('')}
+    ${[0, 1, 2].map(i => `<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span>"${JARLAB[i]}"${s && s.i === i ? ' — ' + s.col : ''}</span><span style="white-space:nowrap"><button class="jb" data-a="s${i}" ${s || ro ? 'disabled' : ''}>OPEN</button> <button class="jb" data-a="t${i}" ${ro || !s || held === i ? 'disabled' : ''}>${ro ? 'SWAP' : held === i ? 'HELD' : held !== undefined ? 'SWAP' : 'TAKE'}</button></span></div>`).join('')}
     <div class="row"><button class="jb" data-a="x">CLOSE</button></div>`,
     a => {
       if (a === 'x') return closePanel();
@@ -1069,7 +1069,7 @@ const ROOMS = [
         }),
         H(104, 33, 36, 12, () => {
           if (!F.cab) return lockPanel('cab', "MIRROR CABINET... IT'S LOCKED", ['●', '■', '▲'], CAB_CODE, () => { F.cab = 1; give('soap'); say('THE CABINET OPENS. ONE BAR OF SOAP.'); });
-          if (N) return S.done[5] ? say('THREE BOTTLES. LEAVE THEM.') : jarPanel();
+          if (N) return jarPanel();
           say('AN EMPTY CABINET.');
         }),
         H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. IT SHOWS A MEDICINE BOTTLE.'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })

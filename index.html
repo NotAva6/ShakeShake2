@@ -568,13 +568,13 @@ function hintNote() {
   openPanel(`<div class="t">${F.ward ? 'A NOTE IN THE DRAWER. DONE WITH.' : 'A NOTE IN THE DRAWER'}</div><div class="sp"></div><canvas id="hn" width="${F.ward ? 184 : 152}" height="90" style="width:${F.ward ? 270 : 228}px;max-width:100%"></canvas><div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
   const c = $('#hn').getContext('2d'), K = COL.k, W = COL.w; c.fillStyle = W; c.fillRect(0, 0, 184, 90);
   const box = (x, y, t) => { c.fillStyle = K; c.fillRect(x, y, 22, 22); c.fillStyle = W; c.fillRect(x + t, y + t, 22 - 2 * t, 22 - 2 * t); };
-  const sq = pts => { c.strokeStyle = K; c.lineWidth = 1; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0] + .5, p[1] + .5) : c.moveTo(p[0] + .5, p[1] + .5)); c.stroke(); };
-  box(6, 6, 1); box(6, 34, 3); box(6, 62, 1); [38, 66, 94, 122].forEach(x => box(x, 34, 3));
+  const sq = pts => { c.strokeStyle = K; c.lineWidth = 1; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0] + 116.5, p[1] + .5) : c.moveTo(p[0] + 116.5, p[1] + .5)); c.stroke(); };
+  box(122, 6, 1); box(122, 34, 3); box(122, 62, 1); [6, 35, 64, 93].forEach(x => box(x, 34, 3));   // the down-word sits in the LAST column
   sq([[13, 10], [18, 14], [16, 19], [12, 18], [13, 10], [12, 22], [17, 25], [23, 23]]);
   sq([[12, 41], [13, 46], [16, 47], [18, 43], [17, 40], [19, 45], [19, 51], [17, 50]]);
   sq([[18, 68], [14, 66], [12, 70], [16, 71], [18, 69], [12, 72], [13, 80], [17, 81], [20, 77]]);
   if (F.ward) {                                                   // done: struck through, with a tick
-    c.fillStyle = K; c.fillRect(2, 44, 146, 3); c.fillRect(2, 16, 30, 3); c.fillRect(2, 72, 30, 3);
+    c.fillStyle = K; c.fillRect(2, 44, 146, 3); c.fillRect(118, 16, 30, 3); c.fillRect(118, 72, 30, 3);
     c.lineWidth = 3; c.strokeStyle = K; c.beginPath(); c.moveTo(156, 46); c.lineTo(163, 55); c.lineTo(178, 32); c.stroke();
   }
 }

@@ -900,7 +900,7 @@ const ROOMS = [
         H(138, 92, 22, 14, it => {
           if (N) {
             if (S.done[4]) return say('WATER. EXACTLY ENOUGH.');
-            if (CAPS[it]) { const a = jamt(it); return a === 5 ? need(4) : say(`${a} CUPS. POOK LOOKS AT THE WATER. THEN AT YOU. THE NOTE SAID 5.`); }
+            if (CAPS[it]) { const a = jamt(it); return a === 5 ? need(4) : say(a > 5 ? 'TOO MUCH.' : 'TOO LITTLE.'); }
             return say('THE BOWL IS DRY.');
           }
           if (S.done[0]) return say('LICKED CLEAN.');

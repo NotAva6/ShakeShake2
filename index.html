@@ -179,6 +179,8 @@ button{font:inherit;cursor:pointer;border-radius:0}
 #controls{align-items:flex-end}
 .mid{flex-direction:row;gap:8px;align-items:flex-end}
 #bmenu,#bwords{padding:8px 10px}
+.lt{display:inline-block;width:1.15em;text-align:center}
+.lt.nl{padding:0}
 </style>
 </head>
 <body>
@@ -272,7 +274,31 @@ function awards() {
 }
 const found = () => { const s = new Set(), A = awards(); S.done.forEach((d, i) => { if (d && A[i]) A[i].forEach(c => s.add(c)); }); return s; };
 const showWord = k => { const f = found(); return [...CFG.keys[k]].map(c => /[A-Z]/.test(c) ? (f.has(c) ? c : '_') : c).join(' '); };
-const wordsHtml = (fresh = new Set()) => { const f = found(); return CFG.keys.map((w, k) => (k > 0 && S.tape < k) ? '' : `<div class="hw">${[...w].map(c => !/[A-Z]/.test(c) ? esc(c) : !f.has(c) ? '_' : fresh.has(c) ? `<span class="nl">${c}</span>` : c).join(' ')}</div>`).join(''); };
+/* the first name is shown with its letters in the wrong places until Pook "fixes" it at the end of tape one */
+const scramOrder = w => { const idx = [...w].map((c, i) => i); let seed = 7; for (const c of w) seed = (seed * 31 + c.charCodeAt(0)) % 9973; for (let i = idx.length - 1; i > 0; i--) { seed = (seed * 137 + 11) % 9973; const j = seed % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; } if (idx.every((v, i) => v === i)) idx.reverse(); return idx; };
+const wordsHtml = (fresh = new Set()) => { const f = found(); return CFG.keys.map((w, k) => { if (k > 0 && S.tape < k) return ''; const order = (k === 0 && !F.unscr) ? scramOrder(w) : [...w].map((c, i) => i); return `<div class="hw" id="hw${k}">${order.map(i => { const c = w[i]; return `<span class="lt ${fresh.has(c) && f.has(c) ? 'nl' : ''}">${!/[A-Z]/.test(c) ? esc(c) : f.has(c) ? c : '_'}</span>`; }).join('')}</div>`; }).join(''); };
+function unscramble() {
+  const el = $('#hw0'); if (!el) return;
+  const btn = elPanel.querySelector('button.o'), w = CFG.keys[0], spans = [...el.querySelectorAll('.lt')]; if (btn) btn.disabled = true;
+  setTimeout(() => {
+    if (!document.body.contains(el)) return;
+    say('POOK: "?? THAT\'S NOT RIGHT."'); sfx.bad(); let n = 0;
+    const t = setInterval(() => {
+      if (!document.body.contains(el)) return clearInterval(t);
+      const sh = [...w]; for (let i = sh.length - 1; i > 0; i--) { const j = rand(i + 1); [sh[i], sh[j]] = [sh[j], sh[i]]; }
+      spans.forEach((sp, i) => { sp.classList.remove('nl'); sp.textContent = sh[i]; sp.style.transform = `translate(${rand(13) - 6}px,${rand(15) - 7}px) rotate(${rand(51) - 25}deg)`; });
+      beep(300 + rand(600), .03, 'square', .02);
+      if (++n < 20) return;
+      clearInterval(t);
+      spans.forEach((sp, i) => {                                  // slam each letter into its real place
+        sp.textContent = w[i]; sp.style.transform = '';
+        try { sp.animate([{ transform: 'translateY(-30px) scale(3)', opacity: 0 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .7 }, { transform: 'translateY(3px) scale(.85)', offset: .85 }, { transform: 'none' }], { duration: 400, delay: i * 80, fill: 'backwards', easing: 'cubic-bezier(.4,0,.2,1)' }); } catch (e) {}
+        setTimeout(() => beep(85, .1, 'square', .08), i * 80 + 280);
+      });
+      setTimeout(() => { F.unscr = 1; save(); if (btn) btn.disabled = false; sfx.solve(); say('POOK: "THERE."'); }, spans.length * 80 + 550);
+    }, 90);
+  }, 2400);
+}
 const isDebug = () => forceDebug || /debug/i.test(location.hash);
 
 /* ---------- save state ---------- */
@@ -476,15 +502,18 @@ function clueNote() {
     <div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
 }
 function hintNote() {
-  openPanel(`<div class="t">${F.ward ? 'A NOTE IN THE DRAWER. SOMEONE HAS SCRIBBLED ON IT.' : 'A NOTE IN THE DRAWER'}</div><div class="sp"></div><canvas id="hn" width="152" height="90" style="width:228px;max-width:100%"></canvas><div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
-  const c = $('#hn').getContext('2d'), K = COL.k, W = COL.w; c.fillStyle = W; c.fillRect(0, 0, 152, 90);
+  openPanel(`<div class="t">${F.ward ? 'A NOTE IN THE DRAWER. DONE WITH.' : 'A NOTE IN THE DRAWER'}</div><div class="sp"></div><canvas id="hn" width="${F.ward ? 184 : 152}" height="90" style="width:${F.ward ? 270 : 228}px;max-width:100%"></canvas><div class="sp"></div><div class="row"><button data-a="x">PUT BACK</button></div>`, () => closePanel());
+  const c = $('#hn').getContext('2d'), K = COL.k, W = COL.w; c.fillStyle = W; c.fillRect(0, 0, 184, 90);
   const box = (x, y, t) => { c.fillStyle = K; c.fillRect(x, y, 22, 22); c.fillStyle = W; c.fillRect(x + t, y + t, 22 - 2 * t, 22 - 2 * t); };
   const sq = pts => { c.strokeStyle = K; c.lineWidth = 1; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0] + .5, p[1] + .5) : c.moveTo(p[0] + .5, p[1] + .5)); c.stroke(); };
   box(6, 6, 1); box(6, 34, 3); box(6, 62, 1); [38, 66, 94, 122].forEach(x => box(x, 34, 3));
   sq([[13, 10], [18, 14], [16, 19], [12, 18], [13, 10], [12, 22], [17, 25], [23, 23]]);
   sq([[12, 41], [13, 46], [16, 47], [18, 43], [17, 40], [19, 45], [19, 51], [17, 50]]);
   sq([[18, 68], [14, 66], [12, 70], [16, 71], [18, 69], [12, 72], [13, 80], [17, 81], [20, 77]]);
-  if (F.ward) for (let i = 0; i < 16; i++) sq([[2 + rand(20), 4 + rand(82)], [40 + rand(40), 4 + rand(82)], [70 + rand(40), 4 + rand(82)], [120 + rand(30), 4 + rand(82)]]);
+  if (F.ward) {                                                   // done: struck through, with a tick
+    c.fillStyle = K; c.fillRect(2, 44, 146, 3); c.fillRect(2, 16, 30, 3); c.fillRect(2, 72, 30, 3);
+    c.lineWidth = 3; c.strokeStyle = K; c.beginPath(); c.moveTo(156, 46); c.lineTo(163, 55); c.lineTo(178, 32); c.stroke();
+  }
 }
 function mirrorPanel() {
   openPanel(`<div class="t">WRITTEN IN THE STEAM, BY A FINGER</div><div class="fog"><div style="transform:rotate(-3deg)"><b class="sym">▲</b> + <b class="sym">▲</b> + <b class="sym">●</b> = 15<i class="drip" style="left:24%;height:16px"></i></div><div style="transform:rotate(2deg);margin-left:18px"><b class="sym">▲</b> + <b class="sym">●</b> + <b class="sym">●</b> = 18<i class="drip" style="left:72%;height:22px"></i></div><div style="transform:rotate(-1deg);margin-left:-12px"><b class="sym">■</b> × <b class="sym">▲</b> = 8<i class="drip" style="left:38%;height:12px"></i></div></div><div class="row"><button data-a="x">STEP BACK</button></div>`, () => closePanel());
@@ -664,7 +693,7 @@ const FIX = [
 ];
 const DONE_LINE = ['POOK EATS. POOK DOES NOT BLINK WHILE HE EATS.', 'POOK PLAYS. THE BALL WILL NEVER BE THE SAME.', 'POOK IS CLEAN. THE WATER IS NOT.', 'POOK SLEEPS.',
   'POOK DRINKS. EXACTLY ENOUGH.', 'POOK SWALLOWS IT. THE WRONGNESS FADES.', 'POOK HOLDS HIS BEAR. HE STOPS SHAKING.', 'THE SONG PLAYS. POOK SLEEPS.'];
-function startNight() { S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
+function startNight() { F.unscr = 1; S.tape = 1; S.inv = []; sel = null; S.room = 3; S.hi = 0; F.jperm = rand(2); F.jsample = null; }
 let flying = 0;
 function need(i) {
   if (S.done[i]) return;
@@ -729,6 +758,7 @@ function wordsPanel() {
     a => { closePanel(); if (a === 'go') { F.pendEnd = null; save(); tapeEnd(end); } }, end != null);
   if (fresh.size) { F.newL = []; save(); sfx.solve(); }
   $('#bwords').classList.remove('blinkw');
+  if (end === 0 && !F.unscr && [...CFG.keys[0]].every(ch => !/[A-Z]/.test(ch) || found().has(ch))) unscramble();
   const old = g, n = S.done.filter(Boolean).length; g = $('#hm').getContext('2d'); PAL = isNight() ? nightPal : dayPal;
   R(0, 0, 28, 40, 'w'); R(2, 38, 24, 2); R(6, 2, 2, 36); R(6, 2, 14, 2); R(18, 4, 1, 5);
   if (n > 0) DO(18, 12, 3, 'w'); if (n > 1) R(18, 16, 1, 9); if (n > 2) R(14, 18, 4, 1); if (n > 3) R(19, 18, 4, 1);
@@ -1024,7 +1054,7 @@ function water() {
       const a = ac(), n = a.sampleRate * 2, buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
       for (let i = 0; i < n; i++) ch[i] = Math.random() * 2 - 1;
       const src = a.createBufferSource(), f = a.createBiquadFilter(), gn = a.createGain();
-      src.buffer = buf; src.loop = true; f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 0.6; gn.gain.value = 0.04;
+      src.buffer = buf; src.loop = true; f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 0.6; gn.gain.value = 0.014;
       src.connect(f); f.connect(gn); gn.connect(a.destination); src.start(); waterNode = src;
     } catch (e) {}
   } else if (!on && waterNode) { try { waterNode.stop(); } catch (e) {} waterNode = null; }

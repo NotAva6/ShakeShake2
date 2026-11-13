@@ -486,7 +486,7 @@ Object.assign(ICON, {   // trading cards: each shows something that can be count
   cardM() { B(2, 1, 12, 14, 'w'); D(7, 9, 2, 'o'); D(9, 6, 1, 'o'); R(11, 6, 2, 1, 'o'); R(9, 5, 1, 1); R(4, 12, 8, 1); },
   cardV() { B(2, 1, 12, 14, 'w'); B(5, 5, 6, 8, 'w'); R(6, 3, 4, 2); R(6, 8, 4, 2, 'o'); },
   cardP() { B(2, 1, 12, 14, 'w'); B(4, 4, 8, 8, 'o'); R(8, 5, 1, 6); R(5, 8, 6, 1); },
-  cardD() { B(2, 1, 12, 14, 'w'); B(4, 3, 8, 10, 'w'); [0, 1, 2, 3, 4, 5].forEach(i => R(6 + (i % 2) * 3, 4 + ((i / 2) | 0) * 3, 2, 2, 'o')); }
+  cardD() { B(2, 1, 12, 14, 'w'); B(5, 4, 6, 8, 'o'); }
 });
 const JARLAB = ['MEDICINE', 'NOT MEDICINE', 'MIXED'];
 const NAME = id => CARDS[id] ? `A TRADING CARD: "${CARDS[id][0]}"` : ({
@@ -741,7 +741,7 @@ function jarPanel() {
       drop('jar0', 'jar1', 'jar2'); give('jar' + i); sfx.take(); save(); renderInv(); jarPanel(); say(`YOU ARE HOLDING THE "${JARLAB[i]}" JAR.`);
     });
 }
-const CARDS = { cardM: ['RUBBER DUCKS'], cardV: ['JARS'], cardP: ['WINDOWS'], cardD: ['LIGHT SWITCHES'] };
+const CARDS = { cardM: ['RUBBER DUCKS'], cardV: ['PILL JARS'], cardP: ['WINDOWS'], cardD: ['SWITCHES'] };
 const CARD_ANS = ['cardM', 'cardP', 'cardV', 'cardD'];   // 1 duck, 2 windows, 3 jars, 6 switches
 let panelInv = null;
 let boxRedraw = null, cardDrag = null, dragDone = 0;
@@ -1072,7 +1072,7 @@ const ROOMS = [
           if (N) return S.done[5] ? say('THREE JARS. LEAVE THEM.') : jarPanel();
           say('AN EMPTY CABINET.');
         }),
-        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. IT SHOWS A JAR.'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })
+        H(90, 44, 12, 18, () => { if (N && !F.cV) { F.cV = 1; give('cardV'); sfx.take(); return say('BEHIND THE TOWEL: A TRADING CARD. IT SHOWS A PILL JAR.'); } say('A TOWEL. IT SMELLS LIKE WET DOG.'); })
       ];
     } },
   { name: 'BEDROOM',
@@ -1091,7 +1091,7 @@ const ROOMS = [
     hot() {
       const N = isNight();
       return [
-        H(139, 28, 16, 22, () => N ? say('THE SWITCHES DO NOTHING NOW.') : S.done[3] ? say('LEAVE THE LIGHTS.') : switchPanel()),
+        H(139, 28, 16, 22, () => N ? say('SIX SWITCHES ON THE PLATE. NONE OF THEM DO ANYTHING NOW.') : S.done[3] ? say('LEAVE THE LIGHTS.') : switchPanel()),
         H(26, 8, 30, 26, () => bedDark() ? say('SOMETHING HANGS ON THE WALL. TOO DARK TO READ.') : mazePanel()),
         H(82, 44, 16, 34, it => {
           if (bedDark()) return say('TOO DARK. SOMETHING SMALL STANDS BY THE BED.');
@@ -1100,7 +1100,7 @@ const ROOMS = [
         }),
         H(4, 42, 78, 38, it => {
 
-          if (N && !F.cD) { F.cD = 1; give('cardD'); sfx.take(); return say('UNDER THE PILLOW: A TRADING CARD. IT SHOWS A LIGHT SWITCH.'); }
+          if (N && !F.cD) { F.cD = 1; give('cardD'); sfx.take(); return say('UNDER THE PILLOW: A TRADING CARD. IT SHOWS ONE SWITCH.'); }
           if (N) return say('THE BED IS STILL WARM.');
           if (it === 'blanket') { if (bedDark()) return say('IT IS TOO DARK TO MAKE THE BED.'); F.blanket = 1; drop('blanket'); sfx.tap(); return say('THE BED IS MADE.'); }
           if (!F.blanket) return say("IT'S TOO COLD.");
@@ -1336,7 +1336,7 @@ function menu() {
 5 THREE JUGS 10/7/3, BIG ONE FULL. POUR 10>7, 7>3, 3>10, 7>3, 3>10, 7>3, 10>7, 7>3. THE 7-JUG NOW HOLDS 5: USE IT ON THE BOWL. (BIG JUG ON TAP = START OVER. NOTHING CAN BE DUMPED.)
 6 CABINET: PILL FROM "MIXED". WHITE = GIVE THAT JAR. ORANGE = GIVE "NOT MEDICINE".
 7 TV HEX GROUPS: BONE CANINE KITTEN WEIGHT / TIRED STEAL SULTAN SUBLIME / DOGMA PLANT BEEF SCOWL / FARMER HEART CHIPS CLIPS. THEN READ THE 5 CHANNELS. RIGHT NOW THE BEAR IS ${F.liar ? PLACES[F.liar.ans] : 'NOT PLACED UNTIL THE TV TUNES'} (MOVES AFTER A WRONG SEARCH). BEAR ON POOK.
-8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER BY HOW MANY ARE IN THE HOUSE: DUCK (1), WINDOWS (2, BOTH IN THE DEN), JARS (3), LIGHT SWITCHES (6).`);
+8 CARDS: DRAWER, TOY BOX, TOWEL, BED. MUSIC BOX ORDER BY HOW MANY ARE IN THE HOUSE: DUCK (1), WINDOWS (2, BOTH IN THE DEN), PILL JARS (3), SWITCHES (6 ON THE BEDROOM PLATE).`);
     });
 }
 function dbgSolve() {
